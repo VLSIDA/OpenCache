@@ -1,5 +1,6 @@
 # Documentation
 This serves as the documentation of OpenCache that explains how generated caches work.
+![Port Diagram](./images/port_diagram.svg)
 
 # Cache States
 ![State Diagram](./images/state_diagram.svg)
