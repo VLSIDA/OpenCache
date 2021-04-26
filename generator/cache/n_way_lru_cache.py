@@ -196,7 +196,7 @@ class n_way_lru_cache(cache_base):
         # signal is not low in this state since we want to fill the pipeline. If csb
         # input is high, cache waits in this state.
         self.vf.write("      case(state)\n")
-        self.vf.write("      0: begin // STATE 0: Read tag line\n")
+        self.vf.write("      IDLE_STATE: begin // Read tag line\n")
         self.vf.write("        stall = 0;\n")
         self.vf.write("        if (!csb) begin\n")
         self.vf.write("          state_next       = 1;\n")
@@ -239,7 +239,7 @@ class n_way_lru_cache(cache_base):
         # 
         # If the data line is not dirty, cache requests the new data line from the lower
         # memory. State switches to 3.
-        self.vf.write("      1: begin // STATE 1: Check if hit/miss\n")
+        self.vf.write("      CHECK_STATE: begin // Check if hit/miss\n")
         if self.data_hazard:
             self.vf.write("        data_hazard_next = 0;\n")
             self.vf.write("        new_lru_next     = 0;\n")
@@ -367,7 +367,7 @@ class n_way_lru_cache(cache_base):
         # Cache waits in this state until lower memory’s stall signal becomes low. When it
         # is low, cache requests the new data line from the lower memory. State switches
         # to 3. Stall signal stays high.
-        self.vf.write("      2: begin // STATE 2: Wait for main memory to write\n")
+        self.vf.write("      WRITE_STATE: begin // Wait for main memory to write\n")
         self.vf.write("        lru_read_addr  = set; // needed in state 3 to update LRU bits\n")
         self.vf.write("        tag_read_addr  = set; // needed in state 3 to keep other ways' tags\n")
         self.vf.write("        data_read_addr = set; // needed in state 3 to keep other ways' data\n")
@@ -384,7 +384,7 @@ class n_way_lru_cache(cache_base):
         # cache reads the next address from the pipeline and requests corresponding tag and
         # data lines from internal arrays. It avoids data hazard just like state 1. If csb
         # is high, state switches to 0; otherwise, it switches to 1.
-        self.vf.write("      3: begin // STATE 3: Wait line from main memory\n")
+        self.vf.write("      READ_STATE: begin // Wait line from main memory\n")
         self.vf.write("        lru_read_addr  = set;\n")
         self.vf.write("        tag_read_addr  = set;\n")
         self.vf.write("        data_read_addr = set;\n")

@@ -134,6 +134,12 @@ class cache_base:
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter  DELAY = 3;\n\n")
 
+        self.vf.write("  // States of the cache\n")
+        self.vf.write("  localparam IDLE_STATE  = 0; // Fetch tag and data lines\n")
+        self.vf.write("  localparam CHECK_STATE = 1; // Compare tags\n")
+        self.vf.write("  localparam WRITE_STATE = 2; // Write dirty line to main memory\n")
+        self.vf.write("  localparam READ_STATE  = 3; // Read new line from main memory\n\n")
+
 
     def write_io_ports(self):
         """ Write the IO ports of the cache. """
