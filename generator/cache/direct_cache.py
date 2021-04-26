@@ -22,7 +22,7 @@ class direct_cache(cache_base):
         self.vf.write("  reg [WORD_WIDTH-1:0]   din_reg, din_reg_next;\n")
         self.vf.write("  reg [WORD_WIDTH-1:0]   dout;\n")
         self.vf.write("  reg [1:0]              state, state_next; // state is used while reading/writing main memory\n")
-        # No need for bypass registers if the cache is not pipelined or SRAMs are guaranteed to be data hazard proof
+        # No need for bypass registers if the SRAMs are guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
             self.vf.write("  reg [2+TAG_WIDTH-1:0] new_tag, new_tag_next;   // msb shows if in the same set, the rest is dirty bit and tag bits\n")
@@ -143,10 +143,6 @@ class direct_cache(cache_base):
         self.vf.write("      0: begin // STATE 0: Read tag line\n")
         self.vf.write("        stall = 0;\n")
         self.vf.write("        if (!csb) begin\n")
-        # If cache is not pipelined, stall must be high in state 0 since we will not fill
-        # a pipeline.
-        if not self.pipeline:
-            self.vf.write("          stall          = 1;\n")
         self.vf.write("          state_next     = 1;\n")
         self.vf.write("          tag_next       = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("          set_next       = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
@@ -217,31 +213,30 @@ class direct_cache(cache_base):
         self.vf.write("              data_write_din[offset * WORD_WIDTH + i] = din_reg[i];\n")
         self.vf.write("          end\n")
         # Pipelining in state 1
-        if self.pipeline:
-            self.vf.write("          if (!csb) begin // Pipeline\n")
-            self.vf.write("            state_next   = 1;\n")
-            self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
-            self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-            self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
-            self.vf.write("            web_reg_next = web;\n")
-            self.vf.write("            din_reg_next = din;\n")
-            if self.data_hazard:
-                self.vf.write("            if (!web_reg && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
-                self.vf.write("              new_tag_next = {2'b11, tag};\n")
-                self.vf.write("              if (new_tag[TAG_WIDTH+1])\n") 
-                self.vf.write("                new_data_next = new_data;\n")
-                self.vf.write("              else\n")
-                self.vf.write("                new_data_next = data_read_dout;\n")
-                self.vf.write("              for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
-                self.vf.write("                new_data_next[offset * WORD_WIDTH + i] = din_reg[i];\n")
-                self.vf.write("            end else begin\n")
-                self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("            end\n")
-            else:
-                self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-            self.vf.write("          end\n")
+        self.vf.write("          if (!csb) begin // Pipeline\n")
+        self.vf.write("            state_next   = 1;\n")
+        self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
+        self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+        self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
+        self.vf.write("            web_reg_next = web;\n")
+        self.vf.write("            din_reg_next = din;\n")
+        if self.data_hazard:
+            self.vf.write("            if (!web_reg && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
+            self.vf.write("              new_tag_next = {2'b11, tag};\n")
+            self.vf.write("              if (new_tag[TAG_WIDTH+1])\n") 
+            self.vf.write("                new_data_next = new_data;\n")
+            self.vf.write("              else\n")
+            self.vf.write("                new_data_next = data_read_dout;\n")
+            self.vf.write("              for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
+            self.vf.write("                new_data_next[offset * WORD_WIDTH + i] = din_reg[i];\n")
+            self.vf.write("            end else begin\n")
+            self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("            end\n")
+        else:
+            self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+        self.vf.write("          end\n")
         if self.data_hazard:
             self.vf.write("        end else if (new_tag[TAG_WIDTH +: 2] == 2'b11 || tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
         else:
@@ -312,25 +307,24 @@ class direct_cache(cache_base):
             self.vf.write("              new_data_next[offset * WORD_WIDTH + i]  = din_reg[i];\n")
         self.vf.write("            end\n")
         # Pipelining in state 3
-        if self.pipeline:
-            self.vf.write("          if (!csb) begin // Pipeline\n")
-            self.vf.write("            state_next   = 1;\n")
-            self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
-            self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-            self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
-            self.vf.write("            web_reg_next = web;\n")
-            self.vf.write("            din_reg_next = din;\n")
-            if self.data_hazard:
-                self.vf.write("            if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
-                self.vf.write("              new_tag_next = {1'b1, ~web_reg, tag};\n")
-                self.vf.write("            end else begin\n")
-                self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("            end\n")
-            else:
-                self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-                self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-            self.vf.write("          end\n")
+        self.vf.write("          if (!csb) begin // Pipeline\n")
+        self.vf.write("            state_next   = 1;\n")
+        self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
+        self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+        self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
+        self.vf.write("            web_reg_next = web;\n")
+        self.vf.write("            din_reg_next = din;\n")
+        if self.data_hazard:
+            self.vf.write("            if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
+            self.vf.write("              new_tag_next = {1'b1, ~web_reg, tag};\n")
+            self.vf.write("            end else begin\n")
+            self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("            end\n")
+        else:
+            self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+            self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+        self.vf.write("          end\n")
         self.vf.write("        end\n")
         self.vf.write("      end\n")
         self.vf.write("      endcase\n")

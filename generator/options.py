@@ -31,10 +31,9 @@ class options(optparse.Values):
     # Cache can return a word or a line of words !! returning line not yet supported !!
     return_type = "word"
 
-    # Cache can be pipelined for better performance
-    pipeline = True
-    # Data hazard might occur when the cache is pipelined. If SRAM arrays
-    # are guaranteed to be data hazard proof, this can be False.
+    # Data hazard might occur when the same location is read and
+    # written at the same cycle. If SRAM arrays are guaranteed to
+    # be data hazard proof, this can be False.
     data_hazard = True
 
     # Define the output file paths

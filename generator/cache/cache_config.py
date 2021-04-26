@@ -15,7 +15,6 @@ class cache_config:
         self.write_policy = OPTS.write_policy
         self.is_data_cache = OPTS.is_data_cache
         self.return_type = OPTS.return_type
-        self.pipeline = OPTS.pipeline
         self.data_hazard = OPTS.data_hazard
 
         self.compute_configs()

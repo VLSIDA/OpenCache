@@ -34,9 +34,6 @@ This is whether the cache is a "data cache" or an "instruction cache". INSTRUCTI
 This is which data the cache returns. Currently supported return types are:
 * Word
 
-## `pipeline`
-This is whether the cache is pipelined.
-
 ## `data_hazard`
 This is whether data hazard may occur in the internal SRAM arrays. Currently OpenRAM arrays are not read-after-write.
 However, this parameter can be set `False` if the user can guarantee that SRAM arrays are going to be "data hazard proof"
