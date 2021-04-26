@@ -1,4 +1,4 @@
-__pycache__/
+__pycache__
 *.v
 *.log
 config.py
