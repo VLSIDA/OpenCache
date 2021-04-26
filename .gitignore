@@ -1,0 +1,4 @@
+__pycache__/
+*.v
+*.log
+config.py
