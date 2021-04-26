@@ -25,29 +25,34 @@ class n_way_random_cache(cache_base):
         self.vf.write("  reg [1:0]              state, state_next;   // state is used while reading/writing main memory\n")
         self.vf.write("  reg [WAY_WIDTH-1:0]    way, way_next;       // to place in a way\n")
         self.vf.write("  reg [WAY_WIDTH-1:0]    random, random_next; // random bits\n")
-        # No need for bypass registers if the cache is not pipelined or RAMs are guaranteed to be data hazard proof
+        # No need for bypass registers if the cache is not pipelined or SRAMs are guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
             self.vf.write("  reg data_hazard, data_hazard_next; // high if must write and read from arrays at the same cycle\n")
             self.vf.write("  reg [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] new_tag, new_tag_next;   // new tag line from the previous cycle\n")
             self.vf.write("  reg [LINE_WIDTH * WAY_DEPTH-1:0]      new_data, new_data_next; // new data line from the previous cycle\n\n")
 
+        self.vf.write("  // source memory ports\n")
         self.vf.write("  reg main_csb;\n")
         self.vf.write("  reg main_web;\n")
         self.vf.write("  reg [ADDR_WIDTH - OFFSET_WIDTH-1:0] main_addr;\n")
         self.vf.write("  reg [LINE_WIDTH-1:0] main_din;\n\n")
 
-        self.vf.write("  reg  tag_read_csb;  // tag read port active low chip select\n")
+        self.vf.write("  // tag array read port\n")
+        self.vf.write("  reg  tag_read_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] tag_read_addr;\n")
         self.vf.write("  wire [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_read_dout;\n")
-        self.vf.write("  reg  tag_write_csb; // tag write port active low chip select\n")
+        self.vf.write("  // tag array write port\n")
+        self.vf.write("  reg  tag_write_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] tag_write_addr;\n")
         self.vf.write("  reg  [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_write_din;\n\n")
 
-        self.vf.write("  reg  data_read_csb;  // data read port active low chip select\n")
+        self.vf.write("  // data array read port\n")
+        self.vf.write("  reg  data_read_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] data_read_addr;\n")
         self.vf.write("  wire [LINE_WIDTH * WAY_DEPTH-1:0] data_read_dout;\n")
-        self.vf.write("  reg  data_write_csb; // data write port active low chip select\n")
+        self.vf.write("  // data array write port\n")
+        self.vf.write("  reg  data_write_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] data_write_addr;\n")
         self.vf.write("  reg  [LINE_WIDTH * WAY_DEPTH-1:0] data_write_din;\n")
 
@@ -62,13 +67,13 @@ class n_way_random_cache(cache_base):
         self.vf.write("    tag         <= #(DELAY) tag_next;\n")
         self.vf.write("    set         <= #(DELAY) set_next;\n")
         self.vf.write("    offset      <= #(DELAY) offset_next;\n")
+        self.vf.write("    rst_reg     <= #(DELAY) rst_reg_next;\n")
+        self.vf.write("    web_reg     <= #(DELAY) web_reg_next;\n")
+        self.vf.write("    din_reg     <= #(DELAY) din_reg_next;\n")
         if self.data_hazard:
             self.vf.write("    data_hazard <= #(DELAY) data_hazard_next;\n")
             self.vf.write("    new_tag     <= #(DELAY) new_tag_next;\n")
             self.vf.write("    new_data    <= #(DELAY) new_data_next;\n")
-        self.vf.write("    rst_reg     <= #(DELAY) rst_reg_next;\n")
-        self.vf.write("    web_reg     <= #(DELAY) web_reg_next;\n")
-        self.vf.write("    din_reg     <= #(DELAY) din_reg_next;\n")
         self.vf.write("  end\n\n")
 
 

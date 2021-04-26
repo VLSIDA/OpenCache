@@ -1,7 +1,7 @@
 class cache_base:
     """
     This is the abstract parent class of cache modules.
-    Some common functions among different cache modules
+    Some common methods among different cache modules
     are implemented here.
     """
     def __init__(self, name, cache_config):
@@ -37,7 +37,23 @@ class cache_base:
         self.write_banner()
 
         # Cache module
-        self.vf.write("module {} (clk,rst,csb,web,addr,din,dout,stall,main_csb,main_web,main_addr,main_din,main_dout,main_stall);\n\n".format(self.name))
+        self.vf.write("module {} (\n".format(self.name))
+        self.vf.write("  clk,\n")
+        self.vf.write("  rst,\n")
+        self.vf.write("  csb,\n")
+        self.vf.write("  web,\n")
+        self.vf.write("  addr,\n")
+        self.vf.write("  din,\n")
+        self.vf.write("  dout,\n")
+        self.vf.write("  stall,\n")
+        self.vf.write("  // Source memory interface\n")
+        self.vf.write("  main_csb,\n")
+        self.vf.write("  main_web,\n")
+        self.vf.write("  main_addr,\n")
+        self.vf.write("  main_din,\n")
+        self.vf.write("  main_dout,\n")
+        self.vf.write("  main_stall\n")
+        self.vf.write(");\n\n")
 
         self.write_parameters()
         
@@ -120,22 +136,22 @@ class cache_base:
 
 
     def write_io_ports(self):
-        """ Write the I/O ports of the cache. """
+        """ Write the IO ports of the cache. """
 
         self.vf.write("  input  clk; // clock\n")
         self.vf.write("  input  rst; // reset\n")
         self.vf.write("  input  csb; // active low chip select\n")
         self.vf.write("  input  web; // active low write control\n")
-        self.vf.write("  input  [ADDR_WIDTH-1:0] addr;\n")
-        self.vf.write("  input  [WORD_WIDTH-1:0] din;\n")
-        self.vf.write("  output [WORD_WIDTH-1:0] dout;\n")
+        self.vf.write("  input  [ADDR_WIDTH-1:0] addr; // address\n")
+        self.vf.write("  input  [WORD_WIDTH-1:0] din; // data input\n")
+        self.vf.write("  output [WORD_WIDTH-1:0] dout; // data output\n")
         self.vf.write("  output stall; // high when pipeline is stalled\n\n")
 
-        self.vf.write("  output main_csb; // main ram active low chip select\n")
-        self.vf.write("  output main_web; // main ram active low write control\n")
-        self.vf.write("  output [ADDR_WIDTH-OFFSET_WIDTH-1:0] main_addr;\n")
-        self.vf.write("  output [LINE_WIDTH-1:0] main_din;\n")
-        self.vf.write("  input  [LINE_WIDTH-1:0] main_dout;\n")
+        self.vf.write("  output main_csb; // source memory active low chip select\n")
+        self.vf.write("  output main_web; // source memory active low write control\n")
+        self.vf.write("  output [ADDR_WIDTH-OFFSET_WIDTH-1:0] main_addr; // source memory address\n")
+        self.vf.write("  output [LINE_WIDTH-1:0] main_din; // source memory data input\n")
+        self.vf.write("  input  [LINE_WIDTH-1:0] main_dout; // source memory data output\n")
         self.vf.write("  input  main_stall; // high when waiting for main memory\n\n")
 
 
@@ -143,7 +159,8 @@ class cache_base:
         """ Write the internal OpenRAM SRAM array instances of the cache. """
 
         self.vf.write("  // For synthesis, modify OpenRAM modules or make these modules black box.\n")
-        if self.replacement_policy is not None and self.replacement_policy != "random":
+        # Random replacement policy doesn't require a separate SRAM array
+        if self.replacement_policy not in [None, "random"]:
             self.vf.write("  {0}_{1}_array {1}_array (\n".format(self.name, self.replacement_policy))
             self.vf.write("    .clk0  (clk),\n")
             self.vf.write("    .csb0  ({}_write_csb),\n".format(self.replacement_policy))
