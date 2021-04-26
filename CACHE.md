@@ -8,14 +8,14 @@ This serves as the documentation of OpenCache that explains how generated caches
 
 | Pin | Description |
 | - | - |
-| `clk` | clock |
-| `rst` | reset |
-| `csb` | chip select (active low) |
-| `web` | write enable (active low) |
-| `addr` | address |
-| `din` | data input |
-| `dout` | data output |
-| `stall` | stall |
+| `clk` | Clock |
+| `rst` | Reset |
+| `csb` | Chip Select (Active Low) |
+| `web` | Write Enable (Active Low) |
+| `addr` | Address |
+| `din` | Data Input |
+| `dout` | Data Output |
+| `stall` | Stall |
 
 # Cache States
 ![State Diagram](./images/state_diagram.png)
@@ -65,10 +65,3 @@ cache reads the next address from the pipeline and requests corresponding **tag*
 **data** lines from internal SRAM arrays. It avoids data hazard just like **CHECK** state.
 If `csb` is high, cache switches to **IDLE** state; otherwise, it switches to **CHECK**
 state.
-
-<!-- Markdown style -->
-<style>
-table {
-    width:100%;
-}
-</style>
