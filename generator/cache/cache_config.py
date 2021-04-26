@@ -19,6 +19,7 @@ class cache_config:
 
         self.compute_configs()
 
+
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience. """
 
