@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import optparse
 import getpass
 import os
@@ -9,9 +16,9 @@ class options(optparse.Values):
     that is the sole required command-line positional argument for opencache.py.
     """
 
-    #########################
-    # Configuration options #
-    #########################
+    #############################
+    #   Configuration options   #
+    #############################
 
     # These parameters must be specified by user in config file.
     # total_size = 0

@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 """
 This is called globals.py, but it actually parses all the arguments
 and performs the global OpenCache setup as well.
@@ -179,8 +186,7 @@ def init_paths():
 
 def report_status():
     """
-    Check for valid arguments and report the
-    info about the SRAM being generated
+    Check for valid arguments and report the info about the cache being generated.
     """
     global OPTS
 
