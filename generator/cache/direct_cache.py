@@ -1,4 +1,4 @@
-from cache.cache_base import cache_base
+from cache_base import cache_base
 
 
 class direct_cache(cache_base):

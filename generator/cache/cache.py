@@ -14,14 +14,14 @@ class cache:
         self.name = name        
 
         if self.num_ways == 1:
-            from cache.direct_cache import direct_cache as cache
+            from direct_cache import direct_cache as cache
         elif self.set_size:
             if self.replacement_policy == "fifo":
-                from cache.n_way_fifo_cache import n_way_fifo_cache as cache
+                from n_way_fifo_cache import n_way_fifo_cache as cache
             elif self.replacement_policy == "lru":
-                from cache.n_way_lru_cache import n_way_lru_cache as cache
+                from n_way_lru_cache import n_way_lru_cache as cache
             elif self.replacement_policy == "random":
-                from cache.n_way_random_cache import n_way_random_cache as cache
+                from n_way_random_cache import n_way_random_cache as cache
             else:
                 debug.error("Invalid replacement policy.", -1)
         elif not self.set_size:

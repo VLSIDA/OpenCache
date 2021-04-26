@@ -25,12 +25,12 @@ g.print_banner()
 # Output info about this run
 g.report_status()
 
-from cache.cache_config import cache_config
+from cache_config import cache_config
 
 # Configure the cache organization
 c = cache_config(OPTS)
 
-from cache.cache import cache
+from cache import cache
 s = cache(cache_config=c,
           name=OPTS.output_name)
 

@@ -1,4 +1,4 @@
-import cache.cache_base
+from cache_base import cache_base
 
 
 class n_way_random_cache(cache_base):

@@ -1,4 +1,4 @@
-import cache.cache_base
+from cache_base import cache_base
 
 
 class n_way_lru_cache(cache_base):
@@ -17,7 +17,7 @@ class n_way_lru_cache(cache_base):
         super().config_write(config_path)
 
         self.fcf = open(config_path + "_lru_array_config.py", "w")
-        self.fcf.write("word_size = {}\n".format(self.way_width * self.num_ways))
+        self.fcf.write("word_size = {}\n".format(self.way_size * self.num_ways))
         self.fcf.write("num_words = {}\n".format(self.num_rows))
         # OpenRAM outputs of the LRU array are saved to a separate folder
         self.fcf.write("output_path = \"{}/lru_array\"\n".format(config_path))
@@ -390,7 +390,7 @@ class n_way_lru_cache(cache_base):
         if self.data_hazard:
             self.vf.write("            if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("              data_hazard_next = 1;\n")
-            self.write(7, True, True)
+            self.write_lru_mux(7, True, True)
             self.vf.write("              new_tag_next     = tag_read_dout;\n")
             self.vf.write("              new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH]     = 1'b1;\n")
             self.vf.write("              new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = ~web_reg;\n")
@@ -446,7 +446,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write(base_indent + "    for (n = 0; n < WAY_WIDTH; n = n + 1) begin\n")
         self.vf.write(base_indent + "      case({}[m * WAY_WIDTH +: WAY_WIDTH])\n".format(rhs))
         self.vf.write(base_indent + "      0: {}[m * WAY_WIDTH + n] = NUM_0[n];\n".format(lhs))
-        for i in range(self.num_ways - 1)
+        for i in range(self.num_ways - 1):
             self.vf.write(base_indent + "      {0}: {1}[m * WAY_WIDTH + n] = NUM_{2}[n];\n".format(i + 1, lhs, i))
         self.vf.write(base_indent + "      endcase\n")
         self.vf.write(base_indent + "    end\n")

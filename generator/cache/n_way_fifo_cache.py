@@ -1,4 +1,4 @@
-import cache.cache_base
+from cache_base import cache_base
 
 
 class n_way_fifo_cache(cache_base):
@@ -17,7 +17,7 @@ class n_way_fifo_cache(cache_base):
         super().config_write(config_path)
 
         self.fcf = open(config_path + "_fifo_array_config.py", "w")
-        self.fcf.write("word_size = {}\n".format(self.way_width))
+        self.fcf.write("word_size = {}\n".format(self.way_size))
         self.fcf.write("num_words = {}\n".format(self.num_rows))
         # OpenRAM outputs of the FIFO array are saved to a separate folder
         self.fcf.write("output_path = \"{}/fifo_array\"\n".format(config_path))

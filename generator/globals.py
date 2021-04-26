@@ -85,6 +85,8 @@ def init_opencache(config_file):
 
     read_config(config_file)
 
+    include_paths()
+
     init_paths()
 
 
@@ -153,6 +155,12 @@ def read_config(config_file):
         OPTS.output_name = "cache_{0}b_{1}b_{2}{3}".format(OPTS.total_size,
                                                            OPTS.word_size,
                                                            OPTS.num_ways)
+
+
+def include_paths():
+    """ Include generator folders to the sys path. """
+    
+    sys.path.insert(1, "./cache")
 
 
 def init_paths():

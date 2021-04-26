@@ -37,7 +37,7 @@ class options(optparse.Values):
     data_hazard = True
 
     # Define the output file paths
-    output_path = "."
+    output_path = "./outputs/"
     # Define the output file base name
     output_name = ""
 
