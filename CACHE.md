@@ -1,9 +1,24 @@
+
 # Documentation
 This serves as the documentation of OpenCache that explains how generated caches work.
-![Port Diagram](./images/port_diagram.svg)
+
+
+# Cache Pins
+![Port Diagram](./images/port_diagram.png)
+
+| Pin | Description |
+| - | - |
+| `clk` | clock |
+| `rst` | reset |
+| `csb` | chip select (active low) |
+| `web` | write enable (active low) |
+| `addr` | address |
+| `din` | data input |
+| `dout` | data output |
+| `stall` | stall |
 
 # Cache States
-![State Diagram](./images/state_diagram.svg)
+![State Diagram](./images/state_diagram.png)
 
 ## RESET
 This is the initial state and a multi-cycle reset. It sets all rows of the internal
@@ -50,3 +65,10 @@ cache reads the next address from the pipeline and requests corresponding **tag*
 **data** lines from internal SRAM arrays. It avoids data hazard just like **CHECK** state.
 If `csb` is high, cache switches to **IDLE** state; otherwise, it switches to **CHECK**
 state.
+
+<!-- Markdown style -->
+<style>
+table {
+    width:100%;
+}
+</style>
