@@ -46,9 +46,9 @@ class cache_base:
 
         # Cache module
         self.vf.write("module {} (\n".format(self.name))
-        self.vf.write("  // Upper level interface\n")
+        self.vf.write("  // CPU interface\n")
         self.vf.write("  clk, rst, csb, web, addr, din, dout, stall,\n")
-        self.vf.write("  // Source memory interface\n")
+        self.vf.write("  // Main memory interface\n")
         self.vf.write("  main_csb, main_web, main_addr, main_din, main_dout, main_stall\n")
         self.vf.write(");\n\n")
 
@@ -132,30 +132,32 @@ class cache_base:
         self.vf.write("  parameter  DELAY = 3;\n\n")
 
         self.vf.write("  // States of the cache\n")
-        self.vf.write("  localparam IDLE_STATE  = 0; // Fetch tag and data lines\n")
-        self.vf.write("  localparam CHECK_STATE = 1; // Compare tags\n")
-        self.vf.write("  localparam WRITE_STATE = 2; // Write dirty line to main memory\n")
-        self.vf.write("  localparam READ_STATE  = 3; // Read new line from main memory\n\n")
+        self.vf.write("  localparam IDLE       = 0; // Fetch tag and data lines\n")
+        self.vf.write("  localparam CHECK      = 1; // Compare tags\n")
+        self.vf.write("  localparam WAIT_WRITE = 2; // Wait before sending write request to main memory\n")
+        self.vf.write("  localparam WRITE      = 3; // Write dirty line to main memory\n")
+        self.vf.write("  localparam WAIT_READ  = 4; // Wait before sending read request to main memory\n")
+        self.vf.write("  localparam READ       = 5; // Read new line from main memory\n\n")
 
 
     def write_io_ports(self):
         """ Write the IO ports of the cache. """
 
-        self.vf.write("  input  clk; // clock\n")
-        self.vf.write("  input  rst; // reset\n")
-        self.vf.write("  input  csb; // active low chip select\n")
-        self.vf.write("  input  web; // active low write control\n")
+        self.vf.write("  input  clk;                   // clock\n")
+        self.vf.write("  input  rst;                   // reset\n")
+        self.vf.write("  input  csb;                   // active low chip select\n")
+        self.vf.write("  input  web;                   // active low write control\n")
         self.vf.write("  input  [ADDR_WIDTH-1:0] addr; // address\n")
-        self.vf.write("  input  [WORD_WIDTH-1:0] din; // data input\n")
+        self.vf.write("  input  [WORD_WIDTH-1:0] din;  // data input\n")
         self.vf.write("  output [WORD_WIDTH-1:0] dout; // data output\n")
-        self.vf.write("  output stall; // high when pipeline is stalled\n\n")
+        self.vf.write("  output stall;                 // high when pipeline is stalled\n\n")
 
-        self.vf.write("  output main_csb; // source memory active low chip select\n")
-        self.vf.write("  output main_web; // source memory active low write control\n")
-        self.vf.write("  output [ADDR_WIDTH-OFFSET_WIDTH-1:0] main_addr; // source memory address\n")
-        self.vf.write("  output [LINE_WIDTH-1:0] main_din; // source memory data input\n")
-        self.vf.write("  input  [LINE_WIDTH-1:0] main_dout; // source memory data output\n")
-        self.vf.write("  input  main_stall; // high when waiting for main memory\n\n")
+        self.vf.write("  output main_csb;                                // main memory active low chip select\n")
+        self.vf.write("  output main_web;                                // main memory active low write control\n")
+        self.vf.write("  output [ADDR_WIDTH-OFFSET_WIDTH-1:0] main_addr; // main memory address\n")
+        self.vf.write("  output [LINE_WIDTH-1:0] main_din;               // main memory data input\n")
+        self.vf.write("  input  [LINE_WIDTH-1:0] main_dout;              // main memory data output\n")
+        self.vf.write("  input  main_stall;                              // high when waiting for main memory\n\n")
 
 
     def write_internal_arrays(self):
@@ -196,3 +198,19 @@ class cache_base:
         self.vf.write("    .addr1 (data_read_addr),\n")
         self.vf.write("    .dout1 (data_read_dout)\n")
         self.vf.write("  );\n\n")
+
+
+    def write_registers(self):
+        raise NotImplementedError("cache_base is an abstract class.")
+
+
+    def write_flops(self):
+        raise NotImplementedError("cache_base is an abstract class.")
+
+
+    def write_temp_variables(self):
+        raise NotImplementedError("cache_base is an abstract class.")
+
+
+    def write_logic_block(self):
+        raise NotImplementedError("cache_base is an abstract class.")

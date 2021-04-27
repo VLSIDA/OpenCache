@@ -41,10 +41,14 @@ class cache:
 
 
     def config_write(self, path):
+        """ Save the config files. """
+
         self.c.config_write(path)
 
 
     def verilog_write(self, path):
+        """ Save the Verilog file. """
+
         self.c.verilog_write(path)
 
 
