@@ -55,17 +55,17 @@ class n_way_lru_cache(cache_base):
         self.vf.write("  reg [OFFSET_WIDTH-1:0] offset, offset_next;\n")
         self.vf.write("  reg [WORD_WIDTH-1:0]   din_reg, din_reg_next;\n")
         self.vf.write("  reg [WORD_WIDTH-1:0]   dout;\n")
-        self.vf.write("  reg [1:0]              state, state_next; // state is used while reading/writing main memory\n")
+        self.vf.write("  reg [2:0]              state, state_next; // state is used while reading/writing main memory\n")
         self.vf.write("  reg [WAY_WIDTH-1:0]    way, way_next;     // to place in a way\n")
         # No need for bypass registers if SRAMs are guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
-            self.vf.write("  reg data_hazard, data_hazard_next; // high if write and read from arrays must be done at the same cycle\n")
+            self.vf.write("  reg data_hazard, data_hazard_next;                             // high if write and read from arrays must be done at the same cycle\n")
             self.vf.write("  reg [WAY_WIDTH * WAY_DEPTH-1:0]       new_lru, new_lru_next;   // new replacement bits from the previous cycle\n")
             self.vf.write("  reg [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] new_tag, new_tag_next;   // new tag line from the previous cycle\n")
             self.vf.write("  reg [LINE_WIDTH * WAY_DEPTH-1:0]      new_data, new_data_next; // new data line from the previous cycle\n\n")
 
-        self.vf.write("  // source memory ports\n")
+        self.vf.write("  // Main memory ports\n")
         self.vf.write("  reg main_csb;\n")
         self.vf.write("  reg main_web;\n")
         self.vf.write("  reg [ADDR_WIDTH - OFFSET_WIDTH-1:0] main_addr;\n")
@@ -80,20 +80,20 @@ class n_way_lru_cache(cache_base):
         self.vf.write("  reg  [SET_WIDTH-1:0] lru_write_addr;\n")
         self.vf.write("  reg  [WAY_WIDTH * WAY_DEPTH-1:0] lru_write_din;\n\n")
 
-        self.vf.write("  // tag array read port\n")
+        self.vf.write("  // Tag array read port\n")
         self.vf.write("  reg  tag_read_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] tag_read_addr;\n")
         self.vf.write("  wire [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_read_dout;\n")
-        self.vf.write("  // tag array write port\n")
+        self.vf.write("  // Tag array write port\n")
         self.vf.write("  reg  tag_write_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] tag_write_addr;\n")
         self.vf.write("  reg  [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_write_din;\n\n")
 
-        self.vf.write("  // data array read port\n")
+        self.vf.write("  // Data array read port\n")
         self.vf.write("  reg  data_read_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] data_read_addr;\n")
         self.vf.write("  wire [LINE_WIDTH * WAY_DEPTH-1:0] data_read_dout;\n")
-        self.vf.write("  // data array write port\n")
+        self.vf.write("  // Data array write port\n")
         self.vf.write("  reg  data_write_csb;\n")
         self.vf.write("  reg  [SET_WIDTH-1:0] data_write_addr;\n")
         self.vf.write("  reg  [LINE_WIDTH * WAY_DEPTH-1:0] data_write_din;\n\n")
@@ -173,7 +173,7 @@ class n_way_lru_cache(cache_base):
 
         # RESET state
         self.vf.write("    if (rst || rst_reg) begin // RESET: Multi-cycle reset\n")
-        self.vf.write("      state_next = IDLE_STATE;\n")
+        self.vf.write("      state_next = IDLE;\n")
         self.vf.write("      tag_next   = 0;\n")
         self.vf.write("      set_next   = 1;\n")
         self.vf.write("      if (rst_reg)\n")
@@ -196,10 +196,10 @@ class n_way_lru_cache(cache_base):
 
         # IDLE state
         self.vf.write("      case(state)\n")
-        self.vf.write("      IDLE_STATE: begin // Read tag line\n")
+        self.vf.write("      IDLE: begin // Read tag line\n")
         self.vf.write("        stall = 0;\n")
         self.vf.write("        if (!csb) begin\n")
-        self.vf.write("          state_next       = CHECK_STATE;\n")
+        self.vf.write("          state_next       = CHECK;\n")
         self.vf.write("          way_next         = 0;\n")
         self.vf.write("          tag_next         = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("          set_next         = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
@@ -219,7 +219,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("      end\n")
 
         # CHECK state
-        self.vf.write("      CHECK_STATE: begin // Check if hit/miss\n")
+        self.vf.write("      CHECK: begin // Check if hit/miss\n")
         if self.data_hazard:
             self.vf.write("        data_hazard_next = 0;\n")
             self.vf.write("        new_lru_next     = 0;\n")
@@ -235,27 +235,37 @@ class n_way_lru_cache(cache_base):
             self.vf.write("            if ((data_hazard && new_tag[j * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!data_hazard && tag_read_dout[j * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin // Miss (valid and dirty)\n")
         else:
             self.vf.write("            if (tag_read_dout[j * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
-        self.vf.write("              state_next = WRITE_STATE;\n")
-        self.vf.write("              main_csb   = 0;\n")
-        self.vf.write("              main_web   = 0;\n")
+        self.vf.write("              if (main_stall) begin\n")
+        self.vf.write("                state_next     = WAIT_WRITE;\n")
+        self.vf.write("                tag_read_addr  = set;\n")
+        self.vf.write("                data_read_addr = set;\n")
+        self.vf.write("              end else begin\n")
+        self.vf.write("                state_next = WRITE;\n")
+        self.vf.write("                main_csb   = 0;\n")
+        self.vf.write("                main_web   = 0;\n")
         if self.data_hazard:
-            self.vf.write("              if (data_hazard) begin\n")
-            self.vf.write("                main_addr = {new_tag[j * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-            self.vf.write("                main_din  = new_data[j * LINE_WIDTH +: LINE_WIDTH];\n")
-            self.vf.write("              end else begin\n")
+            self.vf.write("                if (data_hazard) begin\n")
+            self.vf.write("                  main_addr = {new_tag[j * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
+            self.vf.write("                  main_din  = new_data[j * LINE_WIDTH +: LINE_WIDTH];\n")
+            self.vf.write("                end else begin\n")
+            self.vf.write("                  main_addr = {tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
+            self.vf.write("                  main_din  = data_read_dout[j * LINE_WIDTH +: LINE_WIDTH];\n")
+            self.vf.write("                end\n")
+        else:
             self.vf.write("                main_addr = {tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
             self.vf.write("                main_din  = data_read_dout[j * LINE_WIDTH +: LINE_WIDTH];\n")
-            self.vf.write("              end\n")
-        else:
-            self.vf.write("              main_addr = {tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-            self.vf.write("              main_din  = data_read_dout[j * LINE_WIDTH +: LINE_WIDTH];\n")
+        self.vf.write("              end\n")
         self.vf.write("            end else begin // Miss (not valid or not dirty)\n")
-        self.vf.write("              state_next     = READ_STATE;\n")
-        self.vf.write("              lru_read_addr  = set; // needed in READ_STATE to update LRU bits\n")
-        self.vf.write("              tag_read_addr  = set; // needed in READ_STATE to keep other ways' tags\n")
-        self.vf.write("              data_read_addr = set; // needed in READ_STATE to keep other ways' data\n")
-        self.vf.write("              main_csb       = 0;\n")
-        self.vf.write("              main_addr      = {tag, set};\n")
+        self.vf.write("              if (main_stall)\n")
+        self.vf.write("                state_next     = WAIT_READ;\n")
+        self.vf.write("              else begin\n")
+        self.vf.write("                state_next     = READ;\n")
+        self.vf.write("                lru_read_addr  = set; // needed in READ to update LRU bits\n")
+        self.vf.write("                tag_read_addr  = set; // needed in READ to keep other ways' tags\n")
+        self.vf.write("                data_read_addr = set; // needed in READ to keep other ways' data\n")
+        self.vf.write("                main_csb       = 0;\n")
+        self.vf.write("                main_addr      = {tag, set};\n")
+        self.vf.write("              end\n")
         self.vf.write("            end\n")
         self.vf.write("          end\n")
         self.vf.write("        end\n")
@@ -266,7 +276,7 @@ class n_way_lru_cache(cache_base):
         else:
             self.vf.write("          if (tag_read_dout[j * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin // Hit\n")
         self.vf.write("            stall          = 0;\n")
-        self.vf.write("            state_next     = IDLE_STATE; // If nothing is requested, go back to IDLE_STATE\n")
+        self.vf.write("            state_next     = IDLE; // If nothing is requested, go back to IDLE\n")
         self.vf.write("            main_csb       = 1;\n")
         self.vf.write("            lru_write_csb  = 0;\n")
         self.vf.write("            lru_write_addr = 0;\n")
@@ -308,7 +318,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("            end\n")
         # Pipelining in CHECK state
         self.vf.write("            if (!csb) begin // Pipeline\n")
-        self.vf.write("              state_next   = CHECK_STATE;\n")
+        self.vf.write("              state_next   = CHECK;\n")
         self.vf.write("              tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("              set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("              offset_next  = addr[OFFSET_WIDTH-1:0];\n")
@@ -343,26 +353,52 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          end\n")
         self.vf.write("      end\n")
 
+        # WAIT_WRITE state
+        self.vf.write("      WAIT_WRITE: begin // Wait for main memory to be ready\n")
+        self.vf.write("        tag_read_addr  = set;\n")
+        self.vf.write("        data_read_addr = set;\n")
+        self.vf.write("        if (!main_stall) begin\n")
+        self.vf.write("          state_next = WRITE;\n")
+        self.vf.write("          main_csb   = 0;\n")
+        self.vf.write("          main_web   = 0;\n")
+        self.vf.write("          main_addr  = {tag_read_dout[way * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
+        self.vf.write("          main_din   = data_read_dout[way * LINE_WIDTH +: LINE_WIDTH];\n")
+        self.vf.write("        end\n")
+        self.vf.write("      end\n")
+
         # WRITE state
-        self.vf.write("      WRITE_STATE: begin // Wait for main memory to write\n")
-        self.vf.write("        lru_read_addr  = set; // needed in READ_STATE to update LRU bits\n")
-        self.vf.write("        tag_read_addr  = set; // needed in READ_STATE to keep other ways' tags\n")
-        self.vf.write("        data_read_addr = set; // needed in READ_STATE to keep other ways' data\n")
+        self.vf.write("      WRITE: begin // Wait for main memory to write\n")
+        self.vf.write("        lru_read_addr  = set; // needed in READ to update LRU bits\n")
+        self.vf.write("        tag_read_addr  = set; // needed in READ to keep other ways' tags\n")
+        self.vf.write("        data_read_addr = set; // needed in READ to keep other ways' data\n")
         self.vf.write("        if (!main_stall) begin // Read line from main memory\n")
-        self.vf.write("          state_next = READ_STATE;\n")
+        self.vf.write("          state_next = READ;\n")
+        self.vf.write("          main_csb   = 0;\n")
+        self.vf.write("          main_addr  = {tag, set};\n")
+        self.vf.write("        end\n")
+        self.vf.write("      end\n")
+
+        # WAIT_READ state
+        # TODO: Is this state really necessary? WRITE state may be used instead.
+        self.vf.write("      WAIT_READ: begin // Wait for main memory to be ready\n")
+        self.vf.write("        lru_read_addr  = set; // needed in READ to update LRU bits\n")
+        self.vf.write("        tag_read_addr  = set; // needed in READ to keep other ways' tags\n")
+        self.vf.write("        data_read_addr = set; // needed in READ to keep other ways' data\n")
+        self.vf.write("        if (!main_stall) begin // Read line from main memory\n")
+        self.vf.write("          state_next = READ;\n")
         self.vf.write("          main_csb   = 0;\n")
         self.vf.write("          main_addr  = {tag, set};\n")
         self.vf.write("        end\n")
         self.vf.write("      end\n")
 
         # READ state
-        self.vf.write("      READ_STATE: begin // Wait line from main memory\n")
+        self.vf.write("      READ: begin // Wait line from main memory\n")
         self.vf.write("        lru_read_addr  = set;\n")
         self.vf.write("        tag_read_addr  = set;\n")
         self.vf.write("        data_read_addr = set;\n")
-        self.vf.write("        if (!main_stall) begin // Switch to CHECK_STATE\n")
+        self.vf.write("        if (!main_stall) begin // Switch to CHECK\n")
         self.vf.write("          stall          = 0;\n")
-        self.vf.write("          state_next     = IDLE_STATE; // If nothing is requested, go back to IDLE_STATE\n")
+        self.vf.write("          state_next     = IDLE; // If nothing is requested, go back to IDLE\n")
         self.vf.write("          lru_write_csb  = 0;\n")
         self.vf.write("          lru_write_addr = set;\n")
         self.write_lru_mux(5, False, False)
@@ -386,9 +422,9 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          else\n")
         self.vf.write("            for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
         self.vf.write("              data_write_din[way * LINE_WIDTH + offset * WORD_WIDTH + i] = din_reg[i];\n")
-        # Pipelining in WRITE state
+        # Pipelining in READ state
         self.vf.write("          if (!csb) begin // Pipeline\n")
-        self.vf.write("            state_next   = CHECK_STATE;\n")
+        self.vf.write("            state_next   = CHECK;\n")
         self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
@@ -397,7 +433,7 @@ class n_way_lru_cache(cache_base):
         if self.data_hazard:
             self.vf.write("            if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("              data_hazard_next = 1;\n")
-            self.write_lru_mux(7, True, True)
+            self.write_lru_mux(7, False, True)
             self.vf.write("              new_tag_next     = tag_read_dout;\n")
             self.vf.write("              new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH]     = 1'b1;\n")
             self.vf.write("              new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = ~web_reg;\n")
@@ -438,8 +474,7 @@ class n_way_lru_cache(cache_base):
         else:
             rhs = "lru_read_dout"
 
-        # If there is no data hazard, no need for bypass registers
-        if data_hazard and update_bypass_regs:
+        if update_bypass_regs:
             lhs = "new_lru_next"
         else:
             lhs = "lru_write_din"
@@ -452,9 +487,9 @@ class n_way_lru_cache(cache_base):
         self.vf.write(base_indent + "  end else if ({0}[m * WAY_WIDTH +: WAY_WIDTH] > {0}[j * WAY_WIDTH +: WAY_WIDTH]) begin\n".format(rhs))
         self.vf.write(base_indent + "    for (n = 0; n < WAY_WIDTH; n = n + 1) begin\n")
         self.vf.write(base_indent + "      case({}[m * WAY_WIDTH +: WAY_WIDTH])\n".format(rhs))
-        self.vf.write(base_indent + "      0: {}[m * WAY_WIDTH + n] = NUM_0[n];\n".format(lhs))
+        self.vf.write(base_indent + "      NUM_0: {}[m * WAY_WIDTH + n] = NUM_0[n];\n".format(lhs))
         for i in range(self.num_ways - 1):
-            self.vf.write(base_indent + "      {0}: {1}[m * WAY_WIDTH + n] = NUM_{2}[n];\n".format(i + 1, lhs, i))
+            self.vf.write(base_indent + "      NUM_{0}: {1}[m * WAY_WIDTH + n] = NUM_{2}[n];\n".format(i + 1, lhs, i))
         self.vf.write(base_indent + "      endcase\n")
         self.vf.write(base_indent + "    end\n")
         self.vf.write(base_indent + "  end\n")
