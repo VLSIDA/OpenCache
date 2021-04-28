@@ -60,8 +60,7 @@ cache switches to **WRITE** state.
 ## WRITE
 Cache waits in this state until main memory’s `stall` signal becomes low. When it is
 low, cache requests the new data line from the main memory. `stall` signal stays high.
-Cache switches to **READ** state if main memory's `stall` signal is low. Otherwise, it
-switches to **WAIT_READ** state.
+Cache switches to **READ** state.
 
 ## WAIT_READ
 Cache waits in this state until main memory's `stall` signal is low. When it is low,

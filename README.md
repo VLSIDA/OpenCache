@@ -52,13 +52,13 @@ OpenCache is licensed under the [BSD 3-clause License](LICENSE).
 
 * * *
 
-[OpenRAM]:       https://github.com/VLSIDA/OpenRAM
+[OpenRAM]:   https://github.com/VLSIDA/OpenRAM
 
-[Magic]:                 http://opencircuitdesign.com/magic/
-[Netgen]:                http://opencircuitdesign.com/netgen/
-[Qflow]:                 http://opencircuitdesign.com/qflow/history.html
-[Ngspice]:               http://ngspice.sourceforge.net/
+[Magic]:     http://opencircuitdesign.com/magic/
+[Netgen]:    http://opencircuitdesign.com/netgen/
+[Qflow]:     http://opencircuitdesign.com/qflow/history.html
+[Ngspice]:   http://ngspice.sourceforge.net/
 
-[OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
-[FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
-[SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
+[OSUPDK]:    https://vlsiarch.ecen.okstate.edu/flow/
+[FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[SCMOS]:     https://www.mosis.com/files/scmos/scmos.pdf
