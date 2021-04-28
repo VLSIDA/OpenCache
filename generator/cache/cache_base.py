@@ -129,15 +129,15 @@ class cache_base:
         if self.num_ways > 1:
             self.vf.write("  localparam WAY_DEPTH    = 1 << WAY_WIDTH;\n")
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
-        self.vf.write("  parameter  DELAY = 3;\n\n")
+        self.vf.write("  parameter  DELAY        = 3;\n\n")
 
         self.vf.write("  // States of the cache\n")
-        self.vf.write("  localparam IDLE       = 0; // Fetch tag and data lines\n")
-        self.vf.write("  localparam CHECK      = 1; // Compare tags\n")
-        self.vf.write("  localparam WAIT_WRITE = 2; // Wait before sending write request to main memory\n")
-        self.vf.write("  localparam WRITE      = 3; // Write dirty line to main memory\n")
-        self.vf.write("  localparam WAIT_READ  = 4; // Wait before sending read request to main memory\n")
-        self.vf.write("  localparam READ       = 5; // Read new line from main memory\n\n")
+        self.vf.write("  localparam IDLE         = 0; // Fetch tag and data lines\n")
+        self.vf.write("  localparam CHECK        = 1; // Compare tags\n")
+        self.vf.write("  localparam WAIT_WRITE   = 2; // Wait before sending write request to main memory\n")
+        self.vf.write("  localparam WRITE        = 3; // Write dirty line to main memory\n")
+        self.vf.write("  localparam WAIT_READ    = 4; // Wait before sending read request to main memory\n")
+        self.vf.write("  localparam READ         = 5; // Read new line from main memory\n\n")
 
 
     def write_io_ports(self):
