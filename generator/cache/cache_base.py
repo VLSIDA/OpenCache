@@ -132,12 +132,12 @@ class cache_base:
         self.vf.write("  parameter  DELAY        = 3;\n\n")
 
         self.vf.write("  // States of the cache\n")
-        self.vf.write("  localparam IDLE         = 0; // Fetch tag and data lines\n")
-        self.vf.write("  localparam CHECK        = 1; // Compare tags\n")
-        self.vf.write("  localparam WAIT_WRITE   = 2; // Wait before sending write request to main memory\n")
-        self.vf.write("  localparam WRITE        = 3; // Write dirty line to main memory\n")
-        self.vf.write("  localparam WAIT_READ    = 4; // Wait before sending read request to main memory\n")
-        self.vf.write("  localparam READ         = 5; // Read new line from main memory\n\n")
+        self.vf.write("  localparam IDLE       = 0; // Fetch tag and data lines\n")
+        self.vf.write("  localparam CHECK      = 1; // Compare tags\n")
+        self.vf.write("  localparam WAIT_WRITE = 2; // Wait before sending write request to main memory\n")
+        self.vf.write("  localparam WRITE      = 3; // Write dirty line to main memory\n")
+        self.vf.write("  localparam WAIT_READ  = 4; // Wait before sending read request to main memory\n")
+        self.vf.write("  localparam READ       = 5; // Read new line from main memory\n\n")
 
 
     def write_io_ports(self):
@@ -150,7 +150,7 @@ class cache_base:
         self.vf.write("  input  [ADDR_WIDTH-1:0] addr; // address\n")
         self.vf.write("  input  [WORD_WIDTH-1:0] din;  // data input\n")
         self.vf.write("  output [WORD_WIDTH-1:0] dout; // data output\n")
-        self.vf.write("  output stall;                 // high when pipeline is stalled\n\n")
+        self.vf.write("  output stall;                 // pipeline stall\n\n")
 
         self.vf.write("  output main_csb;                                // main memory active low chip select\n")
         self.vf.write("  output main_web;                                // main memory active low write control\n")
