@@ -32,8 +32,8 @@ class cache:
             else:
                 debug.error("Invalid replacement policy.", -1)
         elif not self.set_size:
+            # TODO: from full_cache import full_cache as cache
             debug.error("Fully associative cache is not supported at the moment.", -1)
-            # from full_cache import full_cache as cache
         else:
             debug.error("Invalid number of ways.", -1)
 

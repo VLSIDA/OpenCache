@@ -131,6 +131,50 @@ class n_way_random_cache(cache_base):
 
         # RESET state
         self.vf.write("    if (rst || rst_reg) begin // RESET: Multi-cycle reset\n")
+        self.write_reset_state()
+        self.vf.write("    end else begin\n")
+        self.vf.write("      case (state)\n")
+
+        # IDLE state
+        self.vf.write("      IDLE: begin // Read tag line\n")
+        self.write_idle_state()
+        self.vf.write("      end\n")
+
+        # CHECK state
+        self.vf.write("      CHECK: begin // Check if hit/miss\n")
+        self.write_check_state()
+        self.vf.write("      end\n")
+
+        # WAIT_WRITE state
+        self.vf.write("      WAIT_WRITE: begin // Wait for main memory to be ready\n")
+        self.write_wait_write_state()
+        self.vf.write("      end\n")
+
+        # WRITE state
+        self.vf.write("      WRITE: begin // Wait for main memory to write\n")
+        self.write_write_state()
+        self.vf.write("      end\n")
+
+        # WAIT_READ state
+        # TODO: Is this state really necessary? WRITE state may be used instead.
+        self.vf.write("      WAIT_READ: begin // Wait for main memory to be ready\n")
+        self.write_wait_read_state()
+        self.vf.write("      end\n")
+
+        # READ state
+        self.vf.write("      READ: begin // Wait line from main memory\n")
+        self.write_read_state()
+        self.vf.write("      end\n")
+
+        self.vf.write("      endcase\n")
+        self.vf.write("    end\n")
+        self.vf.write("  end\n\n")
+        self.vf.write("endmodule\n")
+
+
+    def write_reset_state(self):
+        """ Write the RESET state of the cache. """
+
         self.vf.write("      state_next  = IDLE;\n")
         self.vf.write("      random_next = 0;\n")
         self.vf.write("      tag_next    = 0;\n")
@@ -148,11 +192,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("        rst_reg_next = 0;\n")
         self.vf.write("        stall        = 0;\n")
         self.vf.write("      end\n")
-        self.vf.write("    end else begin\n")
 
-        # IDLE state
-        self.vf.write("      case (state)\n")
-        self.vf.write("      IDLE: begin // Read tag line\n")
+
+    def write_idle_state(self):
+        """ Write the IDLE state of the cache. """
+
         self.vf.write("        stall = 0;\n")
         self.vf.write("        if (!csb) begin // CPU requests\n")
         self.vf.write("          state_next       = CHECK;\n")
@@ -170,10 +214,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("          data_read_addr   = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("          data_write_din   = {{LINE_WIDTH * WAY_DEPTH{{1'bx}}}};\n")
         self.vf.write("        end\n")
-        self.vf.write("      end\n")
 
-        # CHECK state
-        self.vf.write("      CHECK: begin // Check if hit/miss\n")
+
+    def write_check_state(self):
+        """ Write the CHECK state of the cache. """
+
         self.vf.write("        way_next   = random;\n")
         if self.data_hazard:
             self.vf.write("        data_hazard_next = 0;\n")
@@ -299,10 +344,11 @@ class n_way_random_cache(cache_base):
             self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            end\n\n")
         self.vf.write("          end\n")
-        self.vf.write("      end\n")
 
-        # WAIT_WRITE state
-        self.vf.write("      WAIT_WRITE: begin // Wait for main memory to be ready\n")
+
+    def write_wait_write_state(self):
+        """ Write the WAIT_WRITE state of the cache. """
+
         self.vf.write("        tag_read_addr  = set;\n")
         self.vf.write("        data_read_addr = set;\n")
         self.vf.write("        if (!main_stall) begin // Main memory is ready\n")
@@ -312,10 +358,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("          main_addr  = {tag_read_dout[way * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
         self.vf.write("          main_din   = data_read_dout[way * LINE_WIDTH +: LINE_WIDTH];\n")
         self.vf.write("        end\n")
-        self.vf.write("      end\n")
 
-        # WRITE state
-        self.vf.write("      WRITE: begin // Wait for main memory to write\n")
+
+    def write_write_state(self):
+        """ Write the WRITE state of the cache. """
+
         self.vf.write("        tag_read_addr  = set; // needed in READ to keep other ways' tags\n")
         self.vf.write("        data_read_addr = set; // needed in READ to keep other ways' data\n")
         self.vf.write("        if (!main_stall) begin // Read line from main memory\n")
@@ -323,11 +370,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("          main_csb   = 0;\n")
         self.vf.write("          main_addr  = {tag, set};\n")
         self.vf.write("        end\n")
-        self.vf.write("      end\n")
 
-        # WAIT_READ state
-        # TODO: Is this state really necessary? WRITE state may be used instead.
-        self.vf.write("      WAIT_READ: begin // Wait for main memory to be ready\n")
+
+    def write_wait_read_state(self):
+        """ Write the WAIT_READ state of the cache. """
+
         self.vf.write("        tag_read_addr  = set; // needed in READ to keep other ways' tags\n")
         self.vf.write("        data_read_addr = set; // needed in READ to keep other ways' data\n")
         self.vf.write("        if (!main_stall) begin // Main memory is ready\n")
@@ -335,10 +382,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("          main_csb   = 0;\n")
         self.vf.write("          main_addr  = {tag, set};\n")
         self.vf.write("        end\n")
-        self.vf.write("      end\n")
 
-        # READ state
-        self.vf.write("      READ: begin // Wait line from main memory\n")
+
+    def write_read_state(self):
+        """ Write the READ state of the cache. """
+
         self.vf.write("        tag_read_addr  = set;\n")
         self.vf.write("        data_read_addr = set;\n")
         self.vf.write("        if (!main_stall) begin // Switch to CHECK\n")
@@ -395,8 +443,3 @@ class n_way_random_cache(cache_base):
             self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("          end\n")
         self.vf.write("        end\n")
-        self.vf.write("      end\n")
-        self.vf.write("      endcase\n")
-        self.vf.write("    end\n")
-        self.vf.write("  end\n\n")
-        self.vf.write("endmodule\n")
