@@ -53,7 +53,7 @@ class cache_base:
         self.vf.write(");\n\n")
 
         self.write_parameters()
-        
+
         self.write_io_ports()
 
         self.write_registers()        
@@ -65,7 +65,7 @@ class cache_base:
         self.write_temp_variables()
 
         self.write_logic_block()
-       
+
         self.vf.close()
 
 
@@ -104,6 +104,7 @@ class cache_base:
         elif self.write_policy == "write-through":
             self.vf.write("// Write policy       : Write-through\n")
 
+        # TODO: How to adjust the data return size?
         if self.return_type == "word":
             self.vf.write("// Return type        : Word\n\n")
         elif self.return_type == "line":
@@ -114,13 +115,12 @@ class cache_base:
         """ Write the parameters of the cache. """
 
         self.vf.write("  parameter  TAG_WIDTH    = {};\n".format(self.tag_size))
-        # FIXME: Fully associative cache's set_size = 0.
+        # TODO: Fully associative cache's set_size = 0.
         self.vf.write("  parameter  SET_WIDTH    = {};\n".format(self.set_size))
         self.vf.write("  parameter  OFFSET_WIDTH = {};\n".format(self.offset_size))
         if self.num_ways > 1:
-            self.vf.write("  parameter  WAY_WIDTH    = {};\n\n".format(self.way_size))
-        else:
-            self.vf.write("\n")
+            self.vf.write("  parameter  WAY_WIDTH    = {};\n".format(self.way_size))
+        self.vf.write("\n")
         self.vf.write("  parameter  WORD_WIDTH   = {};\n".format(self.word_size))
         self.vf.write("  parameter  WORD_COUNT   = {};\n".format(self.words_per_line))
         self.vf.write("  localparam LINE_WIDTH   = WORD_WIDTH * WORD_COUNT;\n\n")
@@ -133,7 +133,7 @@ class cache_base:
 
         self.vf.write("  // States of the cache\n")
         self.vf.write("  localparam IDLE       = 0; // Fetch tag and data lines\n")
-        self.vf.write("  localparam CHECK      = 1; // Compare tags\n")
+        self.vf.write("  localparam COMPARE    = 1; // Compare tags\n")
         self.vf.write("  localparam WAIT_WRITE = 2; // Wait before sending write request to main memory\n")
         self.vf.write("  localparam WRITE      = 3; // Write dirty line to main memory\n")
         self.vf.write("  localparam WAIT_READ  = 4; // Wait before sending read request to main memory\n")

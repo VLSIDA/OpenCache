@@ -127,9 +127,9 @@ class direct_cache(cache_base):
         self.write_idle_state()
         self.vf.write("      end\n")
 
-        # CHECK state
-        self.vf.write("      CHECK: begin // Check if hit/miss\n")
-        self.write_check_state()
+        # COMPARE state
+        self.vf.write("      COMPARE: begin // Check if hit/miss\n")
+        self.write_compare_state()
         self.vf.write("      end\n")
 
         # WAIT_WRITE state
@@ -187,7 +187,7 @@ class direct_cache(cache_base):
 
         self.vf.write("        stall = 0;\n")
         self.vf.write("        if (!csb) begin // CPU requests\n")
-        self.vf.write("          state_next     = CHECK;\n")
+        self.vf.write("          state_next     = COMPARE;\n")
         self.vf.write("          tag_next       = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("          set_next       = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("          offset_next    = addr[OFFSET_WIDTH-1:0];\n")
@@ -202,8 +202,8 @@ class direct_cache(cache_base):
         self.vf.write("        end\n")
 
 
-    def write_check_state(self):
-        """ Write the CHECK state of the cache. """
+    def write_compare_state(self):
+        """ Write the COMPARE state of the cache. """
 
         if self.data_hazard:
             self.vf.write("        new_tag_next  = 0;\n")
@@ -237,9 +237,9 @@ class direct_cache(cache_base):
         self.vf.write("            for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
         self.vf.write("              data_write_din[offset * WORD_WIDTH + i] = din_reg[i];\n")
         self.vf.write("          end\n")
-        # Pipelining in CHECK state
+        # Pipelining in COMPARE state
         self.vf.write("          if (!csb) begin // Pipeline\n")
-        self.vf.write("            state_next   = CHECK;\n")
+        self.vf.write("            state_next   = COMPARE;\n")
         self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
@@ -358,7 +358,7 @@ class direct_cache(cache_base):
         self.vf.write("            end\n")
         # Pipelining in READ state
         self.vf.write("          if (!csb) begin // Pipeline\n")
-        self.vf.write("            state_next   = CHECK;\n")
+        self.vf.write("            state_next   = COMPARE;\n")
         self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("            set_next     = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            offset_next  = addr[OFFSET_WIDTH-1:0];\n")
