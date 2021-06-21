@@ -35,11 +35,11 @@ g.report_status()
 from cache_config import cache_config
 
 # Configure the cache organization
-c = cache_config(OPTS)
+s = cache_config(OPTS)
 
 from cache import cache
-s = cache(cache_config=c,
+c = cache(cache_config=s,
           name=OPTS.output_name)
 
 # Output the files for the resulting cache
-s.save()
+c.save()
