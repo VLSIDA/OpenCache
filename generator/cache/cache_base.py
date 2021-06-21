@@ -134,8 +134,10 @@ class cache_base:
         self.vf.write("  // States of the cache\n")
         self.vf.write("  localparam IDLE       = 0; // Fetch tag and data lines\n")
         self.vf.write("  localparam COMPARE    = 1; // Compare tags\n")
-        self.vf.write("  localparam WRITE      = 2; // Send write request when main memory is available\n")
-        self.vf.write("  localparam WAIT_WRITE = 3; // Wait for main memory to complete write request\n")
+        # Instruction caches do not have write states
+        if self.is_data_cache:
+            self.vf.write("  localparam WRITE      = 2; // Send write request when main memory is available\n")
+            self.vf.write("  localparam WAIT_WRITE = 3; // Wait for main memory to complete write request\n")
         self.vf.write("  localparam READ       = 4; // Send read request when main memory is available\n")
         self.vf.write("  localparam WAIT_READ  = 5; // Wait for main memory to return requested data\n\n")
 
