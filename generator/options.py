@@ -31,11 +31,14 @@ class options(optparse.Values):
     # Replacement policy of the cache
     replacement_policy = None
 
-    # Cache can be write-back or write-through !! write-through not yet supported !!
+    # Cache can be write-back or write-through
+    #! Write-through is not yet supported
     write_policy = "write-back"
-    # Cache can be a data cache or an instruction cache !! instruction cache not yet supported !!
+    # Cache can be a data cache or an instruction cache
+    #! Instruction cache is not yet supported
     is_data_cache = True
-    # Cache can return a word or a line of words !! returning line not yet supported !!
+    # Cache can return a word or a line of words 
+    #! Returning line is not yet supported
     return_type = "word"
 
     # Data hazard might occur when the same location is read and
