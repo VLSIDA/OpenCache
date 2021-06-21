@@ -132,25 +132,25 @@ class direct_cache(cache_base):
         self.write_compare_state()
         self.vf.write("      end\n")
 
-        # WAIT_WRITE state
-        self.vf.write("      WAIT_WRITE: begin // Wait for main memory to be ready\n")
-        self.write_wait_write_state()
-        self.vf.write("      end\n")
-
         # WRITE state
-        self.vf.write("      WRITE: begin // Wait for main memory to write\n")
+        self.vf.write("      WRITE: begin // Wait for main memory to be ready\n")
         self.write_write_state()
         self.vf.write("      end\n")
 
-        # WAIT_READ state
-        # TODO: Is this state really necessary? WRITE state may be used instead.
-        self.vf.write("      WAIT_READ: begin // Wait for main memory to be ready\n")
-        self.write_wait_read_state()
+        # WAIT_WRITE state
+        self.vf.write("      WAIT_WRITE: begin // Wait for main memory to write\n")
+        self.write_wait_write_state()
         self.vf.write("      end\n")
 
         # READ state
-        self.vf.write("      READ: begin // Wait line from main memory\n")
+        # TODO: Is this state really necessary? WAIT_WRITE state may be used instead.
+        self.vf.write("      READ: begin // Wait for main memory to be ready\n")
         self.write_read_state()
+        self.vf.write("      end\n")
+
+        # WAIT_READ state
+        self.vf.write("      WAIT_READ: begin // Wait line from main memory\n")
+        self.write_wait_read_state()
         self.vf.write("      end\n")
 
         self.vf.write("      endcase\n")
@@ -268,11 +268,11 @@ class direct_cache(cache_base):
         else:
             self.vf.write("        end else if (tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
         self.vf.write("          if (main_stall) begin // Main memory is busy\n")
-        self.vf.write("            state_next     = WAIT_WRITE;\n")
+        self.vf.write("            state_next     = WRITE;\n")
         self.vf.write("            tag_read_addr  = set;\n")
         self.vf.write("            data_read_addr = set;\n")
         self.vf.write("          end else begin // Main memory is ready\n")
-        self.vf.write("            state_next = WRITE;\n")
+        self.vf.write("            state_next = WAIT_WRITE;\n")
         self.vf.write("            main_csb   = 0;\n")
         self.vf.write("            main_web   = 0;\n")
         if self.data_hazard:
@@ -290,22 +290,22 @@ class direct_cache(cache_base):
         # Miss (not dirty)
         self.vf.write("        end else begin // Miss (not valid or not dirty)\n")
         self.vf.write("          if (main_stall) // Main memory is busy\n")
-        self.vf.write("            state_next = WAIT_READ;\n")
-        self.vf.write("          else begin // Main memory is ready\n")
         self.vf.write("            state_next = READ;\n")
+        self.vf.write("          else begin // Main memory is ready\n")
+        self.vf.write("            state_next = WAIT_READ;\n")
         self.vf.write("            main_csb   = 0;\n")
         self.vf.write("            main_addr  = {tag, set};\n")
         self.vf.write("          end\n")
         self.vf.write("        end\n")
 
 
-    def write_wait_write_state(self):
-        """ Write the WAIT_WRITE state of the cache. """
+    def write_write_state(self):
+        """ Write the WRITE state of the cache. """
 
         self.vf.write("        tag_read_addr  = set;\n")
         self.vf.write("        data_read_addr = set;\n")
         self.vf.write("        if (!main_stall) begin // Main memory is ready\n")
-        self.vf.write("          state_next = WRITE;\n")
+        self.vf.write("          state_next = WAIT_WRITE;\n")
         self.vf.write("          main_csb   = 0;\n")
         self.vf.write("          main_web   = 0;\n")
         self.vf.write("          main_addr  = {tag_read_dout[TAG_WIDTH-1:0], set};\n")
@@ -313,21 +313,11 @@ class direct_cache(cache_base):
         self.vf.write("        end\n")
 
 
-    def write_write_state(self):
-        """ Write the WRITE state of the cache. """
+    def write_wait_write_state(self):
+        """ Write the WAIT_WRITE state of the cache. """
 
         self.vf.write("        if (!main_stall) begin // Read line from main memory\n")
-        self.vf.write("          state_next = READ;\n")
-        self.vf.write("          main_csb   = 0;\n")
-        self.vf.write("          main_addr  = {tag, set};\n")
-        self.vf.write("        end\n")
-
-
-    def write_wait_read_state(self):
-        """ Write the WAIT_READ state of the cache. """
-
-        self.vf.write("        if (!main_stall) begin // Main memory is ready\n")
-        self.vf.write("          state_next = READ;\n")
+        self.vf.write("          state_next = WAIT_READ;\n")
         self.vf.write("          main_csb   = 0;\n")
         self.vf.write("          main_addr  = {tag, set};\n")
         self.vf.write("        end\n")
@@ -335,6 +325,16 @@ class direct_cache(cache_base):
 
     def write_read_state(self):
         """ Write the READ state of the cache. """
+
+        self.vf.write("        if (!main_stall) begin // Main memory is ready\n")
+        self.vf.write("          state_next = WAIT_READ;\n")
+        self.vf.write("          main_csb   = 0;\n")
+        self.vf.write("          main_addr  = {tag, set};\n")
+        self.vf.write("        end\n")
+
+
+    def write_wait_read_state(self):
+        """ Write the WAIT_READ state of the cache. """
 
         self.vf.write("        if (!main_stall) begin // Finish the request\n")
         self.vf.write("          stall           = 0;\n")
@@ -356,7 +356,7 @@ class direct_cache(cache_base):
         if self.data_hazard:
             self.vf.write("              new_data_next[offset * WORD_WIDTH + i]  = din_reg[i];\n")
         self.vf.write("            end\n")
-        # Pipelining in READ state
+        # Pipelining in WAIT_READ state
         self.vf.write("          if (!csb) begin // Pipeline\n")
         self.vf.write("            state_next   = COMPARE;\n")
         self.vf.write("            tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
