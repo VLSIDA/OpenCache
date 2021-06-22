@@ -14,16 +14,16 @@ class cache_config:
 
     def __init__(self, OPTS):
 
-        self.total_size = OPTS.total_size
-        self.word_size = OPTS.word_size
-        self.words_per_line = OPTS.words_per_line
-        self.address_size = OPTS.address_size
-        self.num_ways = OPTS.num_ways
+        self.total_size         = OPTS.total_size
+        self.word_size          = OPTS.word_size
+        self.words_per_line     = OPTS.words_per_line
+        self.address_size       = OPTS.address_size
+        self.num_ways           = OPTS.num_ways
         self.replacement_policy = OPTS.replacement_policy
-        self.write_policy = OPTS.write_policy
-        self.is_data_cache = OPTS.is_data_cache
-        self.return_type = OPTS.return_type
-        self.data_hazard = OPTS.data_hazard
+        self.write_policy       = OPTS.write_policy
+        self.is_data_cache      = OPTS.is_data_cache
+        self.return_type        = OPTS.return_type
+        self.data_hazard        = OPTS.data_hazard
 
         self.compute_configs()
 
@@ -41,7 +41,7 @@ class cache_config:
     def compute_configs(self):
         """  Compute some of the configuration variables. """
 
-        # Direct-mapped cache does not have a replacement policy
+        # Direct-mapped cache doesn't have a replacement policy
         if self.num_ways == 1:
             self.replacement_policy = None
 
@@ -51,16 +51,20 @@ class cache_config:
 
         # A data line consists of multiple words
         self.line_size = self.word_size * self.words_per_line
+
         # A row may consist of multiple lines
         self.row_size = self.line_size * self.num_ways
+
         # Total size must match row size
         if self.total_size % self.row_size:
             debug.error("Row size overflows the size of the cache.", -1)
+
         self.num_rows = int(self.total_size / self.row_size)
 
         self.offset_size = ceil(log2(self.words_per_line))
         self.set_size = ceil(log2(self.num_rows))
         self.tag_size = self.address_size - self.set_size - self.offset_size
+
         if self.tag_size + self.set_size + self.offset_size != self.address_size:
             debug.error("Calculated address size does not match the given address size.", -1)
 

@@ -12,6 +12,7 @@ class direct_cache(cache_base):
     """
     This is the design module of direct-mapped cache.
     """
+
     def __init__(self, name, cache_config):
 
         super().__init__(name, cache_config)
@@ -28,6 +29,7 @@ class direct_cache(cache_base):
         self.vf.write("  reg [WORD_WIDTH-1:0]   din_reg, din_reg_next;\n")
         self.vf.write("  reg [WORD_WIDTH-1:0]   dout;\n")
         self.vf.write("  reg [2:0]              state, state_next;\n")
+
         # No need for bypass registers if the SRAMs are guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next request is in the same set, tag and data lines might be old (data hazard).\n")
@@ -69,9 +71,11 @@ class direct_cache(cache_base):
         self.vf.write("    offset   <= #(DELAY) offset_next;\n")
         self.vf.write("    web_reg  <= #(DELAY) web_reg_next;\n")
         self.vf.write("    din_reg  <= #(DELAY) din_reg_next;\n")
+
         if self.data_hazard:
             self.vf.write("    new_tag  <= #(DELAY) new_tag_next;\n")
             self.vf.write("    new_data <= #(DELAY) new_data_next;\n")
+
         self.vf.write("  end\n\n")
 
 
@@ -109,9 +113,11 @@ class direct_cache(cache_base):
         self.vf.write("    data_write_csb  = 1;\n")
         self.vf.write("    data_write_addr = 0;\n")
         self.vf.write("    data_write_din  = 0;\n")
+
         if self.data_hazard:
             self.vf.write("    new_tag_next    = new_tag;\n")
             self.vf.write("    new_data_next   = new_data;\n")
+
         self.vf.write("    if (rst) begin // Beginning of reset\n")
         self.vf.write("      state_next     = RESET;\n")
         self.vf.write("      tag_next       = 0;\n")
@@ -191,9 +197,11 @@ class direct_cache(cache_base):
         self.vf.write("            tag_next       = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("            set_next       = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            offset_next    = addr[OFFSET_WIDTH-1:0];\n")
+
         if self.data_hazard:
             self.vf.write("            new_tag_next   = 0;\n")
             self.vf.write("            new_data_next  = 0;\n")
+
         self.vf.write("            web_reg_next   = web;\n")
         self.vf.write("            din_reg_next   = din;\n")
         self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
@@ -211,9 +219,11 @@ class direct_cache(cache_base):
             self.vf.write("          if ((new_tag[TAG_WIDTH+1] && new_tag[TAG_WIDTH-1:0] == tag) || (tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag)) begin // Hit\n")
         else:
             self.vf.write("          if (tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag) begin // Hit\n")
+
         self.vf.write("            stall      = 0;\n")
         self.vf.write("            state_next = IDLE; // If nothing is requested, go back to IDLE\n")
         self.vf.write("            if (web_reg) // Read request\n")
+
         if self.data_hazard:
             self.vf.write("              if (new_tag[TAG_WIDTH+1])\n")
             self.vf.write("                dout = new_data[offset * WORD_WIDTH +: WORD_WIDTH];\n")
@@ -221,12 +231,14 @@ class direct_cache(cache_base):
             self.vf.write("                dout = data_read_dout[offset * WORD_WIDTH +: WORD_WIDTH];\n")
         else:
             self.vf.write("              dout = data_read_dout[offset * WORD_WIDTH +: WORD_WIDTH];\n")
+
         self.vf.write("            else begin // Write request\n")
         self.vf.write("              tag_write_csb   = 0;\n")
         self.vf.write("              tag_write_addr  = set;\n")
         self.vf.write("              tag_write_din   = {2'b11, tag};\n")
         self.vf.write("              data_write_csb  = 0;\n")
         self.vf.write("              data_write_addr = set;\n")
+
         if self.data_hazard:
             self.vf.write("              if (new_tag[TAG_WIDTH+1])\n")
             self.vf.write("                data_write_din = new_data;\n")
@@ -234,9 +246,11 @@ class direct_cache(cache_base):
             self.vf.write("                data_write_din = data_read_dout;\n")
         else:
             self.vf.write("              data_write_din = data_read_dout;\n")
+
         self.vf.write("              for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
         self.vf.write("                data_write_din[offset * WORD_WIDTH + i] = din_reg[i];\n")
         self.vf.write("            end\n")
+
         # Pipelining in COMPARE state
         self.vf.write("            if (!csb) begin // Pipeline\n")
         self.vf.write("              state_next   = COMPARE;\n")
@@ -245,6 +259,7 @@ class direct_cache(cache_base):
         self.vf.write("              offset_next  = addr[OFFSET_WIDTH-1:0];\n")
         self.vf.write("              web_reg_next = web;\n")
         self.vf.write("              din_reg_next = din;\n")
+
         if self.data_hazard:
             self.vf.write("              if (!web_reg && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                new_tag_next = {2'b11, tag};\n")
@@ -261,12 +276,15 @@ class direct_cache(cache_base):
         else:
             self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
             self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+
         self.vf.write("            end\n")
+
         # Miss (dirty)
         if self.data_hazard:
             self.vf.write("          end else if (new_tag[TAG_WIDTH +: 2] == 2'b11 || tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
         else:
             self.vf.write("          end else if (tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
+
         self.vf.write("            if (main_stall) begin // Main memory is busy\n")
         self.vf.write("              state_next     = WRITE;\n")
         self.vf.write("              tag_read_addr  = set;\n")
@@ -275,6 +293,7 @@ class direct_cache(cache_base):
         self.vf.write("              state_next = WAIT_WRITE;\n")
         self.vf.write("              main_csb   = 0;\n")
         self.vf.write("              main_web   = 0;\n")
+
         if self.data_hazard:
             self.vf.write("              if (new_tag[TAG_WIDTH+1]) begin\n")
             self.vf.write("                main_addr = {new_tag[TAG_WIDTH-1:0], set};\n")
@@ -286,7 +305,9 @@ class direct_cache(cache_base):
         else:
             self.vf.write("              main_addr = {tag_read_dout[TAG_WIDTH-1:0], set};\n")
             self.vf.write("              main_din  = data_read_dout;\n")
+
         self.vf.write("            end\n")
+
         # Miss (not dirty)
         self.vf.write("          end else begin // Miss (not valid or not dirty)\n")
         self.vf.write("            if (main_stall) // Main memory is busy\n")
@@ -345,17 +366,22 @@ class direct_cache(cache_base):
         self.vf.write("            data_write_csb  = 0;\n")
         self.vf.write("            data_write_addr = set;\n")
         self.vf.write("            data_write_din  = main_dout;\n")
+
         if self.data_hazard:
             self.vf.write("            new_tag_next    = 0;\n")
             self.vf.write("            new_data_next   = main_dout;\n")
+
         self.vf.write("            if (web_reg)\n")
         self.vf.write("              dout = main_dout[offset * WORD_WIDTH +: WORD_WIDTH];\n")
         self.vf.write("            else\n")
         self.vf.write("              for (i = 0; i < WORD_WIDTH; i = i + 1) begin\n")
         self.vf.write("                data_write_din[offset * WORD_WIDTH + i] = din_reg[i];\n")
+
         if self.data_hazard:
             self.vf.write("                new_data_next[offset * WORD_WIDTH + i]  = din_reg[i];\n")
+
         self.vf.write("              end\n")
+
         # Pipelining in WAIT_READ state
         self.vf.write("            if (!csb) begin // Pipeline\n")
         self.vf.write("              state_next   = COMPARE;\n")
@@ -364,6 +390,7 @@ class direct_cache(cache_base):
         self.vf.write("              offset_next  = addr[OFFSET_WIDTH-1:0];\n")
         self.vf.write("              web_reg_next = web;\n")
         self.vf.write("              din_reg_next = din;\n")
+
         if self.data_hazard:
             self.vf.write("              if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                new_tag_next = {1'b1, ~web_reg, tag};\n")
@@ -374,5 +401,6 @@ class direct_cache(cache_base):
         else:
             self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
             self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+
         self.vf.write("            end\n")
         self.vf.write("          end\n")

@@ -12,6 +12,7 @@ class cache_base:
     Some common methods among different cache modules
     are implemented here.
     """
+
     def __init__(self, name, cache_config):
 
         cache_config.set_local_config(self)
@@ -22,24 +23,31 @@ class cache_base:
         """ Write the configuration files for OpenRAM SRAM arrays. """
 
         self.dcf = open(config_path + "_data_array_config.py", "w")
+
         self.dcf.write("word_size = {}\n".format(self.row_size))
         self.dcf.write("num_words = {}\n".format(self.num_rows))
+
         # OpenRAM outputs of the data array are saved to a separate folder
         self.dcf.write("output_path = \"{}/tag_array\"\n".format(config_path))
         self.dcf.write("output_name = \"{}_tag_array\"\n".format(self.name))
+
         self.dcf.close()
 
         self.tcf = open(config_path + "_tag_array_config.py", "w")
+
         self.tcf.write("word_size = {}\n".format((2 + self.tag_size) * self.num_ways))
         self.tcf.write("num_words = {}\n".format(self.num_rows))
+
         # OpenRAM outputs of the tag array are saved to a separate folder
         self.tcf.write("output_path = \"{}/tag_array\"\n".format(config_path))
         self.tcf.write("output_name = \"{}_tag_array\"\n".format(self.name))
+
         self.tcf.close()
 
 
     def verilog_write(self, verilog_path):
         """ Write the behavioral Verilog model. """
+
         self.vf = open(verilog_path + ".v", "w")
 
         self.write_banner()
@@ -118,16 +126,22 @@ class cache_base:
         # TODO: Fully associative cache's set_size = 0.
         self.vf.write("  parameter  SET_WIDTH    = {};\n".format(self.set_size))
         self.vf.write("  parameter  OFFSET_WIDTH = {};\n".format(self.offset_size))
+
         if self.num_ways > 1:
             self.vf.write("  parameter  WAY_WIDTH    = {};\n".format(self.way_size))
+
         self.vf.write("\n")
+
         self.vf.write("  parameter  WORD_WIDTH   = {};\n".format(self.word_size))
         self.vf.write("  parameter  WORD_COUNT   = {};\n".format(self.words_per_line))
+
         self.vf.write("  localparam LINE_WIDTH   = WORD_WIDTH * WORD_COUNT;\n\n")
         self.vf.write("  localparam ADDR_WIDTH   = TAG_WIDTH + SET_WIDTH + OFFSET_WIDTH;\n")
         self.vf.write("  localparam CACHE_DEPTH  = 1 << SET_WIDTH;\n")
+
         if self.num_ways > 1:
             self.vf.write("  localparam WAY_DEPTH    = 1 << WAY_WIDTH;\n")
+
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter  DELAY        = 3;\n\n")
 
@@ -135,10 +149,12 @@ class cache_base:
         self.vf.write("  localparam RESET      = 0; // Reset tags and registers\n")
         self.vf.write("  localparam IDLE       = 1; // Fetch tag and data lines\n")
         self.vf.write("  localparam COMPARE    = 2; // Compare tags\n")
-        # Instruction caches do not have write states
+
+        # Instruction caches don't have write states
         if self.is_data_cache:
             self.vf.write("  localparam WRITE      = 3; // Send write request when main memory is available\n")
             self.vf.write("  localparam WAIT_WRITE = 4; // Wait for main memory to complete write request\n")
+
         self.vf.write("  localparam READ       = 5; // Send read request when main memory is available\n")
         self.vf.write("  localparam WAIT_READ  = 6; // Wait for main memory to return requested data\n\n")
 
@@ -167,6 +183,7 @@ class cache_base:
         """ Write the internal OpenRAM SRAM array instances of the cache. """
 
         self.vf.write("  // For synthesis, modify OpenRAM modules or make these modules black box.\n")
+
         # Random replacement policy doesn't require a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
             self.vf.write("  {0}_{1}_array {1}_array (\n".format(self.name, self.replacement_policy))

@@ -13,6 +13,7 @@ class n_way_fifo_cache(cache_base):
     This is the design module of N-way set associative cache
     with FIFO replacement policy.
     """
+
     def __init__(self, name, cache_config):
 
         super().__init__(name, cache_config)
@@ -24,11 +25,14 @@ class n_way_fifo_cache(cache_base):
         super().config_write(config_path)
 
         self.fcf = open(config_path + "_fifo_array_config.py", "w")
+
         self.fcf.write("word_size = {}\n".format(self.way_size))
         self.fcf.write("num_words = {}\n".format(self.num_rows))
+
         # OpenRAM outputs of the FIFO array are saved to a separate folder
         self.fcf.write("output_path = \"{}/fifo_array\"\n".format(config_path))
         self.fcf.write("output_name = \"{}_fifo_array\"\n".format(self.name))
+
         self.fcf.close()
 
 
@@ -44,6 +48,7 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("  reg [WORD_WIDTH-1:0]   dout;\n")
         self.vf.write("  reg [2:0]              state, state_next;\n")
         self.vf.write("  reg [WAY_WIDTH-1:0]    way, way_next;                          // way that is chosen to evict\n")
+
         # No need for bypass registers if SRAMs are guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
@@ -97,11 +102,13 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("    offset      <= #(DELAY) offset_next;\n")
         self.vf.write("    web_reg     <= #(DELAY) web_reg_next;\n")
         self.vf.write("    din_reg     <= #(DELAY) din_reg_next;\n")
+
         if self.data_hazard:
             self.vf.write("    data_hazard <= #(DELAY) data_hazard_next;\n")
             self.vf.write("    new_fifo    <= #(DELAY) new_fifo_next;\n")
             self.vf.write("    new_tag     <= #(DELAY) new_tag_next;\n")
             self.vf.write("    new_data    <= #(DELAY) new_data_next;\n")
+
         self.vf.write("  end\n\n")
 
 
@@ -148,11 +155,13 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("    data_write_csb   = 1;\n")
         self.vf.write("    data_write_addr  = 0;\n")
         self.vf.write("    data_write_din   = 0;\n")
+
         if self.data_hazard:
             self.vf.write("    data_hazard_next = 0;\n")
             self.vf.write("    new_fifo_next    = new_fifo;\n")
             self.vf.write("    new_tag_next     = new_tag;\n")
             self.vf.write("    new_data_next    = new_data;\n")
+
         self.vf.write("    if (rst) begin // Beginning of reset\n")
         self.vf.write("      state_next      = RESET;\n")
         self.vf.write("      way_next        = 0;\n")
@@ -241,11 +250,13 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("            tag_next         = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
         self.vf.write("            set_next         = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
         self.vf.write("            offset_next      = addr[OFFSET_WIDTH-1:0];\n")
+
         if self.data_hazard:
             self.vf.write("            data_hazard_next = 0;\n")
             self.vf.write("            new_fifo_next    = 0;\n")
             self.vf.write("            new_tag_next     = 0;\n")
             self.vf.write("            new_data_next    = 0;\n")
+
         self.vf.write("            web_reg_next     = web;\n")
         self.vf.write("            din_reg_next     = din;\n")
         self.vf.write("            fifo_read_addr   = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
@@ -271,6 +282,7 @@ class n_way_fifo_cache(cache_base):
         else:
             self.vf.write("          way_next = fifo_read_dout;\n")
             self.vf.write("          if (tag_read_dout[fifo_read_dout * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
+
         self.vf.write("            if (main_stall) begin // Main memory is busy\n")
         self.vf.write("              state_next     = WRITE;\n")
         self.vf.write("              tag_read_addr  = set;\n")
@@ -279,6 +291,7 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("              state_next     = WAIT_WRITE;\n")
         self.vf.write("              main_csb       = 0;\n")
         self.vf.write("              main_web       = 0;\n")
+
         if self.data_hazard:
             self.vf.write("              if (data_hazard) begin\n")
             self.vf.write("                main_addr = {new_tag[new_fifo * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
@@ -290,6 +303,7 @@ class n_way_fifo_cache(cache_base):
         else:
             self.vf.write("              main_addr = {tag_read_dout[fifo_read_dout * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
             self.vf.write("              main_din  = data_read_dout[fifo_read_dout * LINE_WIDTH +: LINE_WIDTH];\n")
+
         self.vf.write("            end\n")
         self.vf.write("          end else begin // Miss (not valid or not dirty)\n")
         self.vf.write("            if (main_stall) // Main memory is busy\n")
@@ -302,16 +316,20 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("              main_addr      = {tag, set};\n")
         self.vf.write("            end\n")
         self.vf.write("          end\n")
+
         # Check if hit
         self.vf.write("          for (j = 0; j < WAY_DEPTH; j = j + 1) // Tag comparison\n")
+
         if self.data_hazard:
             self.vf.write("            if ((data_hazard && new_tag[j * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[j * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[j * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin // Hit\n")
         else:
             self.vf.write("            if (tag_read_dout[j * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[j * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin // Hit\n")
+
         self.vf.write("              stall      = 0;\n")
         self.vf.write("              state_next = IDLE; // If nothing is requested, go back to IDLE\n")
         self.vf.write("              main_csb   = 1;\n")
         self.vf.write("              if (web_reg) // Read request\n")
+
         if self.data_hazard:
             self.vf.write("                if (data_hazard)\n")
             self.vf.write("                  dout = new_data[j * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
@@ -319,11 +337,13 @@ class n_way_fifo_cache(cache_base):
             self.vf.write("                  dout = data_read_dout[j * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
         else:
             self.vf.write("                dout = data_read_dout[j * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
+
         self.vf.write("              else begin  // Write request\n")
         self.vf.write("                tag_write_csb   = 0;\n")
         self.vf.write("                tag_write_addr  = set;\n")
         self.vf.write("                data_write_csb  = 0;\n")
         self.vf.write("                data_write_addr = set;\n")
+
         if self.data_hazard:
             self.vf.write("                if (data_hazard) begin\n")
             self.vf.write("                  tag_write_din  = new_tag;\n")
@@ -335,10 +355,12 @@ class n_way_fifo_cache(cache_base):
         else:
             self.vf.write("                tag_write_din  = tag_read_dout;\n")
             self.vf.write("                data_write_din = data_read_dout;\n")
+
         self.vf.write("                tag_write_din[j * (2 + TAG_WIDTH) + TAG_WIDTH] = 1'b1;\n")
         self.vf.write("                for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
         self.vf.write("                  data_write_din[j * LINE_WIDTH + offset * WORD_WIDTH + i] = din_reg[i];\n")
         self.vf.write("              end\n")
+
         # Pipelining in COMPARE state
         self.vf.write("              if (!csb) begin // Pipeline\n")
         self.vf.write("                state_next   = COMPARE;\n")
@@ -347,6 +369,7 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("                offset_next  = addr[OFFSET_WIDTH-1:0];\n")
         self.vf.write("                web_reg_next = web;\n")
         self.vf.write("                din_reg_next = din;\n")
+
         if self.data_hazard:
             self.vf.write("                if (!web_reg && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                  data_hazard_next = 1;\n")
@@ -371,6 +394,7 @@ class n_way_fifo_cache(cache_base):
             self.vf.write("                fifo_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
             self.vf.write("                tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
             self.vf.write("                data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+
         self.vf.write("              end\n")
         self.vf.write("            end\n")
 
@@ -435,14 +459,17 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("            data_write_din  = data_read_dout;\n")
         self.vf.write("            for (l = 0; l < LINE_WIDTH; l = l + 1)\n")
         self.vf.write("              data_write_din[way * LINE_WIDTH + l] = main_dout[l];\n")
+
         if self.data_hazard:
             self.vf.write("            new_tag_next    = 0;\n")
             self.vf.write("            new_data_next   = 0;\n")
+
         self.vf.write("            if (web_reg)\n")
         self.vf.write("              dout = main_dout[offset * WORD_WIDTH +: WORD_WIDTH];\n")
         self.vf.write("            else\n")
         self.vf.write("              for (i = 0; i < WORD_WIDTH; i = i + 1)\n")
         self.vf.write("                data_write_din[way * LINE_WIDTH + offset * WORD_WIDTH + i] = din_reg[i];\n")
+
         # Pipelining in WAIT_READ state
         self.vf.write("            if (!csb) begin // Pipeline\n")
         self.vf.write("              state_next   = COMPARE;\n")
@@ -451,6 +478,7 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("              offset_next  = addr[OFFSET_WIDTH-1:0];\n")
         self.vf.write("              web_reg_next = web;\n")
         self.vf.write("              din_reg_next = din;\n")
+
         if self.data_hazard:
             self.vf.write("              if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                data_hazard_next = 1;\n")
@@ -473,5 +501,6 @@ class n_way_fifo_cache(cache_base):
         else:
             self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
             self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
+
         self.vf.write("            end\n")
         self.vf.write("          end\n")
