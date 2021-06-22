@@ -20,7 +20,6 @@ class direct_cache(cache_base):
     def write_registers(self):
         """ Write the registers of the cache. """
 
-        self.vf.write("  reg rst_reg, rst_reg_next;\n")
         self.vf.write("  reg web_reg, web_reg_next;\n")
         self.vf.write("  reg stall;\n")
         self.vf.write("  reg [TAG_WIDTH-1:0]    tag, tag_next;\n")
@@ -68,7 +67,6 @@ class direct_cache(cache_base):
         self.vf.write("    tag      <= #(DELAY) tag_next;\n")
         self.vf.write("    set      <= #(DELAY) set_next;\n")
         self.vf.write("    offset   <= #(DELAY) offset_next;\n")
-        self.vf.write("    rst_reg  <= #(DELAY) rst_reg_next;\n")
         self.vf.write("    web_reg  <= #(DELAY) web_reg_next;\n")
         self.vf.write("    din_reg  <= #(DELAY) din_reg_next;\n")
         if self.data_hazard:
@@ -96,7 +94,6 @@ class direct_cache(cache_base):
         self.vf.write("    set_next        = set;\n")
         self.vf.write("    offset_next     = offset;\n")
         self.vf.write("    web_reg_next    = web_reg;\n")
-        self.vf.write("    rst_reg_next    = rst_reg;\n")
         self.vf.write("    din_reg_next    = din_reg;\n")
         self.vf.write("    main_csb        = 1;\n")
         self.vf.write("    main_web        = 1;\n")
@@ -115,13 +112,26 @@ class direct_cache(cache_base):
         if self.data_hazard:
             self.vf.write("    new_tag_next    = new_tag;\n")
             self.vf.write("    new_data_next   = new_data;\n")
-    
-        # RESET state
-        self.vf.write("    if (rst || rst_reg) begin // RESET: Multi-cycle reset\n")
-        self.write_reset_state()
+        self.vf.write("    if (rst) begin // Beginning of reset\n")
+        self.vf.write("      state_next     = RESET;\n")
+        self.vf.write("      tag_next       = 0;\n")
+        self.vf.write("      set_next       = 1;\n")
+        self.vf.write("      offset_next    = 0;\n")
+        self.vf.write("      web_reg_next   = 1;\n")
+        self.vf.write("      din_reg_next   = 0;\n")
+        self.vf.write("      new_tag_next   = 0;\n")
+        self.vf.write("      new_data_next  = 0;\n")
+        self.vf.write("      tag_write_csb  = 0;\n")
+        self.vf.write("      tag_write_addr = 0;\n")
+        self.vf.write("      tag_write_din  = 0;\n")
         self.vf.write("    end else begin\n")
         self.vf.write("      case (state)\n")
-    
+
+        # RESET state
+        self.vf.write("      RESET: begin // Multi-cycle reset\n")
+        self.write_reset_state()
+        self.vf.write("      end\n")
+
         # IDLE state
         self.vf.write("      IDLE: begin // Read tag line\n")
         self.write_idle_state()
@@ -162,24 +172,14 @@ class direct_cache(cache_base):
     def write_reset_state(self):
         """ Write the RESET state of the cache. """
 
-        self.vf.write("      state_next = IDLE;\n")
-        self.vf.write("      tag_next   = 0;\n")
-        self.vf.write("      set_next   = 1;\n")
-        self.vf.write("      if (rst_reg)\n")
-        self.vf.write("        set_next = set + 1;\n")
-        self.vf.write("      offset_next   = 0;\n")
-        self.vf.write("      web_reg_next  = 1;\n")
-        self.vf.write("      rst_reg_next  = 1;\n")
-        self.vf.write("      din_reg_next  = 0;\n")
-        if self.data_hazard:
-            self.vf.write("      new_tag_next  = 0;\n")
-        self.vf.write("      tag_write_csb = 0;\n")
-        self.vf.write("      if (rst_reg)\n")
+        self.vf.write("        set_next       = set + 1;\n")
+        self.vf.write("        tag_write_csb  = 0;\n")
         self.vf.write("        tag_write_addr = set;\n")
-        self.vf.write("      if (rst_reg && set == CACHE_DEPTH-1) begin // Reset is completed\n")
-        self.vf.write("        rst_reg_next = 0;\n")
-        self.vf.write("        stall        = 0;\n")
-        self.vf.write("      end\n")
+        self.vf.write("        tag_write_din  = 0;\n")
+        self.vf.write("        if (set == CACHE_DEPTH-1) begin // Reset is completed\n")
+        self.vf.write("            state_next = IDLE;\n")
+        self.vf.write("            stall      = 0;\n")
+        self.vf.write("        end\n")
 
 
     def write_idle_state(self):
