@@ -43,13 +43,13 @@ class options(optparse.Values):
 
     # Data hazard might occur when the same location is read and
     # written at the same cycle. If SRAM arrays are guaranteed to
-    # be data hazard proof, this can be False.
+    # be data hazard proof, this can be set False.
     data_hazard = True
 
     # Define the output file paths
-    output_path = "./outputs/"
+    output_path = "outputs/"
     # Define the output file base name
-    output_name = ""
+    output_name = "cache"
 
     verbose_level = 0
 
