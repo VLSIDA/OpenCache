@@ -179,12 +179,25 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("      tag_write_csb   = 0;\n")
         self.vf.write("      tag_write_addr  = 0;\n")
         self.vf.write("      tag_write_din   = 0;\n")
+        self.vf.write("    end else if (flush) begin // Beginning of flush\n")
+        self.vf.write("      state_next     = FLUSH;\n")
+        self.vf.write("      way_next       = 0;\n")
+        self.vf.write("      set_next       = 0;\n")
+        self.vf.write("      tag_read_csb   = 0;\n")
+        self.vf.write("      tag_read_addr  = 0;\n")
+        self.vf.write("      data_read_csb  = 0;\n")
+        self.vf.write("      data_read_addr = 0;\n")
         self.vf.write("    end else begin\n")
         self.vf.write("      case (state)\n")
 
         # RESET state
         self.vf.write("        RESET: begin // Multi-cycle reset\n")
         self.write_reset_state()
+        self.vf.write("        end\n")
+
+        # FLUSH state
+        self.vf.write("        FLUSH: begin // Multi-cycle flush\n")
+        self.write_flush_state()
         self.vf.write("        end\n")
 
         # IDLE state
@@ -237,6 +250,31 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("          if (set == CACHE_DEPTH-1) begin // Reset is completed\n")
         self.vf.write("            state_next = IDLE;\n")
         self.vf.write("            stall      = 0;\n")
+        self.vf.write("          end\n")
+
+
+    def write_flush_state(self):
+        """ Write the FLUSH state of the cache. """
+
+        self.vf.write("          tag_read_csb   = 0;\n")
+        self.vf.write("          tag_read_addr  = set;\n")
+        self.vf.write("          data_read_csb  = 0;\n")
+        self.vf.write("          data_read_addr = set;\n")
+        self.vf.write("          main_csb       = 0;\n")
+        self.vf.write("          main_web       = 0;\n")
+        self.vf.write("          main_addr      = {tag_read_dout[way * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
+        self.vf.write("          main_din       = data_read_dout[way * LINE_WIDTH +: LINE_WIDTH];\n")
+        self.vf.write("          if (!main_stall) begin\n")
+        self.vf.write("            way_next = way + 1;\n")
+        self.vf.write("            if (way == WAY_DEPTH-1) begin // All ways in the set are written back\n")
+        self.vf.write("              set_next       = set + 1;\n")
+        self.vf.write("              tag_read_addr  = set + 1;\n")
+        self.vf.write("              data_read_addr = set + 1;\n")
+        self.vf.write("              if (set == CACHE_DEPTH-1) begin // Flush is completed\n")
+        self.vf.write("                state_next = IDLE;\n")
+        self.vf.write("                stall      = 0;\n")
+        self.vf.write("              end\n")
+        self.vf.write("            end\n")
         self.vf.write("          end\n")
 
 

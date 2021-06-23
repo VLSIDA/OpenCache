@@ -55,7 +55,7 @@ class cache_base:
         # Cache module
         self.vf.write("module {} (\n".format(self.name))
         self.vf.write("  // CPU interface\n")
-        self.vf.write("  clk, rst, csb, web, addr, din, dout, stall,\n")
+        self.vf.write("  clk, rst, flush, csb, web, addr, din, dout, stall,\n")
         self.vf.write("  // Main memory interface\n")
         self.vf.write("  main_csb, main_web, main_addr, main_din, main_dout, main_stall\n")
         self.vf.write(");\n\n")
@@ -147,16 +147,20 @@ class cache_base:
 
         self.vf.write("  // States of the cache\n")
         self.vf.write("  localparam RESET      = 0; // Reset tags and registers\n")
-        self.vf.write("  localparam IDLE       = 1; // Fetch tag and data lines\n")
-        self.vf.write("  localparam COMPARE    = 2; // Compare tags\n")
+
+        # Instruction caches don't have flush state
+        if self.is_data_cache:
+            self.vf.write("  localparam FLUSH      = 1; // Write all data lines back to main memory\n")
+        self.vf.write("  localparam IDLE       = 2; // Fetch tag and data lines\n")
+        self.vf.write("  localparam COMPARE    = 3; // Compare tags\n")
 
         # Instruction caches don't have write states
         if self.is_data_cache:
-            self.vf.write("  localparam WRITE      = 3; // Send write request when main memory is available\n")
-            self.vf.write("  localparam WAIT_WRITE = 4; // Wait for main memory to complete write request\n")
+            self.vf.write("  localparam WRITE      = 4; // Send write request when main memory is available\n")
+            self.vf.write("  localparam WAIT_WRITE = 5; // Wait for main memory to complete write request\n")
 
-        self.vf.write("  localparam READ       = 5; // Send read request when main memory is available\n")
-        self.vf.write("  localparam WAIT_READ  = 6; // Wait for main memory to return requested data\n\n")
+        self.vf.write("  localparam READ       = 6; // Send read request when main memory is available\n")
+        self.vf.write("  localparam WAIT_READ  = 7; // Wait for main memory to return requested data\n\n")
 
 
     def write_io_ports(self):
@@ -164,6 +168,7 @@ class cache_base:
 
         self.vf.write("  input  clk;                   // clock\n")
         self.vf.write("  input  rst;                   // reset\n")
+        self.vf.write("  input  flush;                 // flush\n")
         self.vf.write("  input  csb;                   // active low chip select\n")
         self.vf.write("  input  web;                   // active low write control\n")
         self.vf.write("  input  [ADDR_WIDTH-1:0] addr; // address\n")
