@@ -204,7 +204,11 @@ def report_status():
 
     # Data array's total size should match the word size
     if OPTS.total_size % OPTS.word_size:
-        debug.error("Total size does not match word size.", -1)
+        debug.error("Total size is not divisible by word size.", -1)
+
+    # Direct cache doesn't have a replacement policy
+    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
+        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
     
     # Options below are not implemented yet
     if not OPTS.is_data_cache:
