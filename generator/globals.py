@@ -217,3 +217,11 @@ def report_status():
         debug.error("Only write-back policy is supported at the moment.", -1)
     if OPTS.return_type != "word":
         debug.error("Only returning word is supported at the moment.", -1)
+
+    debug.print_raw("\nCache type: {}".format("Data" if OPTS.is_data_cache else "Instruction"))
+    debug.print_raw("Word size: {}".format(OPTS.word_size))
+    debug.print_raw("Words per line: {}".format(OPTS.words_per_line))
+    debug.print_raw("Number of ways: {}".format(OPTS.num_ways))
+    debug.print_raw("Replacement policy: {}".format(OPTS.replacement_policy.capitalize() if OPTS.num_ways > 1 else None))
+    debug.print_raw("Write policy: {}".format(OPTS.write_policy.capitalize()))
+    debug.print_raw("Return type: {}\n".format(OPTS.return_type.capitalize()))

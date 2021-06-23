@@ -55,12 +55,14 @@ class cache:
     def save(self):
         """ Save all the output files (Config and Verilog). """
 
+        debug.print_raw("Saving output files...")
+
         # Write the config file
         cpath = OPTS.output_path + self.c.name
-        debug.print_raw("Config: Writing to {}".format(cpath))
+        debug.print_raw("  Config:  Writing to {}".format(cpath))
         self.config_write(cpath)
 
         # Write the Verilog model
         vpath = OPTS.output_path + self.c.name
-        debug.print_raw("Verilog: Writing to {}".format(vpath))
+        debug.print_raw("  Verilog: Writing to {}".format(vpath))
         self.verilog_write(vpath)
