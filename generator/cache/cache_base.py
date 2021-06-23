@@ -81,42 +81,20 @@ class cache_base:
         """ Write the banner of features of the cache. """
 
         self.vf.write("// ########## OpenCache Module ##########\n")
-
-        if self.is_data_cache:
-            self.vf.write("// Cache type         : Data\n")
-        else:
-            self.vf.write("// Cache type         : Instruction\n")
-
+        self.vf.write("// Cache type         : {}\n".format("Data" if self.is_data_cache else "Instruction"))
         self.vf.write("// Word size          : {}-bit\n".format(self.word_size))
         self.vf.write("// Words per line     : {}\n".format(self.words_per_line))
         self.vf.write("// Data array size    : {}-bit\n".format(self.total_size))
-
-        if self.num_ways == 1:
-            self.vf.write("// Placement policy   : Direct-mapped\n")
-        elif self.set_size:
-            self.vf.write("// Placement policy   : {}-way Set Associative\n".format(self.num_ways))
-        else:
-            self.vf.write("// Placement policy   : Fully Associative\n")
-
-        if self.replacement_policy is None:
-            self.vf.write("// Replacement policy : Direct\n")
-        elif self.replacement_policy == "fifo":
-            self.vf.write("// Replacement policy : First In First Out\n")
-        elif self.replacement_policy == "lru":
-            self.vf.write("// Replacement policy : Least Recently Used\n")
-        elif self.replacement_policy == "random":
-            self.vf.write("// Replacement policy : Random\n")
-
-        if self.write_policy == "write-back":
-            self.vf.write("// Write policy       : Write-back\n")
-        elif self.write_policy == "write-through":
-            self.vf.write("// Write policy       : Write-through\n")
-
+        self.vf.write("// Placement policy   : {}\n".format("Direct-mapped" if self.num_ways == 1 else
+                                                            "{}-way Set Assocative".format(self.num_ways) if self.set_size else
+                                                            "Fully Associative"))
+        self.vf.write("// Replacement policy : {}\n".format("First In First Out" if self.replacement_policy == "fifo" else
+                                                            "Least Recently Used" if self.replacement_policy == "lru" else
+                                                            "Random" if self.replacement_policy == "random" else
+                                                            "None"))
+        self.vf.write("// Write policy       : {}\n".format(self.write_policy.capitalize()))
         # TODO: How to adjust the data return size?
-        if self.return_type == "word":
-            self.vf.write("// Return type        : Word\n\n")
-        elif self.return_type == "line":
-            self.vf.write("// Return type        : Line\n\n")
+        self.vf.write("// Return type        : {}\n\n".format(self.return_type.capitalize()))
 
 
     def write_parameters(self):
