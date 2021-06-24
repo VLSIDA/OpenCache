@@ -24,20 +24,20 @@ class n_way_lru_cache(cache_base):
 
         super().config_write(config_path)
 
-        self.fcf = open(config_path + "_lru_array_config.py", "w")
+        self.lcf = open(config_path + "_lru_array_config.py", "w")
 
-        self.fcf.write("word_size = {}\n".format(self.way_size * self.num_ways))
-        self.fcf.write("num_words = {}\n".format(self.num_rows))
+        self.lcf.write("word_size = {}\n".format(self.way_size * self.num_ways))
+        self.lcf.write("num_words = {}\n".format(self.num_rows))
 
-        self.fcf.write("num_rw_ports = 0\n")
-        self.fcf.write("num_r_ports  = 1\n")
-        self.fcf.write("num_w_ports  = 1\n")
+        self.lcf.write("num_rw_ports = 0\n")
+        self.lcf.write("num_r_ports  = 1\n")
+        self.lcf.write("num_w_ports  = 1\n")
 
         # OpenRAM outputs of the LRU array are saved to a separate folder
-        self.fcf.write("output_path = \"{}/lru_array\"\n".format(config_path))
-        self.fcf.write("output_name = \"{}_lru_array\"\n".format(self.name))
+        self.lcf.write("output_path = \"{}/lru_array\"\n".format(config_path))
+        self.lcf.write("output_name = \"{}_lru_array\"\n".format(self.name))
 
-        self.fcf.close()
+        self.lcf.close()
 
 
     def write_parameters(self):
