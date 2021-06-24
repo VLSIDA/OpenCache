@@ -27,6 +27,10 @@ class cache_base:
         self.dcf.write("word_size = {}\n".format(self.row_size))
         self.dcf.write("num_words = {}\n".format(self.num_rows))
 
+        self.dcf.write("num_rw_ports = 0\n")
+        self.dcf.write("num_r_ports  = 1\n")
+        self.dcf.write("num_w_ports  = 1\n")
+
         # OpenRAM outputs of the data array are saved to a separate folder
         self.dcf.write("output_path = \"{}/data_array\"\n".format(config_path))
         self.dcf.write("output_name = \"{}_data_array\"\n".format(self.name))
@@ -37,6 +41,10 @@ class cache_base:
 
         self.tcf.write("word_size = {}\n".format((2 + self.tag_size) * self.num_ways))
         self.tcf.write("num_words = {}\n".format(self.num_rows))
+
+        self.tcf.write("num_rw_ports = 0\n")
+        self.tcf.write("num_r_ports  = 1\n")
+        self.tcf.write("num_w_ports  = 1\n")
 
         # OpenRAM outputs of the tag array are saved to a separate folder
         self.tcf.write("output_path = \"{}/tag_array\"\n".format(config_path))
