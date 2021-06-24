@@ -28,8 +28,8 @@ class cache_base:
         self.dcf.write("num_words = {}\n".format(self.num_rows))
 
         # OpenRAM outputs of the data array are saved to a separate folder
-        self.dcf.write("output_path = \"{}/tag_array\"\n".format(config_path))
-        self.dcf.write("output_name = \"{}_tag_array\"\n".format(self.name))
+        self.dcf.write("output_path = \"{}/data_array\"\n".format(config_path))
+        self.dcf.write("output_name = \"{}_data_array\"\n".format(self.name))
 
         self.dcf.close()
 
