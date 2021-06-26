@@ -12,6 +12,7 @@ configuration (.py) files for OpenRAM compiler
 a Verilog (.v) file for the cache logic
 """
 
+from os import scandir
 import sys
 import datetime
 import globals as g
@@ -43,3 +44,9 @@ c = cache(cache_config=s,
 
 # Output the files for the resulting cache
 c.save()
+
+# Run verification
+if OPTS.simulate or OPTS.synthesize:
+    from verify import verify
+    v = verify(OPTS.output_name, s)
+    v.verify()

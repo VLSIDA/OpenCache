@@ -150,24 +150,30 @@ def read_config(config_file):
             OPTS.__dict__[k] = v
             OPTS.overridden[k] = True
 
-    # Massage the output path to be an absolute one
-    if not OPTS.output_path.endswith('/'):
-        OPTS.output_path += "/"
-    if not OPTS.output_path.startswith('/'):
-        OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
-    debug.info(1, "Output saved in " + OPTS.output_path)
-
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
         OPTS.output_name = "cache_{0}b_{1}b_{2}{3}".format(OPTS.total_size,
                                                            OPTS.word_size,
                                                            OPTS.num_ways)
 
+    # Massage the output path to be an absolute one
+    if not OPTS.output_path.endswith('/'):
+        OPTS.output_path += "/"
+    if not OPTS.output_path.startswith('/'):
+        OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
+
+    # Create a new folder for this run
+    OPTS.output_path += OPTS.output_name + "/"
+    debug.info(1, "Output saved in " + OPTS.output_path)
+
 
 def include_paths():
     """ Include generator folders to the sys path. """
     
-    sys.path.insert(1, "./cache")
+    sys.path.insert(0, "./cache")
+
+    if OPTS.simulate or OPTS.synthesize:
+        sys.path.insert(0, "./verify")
 
 
 def init_paths():
@@ -182,6 +188,28 @@ def init_paths():
             os.chmod(OPTS.output_path, 0o750)
     except:
         debug.error("Unable to make output directory.", -1)
+
+    # Make a separate folder for simulation
+    if OPTS.simulate:
+        path = OPTS.output_path + "simulation/"
+        try:
+            os.makedirs(path, 0o750)
+        except OSError as e:
+            if e.errno == 17:  # errno.EEXIST
+                os.chmod(path, 0o750)
+        except:
+            debug.error("Unable to make simulation directory.", -1)
+
+    # Make a separate folder for synthesis
+    if OPTS.synthesize:
+        path = OPTS.output_path + "synthesis/"
+        try:
+            os.makedirs(path, 0o750)
+        except OSError as e:
+            if e.errno == 17:  # errno.EEXIST
+                os.chmod(path, 0o750)
+        except:
+            debug.error("Unable to make synthesis directory.", -1)
 
 
 def report_status():

@@ -51,6 +51,12 @@ class options(optparse.Values):
     # Define the output file base name
     output_name = "cache"
 
+    # Verify the design by simulating
+    simulate = False
+
+    # Verify the design by synthesizing
+    synthesize = False
+
     verbose_level = 0
 
     debug = False
