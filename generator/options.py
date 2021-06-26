@@ -49,7 +49,7 @@ class options(optparse.Values):
     # Define the output file paths
     output_path = "outputs/"
     # Define the output file base name
-    output_name = "cache"
+    output_name = ""
 
     # Verify the design by simulating
     simulate = False

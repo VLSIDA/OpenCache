@@ -152,9 +152,10 @@ def read_config(config_file):
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "cache_{0}b_{1}b_{2}{3}".format(OPTS.total_size,
+        OPTS.output_name = "cache_{0}b_{1}b_{2}_{3}".format(OPTS.total_size,
                                                            OPTS.word_size,
-                                                           OPTS.num_ways)
+                                                           OPTS.num_ways,
+                                                           OPTS.replacement_policy)
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
