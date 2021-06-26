@@ -20,7 +20,7 @@ class test_bench:
     def write(self, tb_path):
         """ Write the test bench file. """
 
-        self.tbf = open(tb_path + "test_bench.v", "w")
+        self.tbf = open(tb_path, "w")
 
         self.tbf.write("// Timescale is overwritten when running the EDA tool to prevent bugs\n")
         self.tbf.write("// `timescale 1ns / 1ps\n\n")

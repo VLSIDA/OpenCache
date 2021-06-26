@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import OPTS
+
 
 class cache_base:
     """
@@ -19,10 +21,10 @@ class cache_base:
         self.name = name
 
 
-    def config_write(self, config_path):
+    def config_write(self, config_paths):
         """ Write the configuration files for OpenRAM SRAM arrays. """
 
-        self.dcf = open(config_path + "_data_array_config.py", "w")
+        self.dcf = open(config_paths[0], "w")
 
         self.dcf.write("word_size = {}\n".format(self.row_size))
         self.dcf.write("num_words = {}\n".format(self.num_rows))
@@ -32,12 +34,12 @@ class cache_base:
         self.dcf.write("num_w_ports  = 1\n")
 
         # OpenRAM outputs of the data array are saved to a separate folder
-        self.dcf.write("output_path = \"{}/data_array\"\n".format(config_path))
+        self.dcf.write("output_path = \"{}/data_array\"\n".format(OPTS.output_path))
         self.dcf.write("output_name = \"{}_data_array\"\n".format(self.name))
 
         self.dcf.close()
 
-        self.tcf = open(config_path + "_tag_array_config.py", "w")
+        self.tcf = open(config_paths[1], "w")
 
         self.tcf.write("word_size = {}\n".format((2 + self.tag_size) * self.num_ways))
         self.tcf.write("num_words = {}\n".format(self.num_rows))
@@ -47,7 +49,7 @@ class cache_base:
         self.tcf.write("num_w_ports  = 1\n")
 
         # OpenRAM outputs of the tag array are saved to a separate folder
-        self.tcf.write("output_path = \"{}/tag_array\"\n".format(config_path))
+        self.tcf.write("output_path = \"{}/tag_array\"\n".format(OPTS.output_path))
         self.tcf.write("output_name = \"{}_tag_array\"\n".format(self.name))
 
         self.tcf.close()
@@ -56,7 +58,7 @@ class cache_base:
     def verilog_write(self, verilog_path):
         """ Write the behavioral Verilog model. """
 
-        self.vf = open(verilog_path + ".v", "w")
+        self.vf = open(verilog_path, "w")
 
         self.write_banner()
 

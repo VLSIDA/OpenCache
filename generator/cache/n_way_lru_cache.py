@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from cache_base import cache_base
+from globals import OPTS
 
 
 class n_way_lru_cache(cache_base):
@@ -19,12 +20,12 @@ class n_way_lru_cache(cache_base):
         super().__init__(cache_config, name)
 
 
-    def config_write(self, config_path):
+    def config_write(self, config_paths):
         """ Write the configuration files for OpenRAM SRAM arrays. """
 
-        super().config_write(config_path)
+        super().config_write(config_paths[:-1])
 
-        self.lcf = open(config_path + "_lru_array_config.py", "w")
+        self.lcf = open(config_paths[-1], "w")
 
         self.lcf.write("word_size = {}\n".format(self.way_size * self.num_ways))
         self.lcf.write("num_words = {}\n".format(self.num_rows))
@@ -34,7 +35,7 @@ class n_way_lru_cache(cache_base):
         self.lcf.write("num_w_ports  = 1\n")
 
         # OpenRAM outputs of the LRU array are saved to a separate folder
-        self.lcf.write("output_path = \"{}/lru_array\"\n".format(config_path))
+        self.lcf.write("output_path = \"{}/lru_array\"\n".format(OPTS.output_path))
         self.lcf.write("output_name = \"{}_lru_array\"\n".format(self.name))
 
         self.lcf.close()

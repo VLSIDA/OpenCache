@@ -20,7 +20,7 @@ class core:
     def write(self, core_path):
         """ Write the CORE file for simulation. """
 
-        self.cf = open(core_path + "{}.core".format(self.name), "w")
+        self.cf = open(core_path, "w")
 
         self.cf.write("CAPI=2:\n")
         self.cf.write("name: opencache:cache:{}:0.1.0\n".format(self.name))

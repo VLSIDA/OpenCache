@@ -20,7 +20,7 @@ class dram:
     def write(self, dram_path):
         """ Write the DRAM file. """
 
-        self.df = open(dram_path + "dram.v", "w")
+        self.df = open(dram_path, "w")
 
         self.df.write("module dram (clk, rst, csb, web, addr, din, dout, stall);\n\n")
 

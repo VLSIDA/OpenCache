@@ -42,7 +42,7 @@ class test_data:
 
         data_size = 1 + self.address_size + self.word_size
 
-        self.tdf = open(data_path + "test_data.v", "w")
+        self.tdf = open(data_path, "w")
 
         for i in range(len(self.data)):
             self.tdf.write("test_data[{0}] = {1}'b{2}_{3}_{4};\n".format(i, data_size, self.data[i][0], self.data[i][1:self.address_size + 1], self.data[i][-self.word_size:]))

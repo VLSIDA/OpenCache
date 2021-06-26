@@ -40,10 +40,10 @@ class cache:
         self.c = cache(cache_config, name)
 
 
-    def config_write(self, path):
+    def config_write(self, paths):
         """ Save the config files. """
 
-        self.c.config_write(path)
+        self.c.config_write(paths)
 
 
     def verilog_write(self, path):
@@ -58,11 +58,15 @@ class cache:
         debug.print_raw("Saving output files...")
 
         # Write the config file
-        cpath = OPTS.output_path + self.c.name
-        debug.print_raw("  Config:  Writing to {}".format(cpath))
-        self.config_write(cpath)
+        cpaths = [OPTS.output_path + self.c.name + "_data_array_config.py",
+                  OPTS.output_path + self.c.name + "_tag_array_config.py"]
+        if self.replacement_policy:
+            cpaths.append(OPTS.output_path + self.c.name + "_{0}_array_config.py".format(self.replacement_policy))
+        for cpath in cpaths:
+            debug.print_raw("  Config: Writing to {}".format(cpath))
+        self.config_write(cpaths)
 
         # Write the Verilog model
-        vpath = OPTS.output_path + self.c.name
+        vpath = OPTS.output_path + self.c.name + ".v"
         debug.print_raw("  Verilog: Writing to {}".format(vpath))
         self.verilog_write(vpath)
