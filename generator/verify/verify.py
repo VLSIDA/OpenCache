@@ -22,16 +22,16 @@ class verify:
     by running EDA tools.
     """
 
-    def __init__(self, name, cache_config):
+    def __init__(self, cache_config, name):
 
         cache_config.set_local_config(self)
         self.name = name
 
         if OPTS.simulate:
-            self.core = core(name, cache_config)
-            self.tb   = test_bench(name, cache_config)
-            self.data = test_data(name, cache_config)
-            self.dram = dram(name, cache_config)
+            self.core = core(cache_config, name)
+            self.tb   = test_bench(cache_config, name)
+            self.data = test_data(cache_config, name)
+            self.dram = dram(cache_config, name)
 
 
     def verify(self):

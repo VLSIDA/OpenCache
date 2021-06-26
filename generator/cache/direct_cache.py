@@ -13,9 +13,9 @@ class direct_cache(cache_base):
     This is the design module of direct-mapped cache.
     """
 
-    def __init__(self, name, cache_config):
+    def __init__(self, cache_config, name):
 
-        super().__init__(name, cache_config)
+        super().__init__(cache_config, name)
 
 
     def write_registers(self):

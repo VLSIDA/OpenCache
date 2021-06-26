@@ -14,9 +14,9 @@ class n_way_random_cache(cache_base):
     with random replacement policy.
     """
 
-    def __init__(self, name, cache_config):
+    def __init__(self, cache_config, name):
 
-        super().__init__(name, cache_config)
+        super().__init__(cache_config, name)
 
 
     def write_registers(self):

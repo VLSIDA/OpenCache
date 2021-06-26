@@ -36,10 +36,10 @@ g.report_status()
 from cache_config import cache_config
 
 # Configure the cache organization
-s = cache_config(OPTS)
+conf = cache_config(OPTS)
 
 from cache import cache
-c = cache(cache_config=s,
+c = cache(cache_config=conf,
           name=OPTS.output_name)
 
 # Output the files for the resulting cache
@@ -48,5 +48,7 @@ c.save()
 # Run verification
 if OPTS.simulate or OPTS.synthesize:
     from verify import verify
-    v = verify(OPTS.output_name, s)
+    v = verify(cache_config=conf,
+               name=OPTS.output_name)
+
     v.verify()

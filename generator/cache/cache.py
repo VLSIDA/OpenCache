@@ -37,7 +37,7 @@ class cache:
         else:
             debug.error("Invalid number of ways.", -1)
 
-        self.c = cache(name, cache_config)
+        self.c = cache(cache_config, name)
 
 
     def config_write(self, path):

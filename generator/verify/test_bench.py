@@ -11,7 +11,7 @@ class test_bench:
     Class to generate the test bench file for simulation.
     """
 
-    def __init__(self, name, cache_config):
+    def __init__(self, cache_config, name):
 
         cache_config.set_local_config(self)
         self.name = name
