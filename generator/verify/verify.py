@@ -111,7 +111,7 @@ class verify:
             debug.error("    FuseSoC failed to add simulation core.")
 
         debug.print_raw("    Running the simulation...")
-        if call("fusesoc run --target=sim --no-export opencache:cache:{}:0.1.0".format(self.name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
+        if call("fusesoc run --target=sim --no-export {}".format(self.core.core_name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
             debug.error("    FuseSoC failed to run the simulation.")
 
         # Delete the temporary CONF file
@@ -150,8 +150,11 @@ class verify:
     def check_sim_result(self, path, file_name):
         """ Read the log file of the simulation. """
 
-        # Result of the simulation is supposed to be at the end
-        with open("{0}build/opencache_cache_{1}_0.1.0/sim-icarus/{2}".format(path, self.name, file_name)) as f:
+        # Result of the simulation is supposed to be
+        # at the end of the log file
+        with open("{0}build/{1}/sim-icarus/{2}".format(path,
+                                                       self.core.core_name.replace(":", "_"),
+                                                       file_name)) as f:
             for line in f:
                 pass
             return line.rstrip() == "Simulation successful."
