@@ -29,7 +29,7 @@ def check(check, str):
 
         if globals.OPTS.debug:
             pdb.set_trace()
-            
+
         assert 0
 
 
@@ -43,7 +43,7 @@ def error(str, return_value=0):
 
     if globals.OPTS.debug:
         pdb.set_trace()
-            
+
     assert return_value == 0
 
 

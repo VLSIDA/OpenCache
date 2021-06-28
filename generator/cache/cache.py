@@ -14,11 +14,12 @@ class cache:
     """
     This is not a design module, but contains a cache design instance.
     """
+
     def __init__(self, cache_config, name):
 
         cache_config.set_local_config(self)
 
-        self.name = name        
+        self.name = name
 
         if self.num_ways == 1:
             from direct_cache import direct_cache as cache
