@@ -302,6 +302,7 @@ class n_way_lru_cache(cache_base):
 
         self.vf.write("          stall = 0;\n")
         self.vf.write("          if (!csb) begin // CPU requests\n")
+        self.vf.write("            stall            = 1;\n")
         self.vf.write("            state_next       = COMPARE;\n")
         self.vf.write("            way_next         = 0;\n")
         self.vf.write("            tag_next         = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
