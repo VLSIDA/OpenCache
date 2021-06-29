@@ -58,9 +58,10 @@ class verify:
         by running an EDA tool's simulator.
         """
 
-        debug.print_raw("  Writing simulation files...")
-
         sim_path = OPTS.output_path + "simulation/"
+        openram_command = "python3 $OPENRAM_HOME/openram.py"
+
+        debug.print_raw("  Writing simulation files...")
 
         # Write the CORE file
         core_path = sim_path + "sim.core"
@@ -99,17 +100,26 @@ class verify:
 
         # Run OpenRAM to generate Verilog files of SRAMs
         debug.print_raw("  Running OpenRAM for the data array...")
-        if call("python3 $OPENRAM_HOME/openram.py {}_data_array_config.py".format(sim_path + self.name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
+        if call("{0} {1}_data_array_config.py".format(openram_command, sim_path + self.name),
+                cwd=sim_path,
+                shell=True,
+                stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("  Running OpenRAM for the tag array...")
-        if call("python3 $OPENRAM_HOME/openram.py {}_tag_array_config.py".format(sim_path + self.name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
+        if call("{0} {1}_tag_array_config.py".format(openram_command, sim_path + self.name),
+                cwd=sim_path,
+                shell=True,
+                stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
             debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-            if call("python3 $OPENRAM_HOME/openram.py {0}_{1}_array_config.py".format(sim_path + self.name, self.replacement_policy), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
+            if call("{0} {1}_{2}_array_config.py".format(openram_command, sim_path + self.name, self.replacement_policy),
+                    cwd=sim_path,
+                    shell=True,
+                    stdout=DEVNULL) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Run FuseSoc for simulation
@@ -154,9 +164,10 @@ class verify:
         by running an EDA tool's synthesizer.
         """
 
-        debug.print_raw("  Writing synthesis files...")
-
         synth_path = OPTS.output_path + "synthesis/"
+        openram_command = "python3 $OPENRAM_HOME/openram.py"
+
+        debug.print_raw("  Writing synthesis files...")
 
         # Write the CORE file
         core_path = synth_path + "synth.core"
@@ -179,17 +190,26 @@ class verify:
 
         # Run OpenRAM to generate Verilog files of SRAMs
         debug.print_raw("  Running OpenRAM for the data array...")
-        if call("python3 $OPENRAM_HOME/openram.py {}_data_array_config.py".format(synth_path + self.name), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
+        if call("{0} {1}_data_array_config.py".format(openram_command, synth_path + self.name),
+                cwd=synth_path,
+                shell=True,
+                stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("  Running OpenRAM for the tag array...")
-        if call("python3 $OPENRAM_HOME/openram.py {}_tag_array_config.py".format(synth_path + self.name), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
+        if call("{0} {1}_tag_array_config.py".format(openram_command, synth_path + self.name),
+                cwd=synth_path,
+                shell=True,
+                stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
             debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-            if call("python3 $OPENRAM_HOME/openram.py {0}_{1}_array_config.py".format(synth_path + self.name, self.replacement_policy), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
+            if call("{0} {1}_{2}_array_config.py".format(openram_command, synth_path + self.name, self.replacement_policy),
+                    cwd=synth_path,
+                    shell=True,
+                    stdout=DEVNULL) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Convert SRAM modules to blackbox
