@@ -91,28 +91,28 @@ class verify:
         # Run OpenRAM to generate Verilog files of SRAMs
         debug.print_raw("  Running OpenRAM for the data array...")
         if call("python3 $OPENRAM_HOME/openram.py {}_data_array_config.py".format(sim_path + self.name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    OpenRAM failed!")
+            debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("  Running OpenRAM for the tag array...")
         if call("python3 $OPENRAM_HOME/openram.py {}_tag_array_config.py".format(sim_path + self.name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    OpenRAM failed!")
+            debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
             debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
             if call("python3 $OPENRAM_HOME/openram.py {0}_{1}_array_config.py".format(sim_path + self.name, self.replacement_policy), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-                debug.error("    OpenRAM failed!")
+                debug.error("    OpenRAM failed!", 1)
 
         # Run FuseSoc for simulation
         debug.print_raw("  Running FuseSoC for simulation...")
 
         debug.print_raw("    Adding simulation as library...")
         if call("fusesoc library add {0} {1}".format(self.name, sim_path), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to add simulation core.")
+            debug.error("    FuseSoC failed to add simulation core.", 1)
 
         debug.print_raw("    Running the simulation...")
         if call("fusesoc run --target=sim --no-export {}".format(self.core.core_name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to run the simulation.")
+            debug.error("    FuseSoC failed to run the simulation.", 1)
 
         # Delete the temporary CONF file
         # If this file is not deleted, it can cause simulations
@@ -123,7 +123,7 @@ class verify:
         if self.check_sim_result(sim_path, "icarus.log"):
             debug.print_raw("  Simulation successful.")
         else:
-            debug.error("  Simulation failed.")
+            debug.error("  Simulation failed.", 1)
 
         debug.print_raw("  Verification completed.")
 
@@ -157,4 +157,4 @@ class verify:
                                                        file_name)) as f:
             for line in f:
                 pass
-            return line.rstrip() == "Simulation successful."
+            return line.rstrip() == self.tb.success_message

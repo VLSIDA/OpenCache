@@ -16,6 +16,9 @@ class test_bench:
         cache_config.set_local_config(self)
         self.name = name
 
+        self.success_message = "Simulation successful."
+        self.fail_message    = "Simulation failed."
+
 
     def write(self, tb_path):
         """ Write the test bench file. """
@@ -36,7 +39,7 @@ class test_bench:
 
         self.write_instances()
 
-        self.write_test_block()
+        self.write_tasks()
 
         self.tbf.write("  initial begin\n")
         self.tbf.write("  	`include \"test_data.v\"\n")
@@ -52,7 +55,7 @@ class test_bench:
         self.tbf.write("  parameter  TAG_WIDTH     = {};\n".format(self.tag_size))
         # TODO: Fully associative cache's set_size = 0.
         self.tbf.write("  parameter  SET_WIDTH     = {};\n".format(self.set_size))
-        self.tbf.write("  parameter  OFFSET_WIDTH  = {};\n".format(self.offset_size))
+        self.tbf.write("  parameter  OFFSET_WIDTH  = {};\n\n".format(self.offset_size))
 
         self.tbf.write("  parameter  WORD_WIDTH    = {};\n".format(self.word_size))
         self.tbf.write("  parameter  WORD_COUNT    = {};\n".format(self.words_per_line))
@@ -62,8 +65,7 @@ class test_bench:
 
         self.tbf.write("  parameter  CLOCK_DELAY   = 5;\n")
         self.tbf.write("  parameter  RESET_DELAY   = 20;\n")
-        self.tbf.write("  parameter  DELAY         = 3;\n")
-        self.tbf.write("  parameter  CYCLE_LIMIT   = 3000;\n\n")
+        self.tbf.write("  parameter  DELAY         = 3;\n\n")
 
         self.tbf.write("  // Test data: web + address + word\n")
         self.tbf.write("  localparam DATA_WIDTH    = 1 + ADDR_WIDTH + WORD_WIDTH;\n")
@@ -99,8 +101,6 @@ class test_bench:
         self.tbf.write("  wire dram_stall;\n")
 
         self.tbf.write("  // Test registers\n")
-        self.tbf.write("  reg  [DATA_WIDTH-1:0]    test_data [0:MAX_TEST_SIZE-1];\n")
-        self.tbf.write("  reg [MAX_TEST_SIZE-1:0] test_ptr;\n\n")
         self.tbf.write("  reg [MAX_TEST_SIZE-1:0] error_count;\n\n")
 
 
@@ -110,8 +110,7 @@ class test_bench:
         self.tbf.write("  // Clock generator\n")
         self.tbf.write("  initial begin\n")
         self.tbf.write("    clk = 1;\n")
-        self.tbf.write("    forever\n")
-        self.tbf.write("      #(CLOCK_DELAY) clk = !clk;\n")
+        self.tbf.write("    forever #(CLOCK_DELAY) clk = !clk;\n")
         self.tbf.write("  end\n\n")
 
 
@@ -120,9 +119,12 @@ class test_bench:
 
         self.tbf.write("  // Reset\n")
         self.tbf.write("  initial begin\n")
-        self.tbf.write("    rst = 1;\n")
-        self.tbf.write("    #(RESET_DELAY);\n")
-        self.tbf.write("    rst = 0;\n")
+        self.tbf.write("    cache_flush = 0;\n")
+        self.tbf.write("    cache_csb   = 1;\n")
+        self.tbf.write("    cache_web   = 1;\n")
+        self.tbf.write("    error_count = 0;\n")
+        self.tbf.write("    rst         = 1;\n")
+        self.tbf.write("    #(RESET_DELAY) rst = 0;\n")
         self.tbf.write("  end\n\n")
 
 
@@ -159,34 +161,39 @@ class test_bench:
         self.tbf.write("  );\n\n")
 
 
-    def write_test_block(self):
-        """ Write the test block of the test bench. """
+    def write_tasks(self):
+        """ Write the tasks of the test bench. """
 
-        self.tbf.write("  initial begin\n")
-        self.tbf.write("    cache_flush <= #(DELAY) 0;\n")
-        self.tbf.write("    cache_csb   <= #(DELAY) 0;\n")
-        self.tbf.write("    test_ptr    <= #(DELAY) 0;\n")
-        self.tbf.write("    error_count <= #(DELAY) 0;\n")
-        self.tbf.write("    repeat (CYCLE_LIMIT) begin\n")
-        self.tbf.write("      @(posedge clk);\n")
+        self.tbf.write("  // Stall signal of the cache is supposed be high when this task is called\n")
+        self.tbf.write("  task check_stall;\n")
+        self.tbf.write("    input [MAX_TEST_SIZE-1:0] test_count;\n")
+        self.tbf.write("    begin\n")
         self.tbf.write("      if (!cache_stall) begin\n")
-        self.tbf.write("        if (test_ptr > 1 && test_data[test_ptr-2][DATA_WIDTH-1] && cache_dout != test_data[test_ptr][WORD_WIDTH-1:0]) begin // Unexpected output\n")
-        self.tbf.write("          error_count <= error_count + 1;\n")
-        self.tbf.write("          $display(\"Test case #%d failed! Expected: %d, Received: %d\", test_ptr-2, test_data[test_ptr][WORD_WIDTH-1:0], cache_dout);\n")
-        self.tbf.write("        end\n")
-        self.tbf.write("        cache_web  <= #(DELAY) test_data[test_ptr][DATA_WIDTH-1];\n")
-        self.tbf.write("        cache_addr <= #(DELAY) test_data[test_ptr][DATA_WIDTH-2 -: ADDR_WIDTH];\n")
-        self.tbf.write("        cache_din  <= #(DELAY) test_data[test_ptr][WORD_WIDTH-1:0];\n")
-        self.tbf.write("        test_ptr   <= #(DELAY) test_ptr + 1;\n")
-        self.tbf.write("        if (test_ptr == TEST_SIZE + 2) begin // End of simulation\n")
-        self.tbf.write("          if (error_count == 0)\n")
-        self.tbf.write("            $display(\"Simulation successful.\");\n")
-        self.tbf.write("          else\n")
-        self.tbf.write("            $display(\"Simulation failed with %d errors.\", error_count);\n")
-        self.tbf.write("          $finish;\n")
-        self.tbf.write("        end\n")
+        self.tbf.write("        $display(\"Error at test #%0d! Cache stall is expected to be high but it is low.\", test_count);\n")
+        self.tbf.write("        error_count = error_count + 1;\n")
         self.tbf.write("      end\n")
         self.tbf.write("    end\n")
-        self.tbf.write("    $display(\"Simulation failed due to cycle limit.\");\n")
-        self.tbf.write("    $finish;\n")
-        self.tbf.write("  end\n\n")
+        self.tbf.write("  endtask\n\n")
+
+        self.tbf.write("  // Output of the cache must match the expected\n")
+        self.tbf.write("  task check_dout;\n")
+        self.tbf.write("    input [WORD_WIDTH-1:0] dout_expected;\n")
+        self.tbf.write("    input [MAX_TEST_SIZE-1:0] test_count;\n")
+        self.tbf.write("    begin\n")
+        self.tbf.write("      if (cache_dout !== dout_expected) begin\n")
+        self.tbf.write("        $display(\"Error at test #%0d! Expected: %d, Received: %d\", test_count, dout_expected, cache_dout);\n")
+        self.tbf.write("        error_count = error_count + 1;\n")
+        self.tbf.write("      end\n")
+        self.tbf.write("    end\n")
+        self.tbf.write("  endtask\n\n")
+
+        self.tbf.write("  // Print simulation result\n")
+        self.tbf.write("  task end_simulation;\n")
+        self.tbf.write("    begin\n")
+        self.tbf.write("      if (!error_count) begin\n")
+        self.tbf.write("        $display(\"{}\");\n".format(self.success_message))
+        self.tbf.write("      end else begin\n")
+        self.tbf.write("        $display(\"{} Error count: %0d\", error_count);\n".format(self.fail_message))
+        self.tbf.write("      end\n")
+        self.tbf.write("    end\n")
+        self.tbf.write("  endtask\n\n")
