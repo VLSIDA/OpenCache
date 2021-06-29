@@ -7,7 +7,7 @@
 #
 import os
 from shutil import copyfile
-from subprocess import call, DEVNULL
+from subprocess import call, DEVNULL, STDOUT
 from re import findall
 from core import core
 from test_bench import test_bench
@@ -104,14 +104,16 @@ class verify:
         if call("{0} {1}_data_array_config.py".format(openram_command, sim_path + self.name),
                 cwd=sim_path,
                 shell=True,
-                stdout=DEVNULL) < 0:
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, sim_path + self.name),
                 cwd=sim_path,
                 shell=True,
-                stdout=DEVNULL) < 0:
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
@@ -120,19 +122,28 @@ class verify:
             if call("{0} {1}_{2}_array_config.py".format(openram_command, sim_path + self.name, self.replacement_policy),
                     cwd=sim_path,
                     shell=True,
-                    stdout=DEVNULL) < 0:
+                    stdout=DEVNULL,
+                    stderr=STDOUT) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Run FuseSoc for simulation
         debug.print_raw("    Running FuseSoC for simulation...")
 
         debug.print_raw("      Adding simulation as library...")
-        if call("fusesoc library add {0} {1}".format(self.name, sim_path), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to add simulation core.", 1)
+        if call("fusesoc library add {0} {1}".format(self.name, sim_path),
+                cwd=sim_path,
+                shell=True,
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
+            debug.error("    FuseSoC failed to add simulation core!", 1)
 
         debug.print_raw("      Running the simulation...")
-        if call("fusesoc run --target=sim --no-export {}".format(self.sim_core.core_name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to run the simulation.", 1)
+        if call("fusesoc run --target=sim --no-export {}".format(self.sim_core.core_name),
+                cwd=sim_path,
+                shell=True,
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
+            debug.error("    FuseSoC failed to run the simulation!", 1)
 
         # Delete the temporary CONF file
         # If this file is not deleted, it can cause simulations
@@ -141,9 +152,9 @@ class verify:
 
         # Check the result of the simulation
         if self.check_sim_result(sim_path, "icarus.log"):
-            debug.print_raw("    Simulation successful.")
+            debug.print_raw("    Simulation successful")
         else:
-            debug.error("    Simulation failed.", 1)
+            debug.error("    Simulation failed!", 1)
 
 
     def check_sim_result(self, path, file_name):
@@ -195,14 +206,16 @@ class verify:
         if call("{0} {1}_data_array_config.py".format(openram_command, synth_path + self.name),
                 cwd=synth_path,
                 shell=True,
-                stdout=DEVNULL) < 0:
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, synth_path + self.name),
                 cwd=synth_path,
                 shell=True,
-                stdout=DEVNULL) < 0:
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
@@ -211,7 +224,8 @@ class verify:
             if call("{0} {1}_{2}_array_config.py".format(openram_command, synth_path + self.name, self.replacement_policy),
                     cwd=synth_path,
                     shell=True,
-                    stdout=DEVNULL) < 0:
+                    stdout=DEVNULL,
+                    stderr=STDOUT) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Convert SRAM modules to blackbox
@@ -226,12 +240,20 @@ class verify:
         debug.print_raw("    Running FuseSoC for synthesis...")
 
         debug.print_raw("      Adding synthesis as library...")
-        if call("fusesoc library add {0} {1}".format(self.name, synth_path), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to add synthesis core.", 1)
+        if call("fusesoc library add {0} {1}".format(self.name, synth_path),
+                cwd=synth_path,
+                shell=True,
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
+            debug.error("    FuseSoC failed to add synthesis core!", 1)
 
         debug.print_raw("      Running the synthesis...")
-        if call("fusesoc run --target=synth --no-export {}".format(self.synth_core.core_name), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
-            debug.error("    FuseSoC failed to run the synthesis.", 1)
+        if call("fusesoc run --target=synth --no-export {}".format(self.synth_core.core_name),
+                cwd=synth_path,
+                shell=True,
+                stdout=DEVNULL,
+                stderr=STDOUT) < 0:
+            debug.error("    FuseSoC failed to run the synthesis!", 1)
 
         # Delete the temporary CONF file
         # If this file is not deleted, it can cause syntheses
@@ -240,9 +262,9 @@ class verify:
 
         # Check the result of the synthesis
         if self.check_synth_result(synth_path, "yosys.log"):
-            debug.print_raw("    Synthesis successful.")
+            debug.print_raw("    Synthesis successful")
         else:
-            debug.error("    Synthesis failed.", 1)
+            debug.error("    Synthesis failed!", 1)
 
 
     def convert_to_blacbox(self, file_path):
