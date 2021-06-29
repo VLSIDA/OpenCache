@@ -61,36 +61,37 @@ class verify:
         sim_path = OPTS.output_path + "simulation/"
         openram_command = "python3 $OPENRAM_HOME/openram.py"
 
-        debug.print_raw("  Writing simulation files...")
+        debug.print_raw("  Initializing simulation...")
+        debug.print_raw("    Writing simulation files...")
 
         # Write the CORE file
         core_path = sim_path + "sim.core"
-        debug.print_raw("    CORE: Writing to {}".format(core_path))
+        debug.print_raw("      CORE: Writing to {}".format(core_path))
         self.sim_core.write(core_path)
 
         # Write the test bench file
         tb_path = sim_path + "test_bench.v"
-        debug.print_raw("    Verilog (Test bench): Writing to {}".format(tb_path))
+        debug.print_raw("      Verilog (Test bench): Writing to {}".format(tb_path))
         self.tb.write(tb_path)
 
         # Write the test data file
         data_path = sim_path + "test_data.v"
-        debug.print_raw("    Verilog (Test data): Writing to {}".format(data_path))
+        debug.print_raw("      Verilog (Test data): Writing to {}".format(data_path))
         self.data.generate_data()
         self.data.write(data_path)
 
         # Write the DRAM file
         dram_path = sim_path + "dram.v"
-        debug.print_raw("    Verilog (DRAM): Writing to {}".format(dram_path))
+        debug.print_raw("      Verilog (DRAM): Writing to {}".format(dram_path))
         self.dram.write(dram_path)
 
         # Copy the generated cache Verilog file
         cache_path = sim_path + self.name + ".v"
-        debug.print_raw("  Copying the cache design file to the simulation subfolder")
+        debug.print_raw("    Copying the cache design file to the simulation subfolder")
         copyfile(OPTS.output_path + self.name + ".v", cache_path)
 
         # Copy the configuration files
-        debug.print_raw("  Copying the config files to the simulation subfolder")
+        debug.print_raw("    Copying the config files to the simulation subfolder")
         self.copy_config_file(self.name + "_data_array_config.py", sim_path)
         self.copy_config_file(self.name + "_tag_array_config.py", sim_path)
 
@@ -99,14 +100,14 @@ class verify:
             self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), sim_path)
 
         # Run OpenRAM to generate Verilog files of SRAMs
-        debug.print_raw("  Running OpenRAM for the data array...")
+        debug.print_raw("    Running OpenRAM for the data array...")
         if call("{0} {1}_data_array_config.py".format(openram_command, sim_path + self.name),
                 cwd=sim_path,
                 shell=True,
                 stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
-        debug.print_raw("  Running OpenRAM for the tag array...")
+        debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, sim_path + self.name),
                 cwd=sim_path,
                 shell=True,
@@ -115,7 +116,7 @@ class verify:
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
-            debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
+            debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
             if call("{0} {1}_{2}_array_config.py".format(openram_command, sim_path + self.name, self.replacement_policy),
                     cwd=sim_path,
                     shell=True,
@@ -123,13 +124,13 @@ class verify:
                 debug.error("    OpenRAM failed!", 1)
 
         # Run FuseSoc for simulation
-        debug.print_raw("  Running FuseSoC for simulation...")
+        debug.print_raw("    Running FuseSoC for simulation...")
 
-        debug.print_raw("    Adding simulation as library...")
+        debug.print_raw("      Adding simulation as library...")
         if call("fusesoc library add {0} {1}".format(self.name, sim_path), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
             debug.error("    FuseSoC failed to add simulation core.", 1)
 
-        debug.print_raw("    Running the simulation...")
+        debug.print_raw("      Running the simulation...")
         if call("fusesoc run --target=sim --no-export {}".format(self.sim_core.core_name), cwd=sim_path, shell=True, stdout=DEVNULL) < 0:
             debug.error("    FuseSoC failed to run the simulation.", 1)
 
@@ -140,9 +141,9 @@ class verify:
 
         # Check the result of the simulation
         if self.check_sim_result(sim_path, "icarus.log"):
-            debug.print_raw("  Simulation successful.")
+            debug.print_raw("    Simulation successful.")
         else:
-            debug.error("  Simulation failed.", 1)
+            debug.error("    Simulation failed.", 1)
 
 
     def check_sim_result(self, path, file_name):
@@ -167,20 +168,21 @@ class verify:
         synth_path = OPTS.output_path + "synthesis/"
         openram_command = "python3 $OPENRAM_HOME/openram.py"
 
-        debug.print_raw("  Writing synthesis files...")
+        debug.print_raw("  Initializing synthesis...")
+        debug.print_raw("    Writing synthesis files...")
 
         # Write the CORE file
         core_path = synth_path + "synth.core"
-        debug.print_raw("    CORE: Writing to {}".format(core_path))
+        debug.print_raw("      CORE: Writing to {}".format(core_path))
         self.synth_core.write(core_path)
 
         # Copy the generated cache Verilog file
         cache_path = synth_path + self.name + ".v"
-        debug.print_raw("  Copying the cache design file to the synthesis subfolder")
+        debug.print_raw("    Copying the cache design file to the synthesis subfolder")
         copyfile(OPTS.output_path + self.name + ".v", cache_path)
 
         # Copy the configuration files
-        debug.print_raw("  Copying the config files to the simulation subfolder")
+        debug.print_raw("    Copying the config files to the simulation subfolder")
         self.copy_config_file(self.name + "_data_array_config.py", synth_path)
         self.copy_config_file(self.name + "_tag_array_config.py", synth_path)
 
@@ -189,14 +191,14 @@ class verify:
             self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), synth_path)
 
         # Run OpenRAM to generate Verilog files of SRAMs
-        debug.print_raw("  Running OpenRAM for the data array...")
+        debug.print_raw("    Running OpenRAM for the data array...")
         if call("{0} {1}_data_array_config.py".format(openram_command, synth_path + self.name),
                 cwd=synth_path,
                 shell=True,
                 stdout=DEVNULL) < 0:
             debug.error("    OpenRAM failed!", 1)
 
-        debug.print_raw("  Running OpenRAM for the tag array...")
+        debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, synth_path + self.name),
                 cwd=synth_path,
                 shell=True,
@@ -205,7 +207,7 @@ class verify:
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
-            debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
+            debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
             if call("{0} {1}_{2}_array_config.py".format(openram_command, synth_path + self.name, self.replacement_policy),
                     cwd=synth_path,
                     shell=True,
@@ -213,7 +215,7 @@ class verify:
                 debug.error("    OpenRAM failed!", 1)
 
         # Convert SRAM modules to blackbox
-        debug.print_raw("  Converting OpenRAM modules to blackbox...")
+        debug.print_raw("    Converting OpenRAM modules to blackbox...")
         self.convert_to_blacbox(synth_path + self.name + "_tag_array.v")
         self.convert_to_blacbox(synth_path + self.name + "_data_array.v")
 
@@ -221,13 +223,13 @@ class verify:
             self.convert_to_blacbox(synth_path + self.name + "_" + self.replacement_policy + "_array.v")
 
         # Run FuseSoc for synthesis
-        debug.print_raw("  Running FuseSoC for synthesis...")
+        debug.print_raw("    Running FuseSoC for synthesis...")
 
-        debug.print_raw("    Adding synthesis as library...")
+        debug.print_raw("      Adding synthesis as library...")
         if call("fusesoc library add {0} {1}".format(self.name, synth_path), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
             debug.error("    FuseSoC failed to add synthesis core.", 1)
 
-        debug.print_raw("    Running the synthesis...")
+        debug.print_raw("      Running the synthesis...")
         if call("fusesoc run --target=synth --no-export {}".format(self.synth_core.core_name), cwd=synth_path, shell=True, stdout=DEVNULL) < 0:
             debug.error("    FuseSoC failed to run the synthesis.", 1)
 
@@ -238,9 +240,9 @@ class verify:
 
         # Check the result of the synthesis
         if self.check_synth_result(synth_path, "yosys.log"):
-            debug.print_raw("  Synthesis successful.")
+            debug.print_raw("    Synthesis successful.")
         else:
-            debug.error("  Synthesis failed.", 1)
+            debug.error("    Synthesis failed.", 1)
 
 
     def convert_to_blacbox(self, file_path):
