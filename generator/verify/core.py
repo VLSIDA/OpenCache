@@ -11,10 +11,11 @@ class core:
     Class to generate the CORE file for FuseSoC.
     """
 
-    def __init__(self, cache_config, name):
+    def __init__(self, cache_config, name, is_sim):
 
         cache_config.set_local_config(self)
         self.name = name
+        self.is_sim = is_sim
 
         # This is used in FuseSoC for the current run
         self.core_name = "opencache:cache:{}:0.1.0".format(name)
@@ -32,33 +33,49 @@ class core:
         self.cf.write("filesets:\n")
         self.cf.write("  rtl_files:\n")
         self.cf.write("    files:\n")
-        self.cf.write("      - dram.v\n")
+
+        # DRAM file isn't needed for synthesis
+        if self.is_sim:
+            self.cf.write("      - dram.v\n")
+
         self.cf.write("      - {}_tag_array.v\n".format(self.name))
         self.cf.write("      - {}_data_array.v\n".format(self.name))
         self.cf.write("      - {}.v\n".format(self.name))
         self.cf.write("    file_type: verilogSource\n\n")
 
-        self.cf.write("  tb_files:\n")
-        self.cf.write("    files:\n")
-        self.cf.write("      - test_bench.v\n")
-        self.cf.write("      - test_data.v:\n")
-        self.cf.write("          is_include_file: true\n")
-        self.cf.write("    file_type: verilogSource\n\n")
+        if self.is_sim:
+            self.cf.write("  tb_files:\n")
+            self.cf.write("    files:\n")
+            self.cf.write("      - test_bench.v\n")
+            self.cf.write("      - test_data.v:\n")
+            self.cf.write("          is_include_file: true\n")
+            self.cf.write("    file_type: verilogSource\n\n")
 
         self.cf.write("targets:\n")
         self.cf.write("  default:\n")
         self.cf.write("    filesets:\n")
         self.cf.write("      - rtl_files\n\n")
 
-        self.cf.write("  sim:\n")
-        self.cf.write("    description: Simulate the cache design\n")
-        self.cf.write("    default_tool: icarus\n")
-        self.cf.write("    filesets:\n")
-        self.cf.write("      - rtl_files\n")
-        self.cf.write("      - tb_files\n")
-        self.cf.write("    tools:\n")
-        self.cf.write("      icarus:\n")
-        self.cf.write("        timescale: 1ns/1ps\n")
-        self.cf.write("    toplevel: test_bench\n")
+        if self.is_sim:
+            self.cf.write("  sim:\n")
+            self.cf.write("    description: Simulate the cache design\n")
+            self.cf.write("    default_tool: icarus\n")
+            self.cf.write("    filesets:\n")
+            self.cf.write("      - rtl_files\n")
+            self.cf.write("      - tb_files\n")
+            self.cf.write("    tools:\n")
+            self.cf.write("      icarus:\n")
+            self.cf.write("        timescale: 1ns/1ps\n")
+            self.cf.write("    toplevel: test_bench\n")
+        else:
+            self.cf.write("  synth:\n")
+            self.cf.write("    description: Synthesize the cache design\n")
+            self.cf.write("    default_tool: yosys\n")
+            self.cf.write("    filesets:\n")
+            self.cf.write("      - rtl_files\n")
+            self.cf.write("    tools:\n")
+            self.cf.write("      yosys:\n")
+            self.cf.write("        arch: xilinx\n")
+            self.cf.write("    toplevel: {}\n".format(self.name))
 
         self.cf.close()
