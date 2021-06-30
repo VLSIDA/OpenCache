@@ -142,20 +142,16 @@ def read_config(config_file):
     
     OPTS.overridden = {}
     for k, v in config.__dict__.items():
-        # The command line will over-ride the config file
-        # except in the case of the tech name! This is because the tech name
-        # is sometimes used to specify the config file itself (e.g. unit tests)
-        # Note that if we re-read a config file, nothing will get read again!
-        if k not in OPTS.__dict__ or k == "tech_name":
+        if k not in OPTS.__dict__:
             OPTS.__dict__[k] = v
             OPTS.overridden[k] = True
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
         OPTS.output_name = "cache_{0}b_{1}b_{2}_{3}".format(OPTS.total_size,
-                                                           OPTS.word_size,
-                                                           OPTS.num_ways,
-                                                           OPTS.replacement_policy)
+                                                            OPTS.word_size,
+                                                            OPTS.num_ways,
+                                                            OPTS.replacement_policy)
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
@@ -166,6 +162,10 @@ def read_config(config_file):
     # Create a new folder for this run
     OPTS.output_path += OPTS.output_name + "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
+
+    # Make a temp folder if not given
+    if OPTS.temp_path == "":
+        OPTS.temp_path = OPTS.output_path + "temp/"
 
 
 def include_paths():
@@ -190,16 +190,14 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.", -1)
 
-    # Make a separate folder for verification
-    if OPTS.simulate or OPTS.synthesize:
-        path = OPTS.output_path + "verification/"
-        try:
-            os.makedirs(path, 0o750)
-        except OSError as e:
-            if e.errno == 17:  # errno.EEXIST
-                os.chmod(path, 0o750)
-        except:
-            debug.error("Unable to make verification directory.", -1)
+    # Make the temp folder
+    try:
+        os.makedirs(OPTS.temp_path, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.temp_path, 0o750)
+    except:
+        debug.error("Unable to make temp directory.", -1)
 
 
 def report_status():
