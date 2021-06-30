@@ -190,27 +190,16 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.", -1)
 
-    # Make a separate folder for simulation
-    if OPTS.simulate:
-        path = OPTS.output_path + "simulation/"
+    # Make a separate folder for verification
+    if OPTS.simulate or OPTS.synthesize:
+        path = OPTS.output_path + "verification/"
         try:
             os.makedirs(path, 0o750)
         except OSError as e:
             if e.errno == 17:  # errno.EEXIST
                 os.chmod(path, 0o750)
         except:
-            debug.error("Unable to make simulation directory.", -1)
-
-    # Make a separate folder for synthesis
-    if OPTS.synthesize:
-        path = OPTS.output_path + "synthesis/"
-        try:
-            os.makedirs(path, 0o750)
-        except OSError as e:
-            if e.errno == 17:  # errno.EEXIST
-                os.chmod(path, 0o750)
-        except:
-            debug.error("Unable to make synthesis directory.", -1)
+            debug.error("Unable to make verification directory.", -1)
 
 
 def report_status():
