@@ -42,6 +42,11 @@ class verify:
 
         debug.print_raw("Initializing verification...")
 
+        # Write the CORE file
+        core_path = self.path + "verify.core"
+        debug.print_raw("  CORE: Writing to {}".format(core_path))
+        self.core.write(core_path)
+
         if OPTS.simulate:
             self.simulate()
 
@@ -61,11 +66,6 @@ class verify:
 
         debug.print_raw("  Initializing simulation...")
         debug.print_raw("    Writing simulation files...")
-
-        # Write the CORE file
-        core_path = self.path + "sim.core"
-        debug.print_raw("      CORE: Writing to {}".format(core_path))
-        self.core.write(core_path)
 
         # Write the test bench file
         tb_path = self.path + "test_bench.v"
@@ -178,11 +178,6 @@ class verify:
 
         debug.print_raw("  Initializing synthesis...")
         debug.print_raw("    Writing synthesis files...")
-
-        # Write the CORE file
-        core_path = self.path + "synth.core"
-        debug.print_raw("      CORE: Writing to {}".format(core_path))
-        self.core.write(core_path)
 
         # Copy the generated cache Verilog file
         cache_path = self.path + self.name + ".v"
