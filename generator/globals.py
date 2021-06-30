@@ -253,4 +253,5 @@ def report_status():
     debug.print_raw("Number of ways: {}".format(OPTS.num_ways))
     debug.print_raw("Replacement policy: {}".format(OPTS.replacement_policy.capitalize() if OPTS.num_ways > 1 else None))
     debug.print_raw("Write policy: {}".format(OPTS.write_policy.capitalize()))
-    debug.print_raw("Return type: {}\n".format(OPTS.return_type.capitalize()))
+    debug.print_raw("Return type: {}".format(OPTS.return_type.capitalize()))
+    debug.print_raw("Data hazard: {}\n".format(OPTS.data_hazard))

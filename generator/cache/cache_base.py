@@ -104,7 +104,8 @@ class cache_base:
                                                             "None"))
         self.vf.write("// Write policy       : {}\n".format(self.write_policy.capitalize()))
         # TODO: How to adjust the data return size?
-        self.vf.write("// Return type        : {}\n\n".format(self.return_type.capitalize()))
+        self.vf.write("// Return type        : {}\n".format(self.return_type.capitalize()))
+        self.vf.write("// Data hazard        : {}\n\n".format(self.data_hazard))
 
 
     def write_parameters(self):
