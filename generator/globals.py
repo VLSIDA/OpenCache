@@ -168,6 +168,34 @@ def read_config(config_file):
         OPTS.temp_path = OPTS.output_path + "temp/"
 
 
+def end_opencache():
+    """ Clean up OpenCache for a proper exit. """
+
+    cleanup_paths()
+
+
+def cleanup_paths():
+    """
+    We should clean up the temp directory after execution.
+    """
+    global OPTS
+
+    if OPTS.keep_temp:
+        debug.info(0, "Preserving temp directory: {}".format(OPTS.temp_path))
+        return
+    elif os.path.exists(OPTS.temp_path):
+        purge_temp()
+
+
+def purge_temp():
+    """ Remove the temp folder. """
+
+    debug.info(1, "Purging temp directory: {}".format(OPTS.temp_path))
+
+    # Remove all files and subdirectories under the temp directory
+    shutil.rmtree(OPTS.temp_path, ignore_errors=True)
+
+
 def include_paths():
     """ Include generator folders to the sys path. """
     

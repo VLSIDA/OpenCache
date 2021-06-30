@@ -52,3 +52,5 @@ if OPTS.simulate or OPTS.synthesize:
                name=OPTS.output_name)
 
     v.verify()
+
+g.end_opencache()

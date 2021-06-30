@@ -53,6 +53,8 @@ class options(optparse.Values):
 
     # Temp path for verification and unit testing
     temp_path = ""
+    # Keep verification 
+    keep_temp = False
 
     # Verify the design by simulating
     simulate = False
