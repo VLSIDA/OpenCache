@@ -52,7 +52,7 @@ class sim_cache:
         """ Write dirty data lines back to DRAM. """
 
         for row_i in range(self.num_rows):
-            for way_i in range(self.self.num_ways):
+            for way_i in range(self.num_ways):
                 if self.valid_array[row_i][way_i] and self.dirty_array[row_i][way_i]:
                     old_tag  = self.tag_array[row_i][way_i]
                     old_data = self.data_array[row_i][way_i].copy()
