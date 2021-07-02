@@ -59,6 +59,22 @@ class sim_cache:
                     self.dram[(old_tag << self.set_size) + row_i] = old_data
 
 
+    def merge_address(self, tag_decimal, set_decimal, offset_decimal):
+        """
+        Create the address consists of given
+        tag, set, and offset values.
+        """
+
+        tag_binary    = "{0:0{1}b}".format(tag_decimal, self.tag_size)
+        set_binary    = "{0:0{1}b}".format(set_decimal, self.set_size)
+        offset_binary = "{0:0{1}b}".format(offset_decimal, self.offset_size)
+
+        address_binary  = tag_binary + set_binary + offset_binary
+        address_decimal = int(address_binary, 2)
+
+        return address_decimal
+
+
     def parse_address(self, address):
         """ Parse the given address into tag, set, and offset. """
 
