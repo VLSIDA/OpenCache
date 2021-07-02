@@ -19,9 +19,7 @@ class sim_cache:
         cache_config.set_local_config(self)
 
         self.reset()
-
-        # DRAM list has a line in each row.
-        self.dram = [[None] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
+        self.reset_dram()
 
 
     def reset(self):
@@ -41,6 +39,13 @@ class sim_cache:
 
         if self.replacement_policy == "lru":
             self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
+
+
+    def reset_dram(self):
+        """ Reset the DRAM. """
+
+        # DRAM list has a line in each row.
+        self.dram = [[None] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
 
 
     def flush(self):
