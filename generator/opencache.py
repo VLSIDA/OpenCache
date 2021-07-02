@@ -25,7 +25,8 @@ if len(args) != 1:
     sys.exit(2)
 
 # Parse config file and set up all the options
-g.init_opencache(config_file=args[0])
+g.init_opencache(config_file=args[0],
+                 is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
 g.print_banner()

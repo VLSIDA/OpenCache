@@ -58,6 +58,9 @@ def print_banner():
     """ Conditionally print the banner to stdout """
     global OPTS
 
+    if OPTS.is_unit_test:
+        return
+
     debug.print_raw("|==============================================================================|")
     debug.print_raw("|=========" + NAME.center(60) + "=========|")
     debug.print_raw("|=========" + " ".center(60) + "=========|")
@@ -85,19 +88,19 @@ def check_versions():
         debug.error("Python {0}.{1} or greater is required.".format(major_required, minor_required), -1)
 
 
-def init_opencache(config_file):
+def init_opencache(config_file, is_unit_test=True):
     """ Initialize the paths, variables, etc. """
 
     check_versions()
 
-    read_config(config_file)
+    read_config(config_file, is_unit_test)
 
     include_paths()
 
     init_paths()
 
 
-def read_config(config_file):
+def read_config(config_file, is_unit_test=True):
     """
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
@@ -112,7 +115,6 @@ def read_config(config_file):
 
     # Make it a python file if the base name was only given
     config_file = re.sub(r'\.py$', "", config_file)
-
 
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
@@ -145,6 +147,8 @@ def read_config(config_file):
         if k not in OPTS.__dict__:
             OPTS.__dict__[k] = v
             OPTS.overridden[k] = True
+
+    OPTS.is_unit_test = is_unit_test
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
@@ -197,12 +201,15 @@ def purge_temp():
 
 
 def include_paths():
-    """ Include generator folders to the sys path. """
+    """ Include script folders to the sys path. """
     
     sys.path.insert(0, "./cache")
 
-    if OPTS.simulate or OPTS.synthesize:
+    if OPTS.is_unit_test or OPTS.simulate or OPTS.synthesize:
         sys.path.insert(0, "./verify")
+
+    if OPTS.is_unit_test:
+        sys.path.insert(0, "./tests")
 
 
 def init_paths():

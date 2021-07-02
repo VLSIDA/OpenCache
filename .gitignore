@@ -3,3 +3,4 @@ outputs
 *.v
 *.log
 *config.py
+!*/tests/configs/*config.py
