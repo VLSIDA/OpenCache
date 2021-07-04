@@ -35,6 +35,8 @@ class verify:
             self.data = test_data(cache_config, name)
             self.dram = dram(cache_config, name)
 
+        self.openram_run = False
+
         # Print subprocess outputs on the terminal
         # if verbose debug is enabled
         self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL
@@ -128,6 +130,8 @@ class verify:
                     stderr=self.stderr) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
+        self.openram_run = True
+
         # Run FuseSoc for simulation
         debug.print_raw("    Running FuseSoC for simulation...")
 
@@ -188,41 +192,45 @@ class verify:
         debug.print_raw("    Copying the cache design file to the synthesis subfolder")
         copyfile(OPTS.output_path + self.name + ".v", cache_path)
 
-        # Copy the configuration files
-        debug.print_raw("    Copying the config files to the simulation subfolder")
-        self.copy_config_file(self.name + "_data_array_config.py", OPTS.temp_path)
-        self.copy_config_file(self.name + "_tag_array_config.py", OPTS.temp_path)
+        # If OpenRAM is run for simulation, no need to run it again
+        if not self.openram_run:
+            # Copy the configuration files
+            debug.print_raw("    Copying the config files to the simulation subfolder")
+            self.copy_config_file(self.name + "_data_array_config.py", OPTS.temp_path)
+            self.copy_config_file(self.name + "_tag_array_config.py", OPTS.temp_path)
 
-        # Random replacement policy doesn't need a separate SRAM array
-        if self.replacement_policy not in [None, "random"]:
-            self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), OPTS.temp_path)
+            # Random replacement policy doesn't need a separate SRAM array
+            if self.replacement_policy not in [None, "random"]:
+                self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), OPTS.temp_path)
 
-        # Run OpenRAM to generate Verilog files of SRAMs
-        debug.print_raw("    Running OpenRAM for the data array...")
-        if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    OpenRAM failed!", 1)
-
-        debug.print_raw("    Running OpenRAM for the tag array...")
-        if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    OpenRAM failed!", 1)
-
-        # Random replacement policy doesn't need a separate SRAM array
-        if self.replacement_policy not in [None, "random"]:
-            debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-            if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
+            # Run OpenRAM to generate Verilog files of SRAMs
+            debug.print_raw("    Running OpenRAM for the data array...")
+            if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
                     cwd=OPTS.temp_path,
                     shell=True,
                     stdout=self.stdout,
                     stderr=self.stderr) < 0:
                 debug.error("    OpenRAM failed!", 1)
+
+            debug.print_raw("    Running OpenRAM for the tag array...")
+            if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
+                    cwd=OPTS.temp_path,
+                    shell=True,
+                    stdout=self.stdout,
+                    stderr=self.stderr) < 0:
+                debug.error("    OpenRAM failed!", 1)
+
+            # Random replacement policy doesn't need a separate SRAM array
+            if self.replacement_policy not in [None, "random"]:
+                debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
+                if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
+                        cwd=OPTS.temp_path,
+                        shell=True,
+                        stdout=self.stdout,
+                        stderr=self.stderr) < 0:
+                    debug.error("    OpenRAM failed!", 1)
+        else:
+            debug.print_raw("    Skipping to run OpenRAM since already run")
 
         # Convert SRAM modules to blackbox
         debug.print_raw("    Converting OpenRAM modules to blackbox...")
