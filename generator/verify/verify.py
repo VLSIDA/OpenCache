@@ -118,27 +118,7 @@ class verify:
 
         # Run FuseSoc for simulation
         debug.print_raw("    Running FuseSoC for simulation...")
-
-        debug.print_raw("      Adding simulation as library...")
-        if call("fusesoc library add {0} {1}".format(self.name, OPTS.temp_path),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    FuseSoC failed to add simulation core!", 1)
-
-        debug.print_raw("      Running the simulation...")
-        if call("fusesoc run --target=sim --no-export {}".format(self.core.core_name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    FuseSoC failed to run the simulation!", 1)
-
-        # Delete the temporary CONF file
-        # If this file is not deleted, it can cause simulations
-        # to fail in the future.
-        os.remove(OPTS.temp_path + "fusesoc.conf")
+        self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, False)
 
         # Check the result of the simulation
         if self.check_sim_result(OPTS.temp_path, "icarus.log"):
@@ -210,27 +190,7 @@ class verify:
 
         # Run FuseSoc for synthesis
         debug.print_raw("    Running FuseSoC for synthesis...")
-
-        debug.print_raw("      Adding synthesis as library...")
-        if call("fusesoc library add {0} {1}".format(self.name, OPTS.temp_path),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    FuseSoC failed to add synthesis core!", 1)
-
-        debug.print_raw("      Running the synthesis...")
-        if call("fusesoc run --target=synth --no-export {}".format(self.core.core_name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    FuseSoC failed to run the synthesis!", 1)
-
-        # Delete the temporary CONF file
-        # If this file is not deleted, it can cause syntheses
-        # to fail in the future.
-        os.remove(OPTS.temp_path + "fusesoc.conf")
+        self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, False)
 
         # Check the result of the synthesis
         if self.check_synth_result(OPTS.temp_path, "yosys.log"):
@@ -250,6 +210,38 @@ class verify:
                 stdout=self.stdout,
                 stderr=self.stderr) < 0:
             debug.error("    OpenRAM failed!", -1)
+
+
+    def run_fusesoc(self, library_name, core_name, path, is_sim):
+        """ Run FuseSoC for simulation or synthesis. """
+
+        fusesoc_library_command = "fusesoc library add {0} {1}".format(library_name, path)
+
+        fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "synth", core_name)
+
+        debug.print_raw("      Adding {} core as library...".format("simulation" if is_sim else "synthesis"))
+        debug.print_raw("      Running the {}...".format("simulation" if is_sim else "synthesis"))
+
+        # Add the CORE file as a library
+        if call(fusesoc_library_command,
+                cwd=path,
+                shell=True,
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
+            debug.error("    FuseSoC failed to add library!", -1)
+
+        # Run the library for simulation or synthesis
+        if call(fusesoc_run_command,
+                cwd=path,
+                shell=True,
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
+            debug.error("    FuseSoC failed to run!", -1)
+
+        # Delete the temporary CONF file
+        # If this file is not deleted, it can cause syntheses
+        # to fail in the future.
+        os.remove(path + "fusesoc.conf")
 
 
     def convert_to_blacbox(self, file_path):
