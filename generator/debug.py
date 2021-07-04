@@ -73,7 +73,9 @@ def log(str):
             if not globals.OPTS.output_path.endswith('/'):
                 globals.OPTS.output_path += "/"
             if not os.path.isdir(globals.OPTS.output_path):
-                os.mkdir(globals.OPTS.output_path)
+                os.makedirs(globals.OPTS.output_path,
+                            mode=0o750,
+                            exist_ok=True)
             compile_log = open(globals.OPTS.output_path +
                                globals.OPTS.output_name + '.log', "w+")
             log.create_file = 0
