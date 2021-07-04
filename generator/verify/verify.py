@@ -35,6 +35,11 @@ class verify:
             self.data = test_data(cache_config, name)
             self.dram = dram(cache_config, name)
 
+        # Print subprocess outputs on the terminal
+        # if verbose debug is enabled
+        self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL
+        self.stderr = None if OPTS.verbose_level >= 2 else STDOUT
+
 
     def verify(self):
         """ Run the verifier. """
@@ -101,16 +106,16 @@ class verify:
         if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
@@ -119,8 +124,8 @@ class verify:
             if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
                     cwd=OPTS.temp_path,
                     shell=True,
-                    stdout=DEVNULL,
-                    stderr=STDOUT) < 0:
+                    stdout=self.stdout,
+                    stderr=self.stderr) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Run FuseSoc for simulation
@@ -130,16 +135,16 @@ class verify:
         if call("fusesoc library add {0} {1}".format(self.name, OPTS.temp_path),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    FuseSoC failed to add simulation core!", 1)
 
         debug.print_raw("      Running the simulation...")
         if call("fusesoc run --target=sim --no-export {}".format(self.core.core_name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    FuseSoC failed to run the simulation!", 1)
 
         # Delete the temporary CONF file
@@ -197,16 +202,16 @@ class verify:
         if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         debug.print_raw("    Running OpenRAM for the tag array...")
         if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    OpenRAM failed!", 1)
 
         # Random replacement policy doesn't need a separate SRAM array
@@ -215,8 +220,8 @@ class verify:
             if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
                     cwd=OPTS.temp_path,
                     shell=True,
-                    stdout=DEVNULL,
-                    stderr=STDOUT) < 0:
+                    stdout=self.stdout,
+                    stderr=self.stderr) < 0:
                 debug.error("    OpenRAM failed!", 1)
 
         # Convert SRAM modules to blackbox
@@ -234,16 +239,16 @@ class verify:
         if call("fusesoc library add {0} {1}".format(self.name, OPTS.temp_path),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    FuseSoC failed to add synthesis core!", 1)
 
         debug.print_raw("      Running the synthesis...")
         if call("fusesoc run --target=synth --no-export {}".format(self.core.core_name),
                 cwd=OPTS.temp_path,
                 shell=True,
-                stdout=DEVNULL,
-                stderr=STDOUT) < 0:
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
             debug.error("    FuseSoC failed to run the synthesis!", 1)
 
         # Delete the temporary CONF file
