@@ -68,8 +68,6 @@ class verify:
         by running an EDA tool's simulator.
         """
 
-        openram_command = "python3 $OPENRAM_HOME/openram.py"
-
         debug.print_raw("  Initializing simulation...")
         debug.print_raw("    Writing simulation files...")
 
@@ -105,30 +103,16 @@ class verify:
 
         # Run OpenRAM to generate Verilog files of SRAMs
         debug.print_raw("    Running OpenRAM for the data array...")
-        if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    OpenRAM failed!", 1)
+        self.run_openram("{}_data_array_config.py".format(OPTS.temp_path + self.name))
 
         debug.print_raw("    Running OpenRAM for the tag array...")
-        if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                cwd=OPTS.temp_path,
-                shell=True,
-                stdout=self.stdout,
-                stderr=self.stderr) < 0:
-            debug.error("    OpenRAM failed!", 1)
+        self.run_openram("{}_tag_array_config.py".format(OPTS.temp_path + self.name))
 
         # Random replacement policy doesn't need a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
             debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-            if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
-                    cwd=OPTS.temp_path,
-                    shell=True,
-                    stdout=self.stdout,
-                    stderr=self.stderr) < 0:
-                debug.error("    OpenRAM failed!", 1)
+            self.run_openram("{0}_{1}_array_config.py".format(OPTS.temp_path + self.name,
+                                                              self.replacement_policy))
 
         self.openram_run = True
 
@@ -182,8 +166,6 @@ class verify:
         by running an EDA tool's synthesizer.
         """
 
-        openram_command = "python3 $OPENRAM_HOME/openram.py"
-
         debug.print_raw("  Initializing synthesis...")
         debug.print_raw("    Writing synthesis files...")
 
@@ -205,30 +187,16 @@ class verify:
 
             # Run OpenRAM to generate Verilog files of SRAMs
             debug.print_raw("    Running OpenRAM for the data array...")
-            if call("{0} {1}_data_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                    cwd=OPTS.temp_path,
-                    shell=True,
-                    stdout=self.stdout,
-                    stderr=self.stderr) < 0:
-                debug.error("    OpenRAM failed!", 1)
+            self.run_openram("{}_data_array_config.py".format(OPTS.temp_path + self.name))
 
             debug.print_raw("    Running OpenRAM for the tag array...")
-            if call("{0} {1}_tag_array_config.py".format(openram_command, OPTS.temp_path + self.name),
-                    cwd=OPTS.temp_path,
-                    shell=True,
-                    stdout=self.stdout,
-                    stderr=self.stderr) < 0:
-                debug.error("    OpenRAM failed!", 1)
+            self.run_openram("{}_tag_array_config.py".format(OPTS.temp_path + self.name))
 
             # Random replacement policy doesn't need a separate SRAM array
             if self.replacement_policy not in [None, "random"]:
                 debug.print_raw("    Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-                if call("{0} {1}_{2}_array_config.py".format(openram_command, OPTS.temp_path + self.name, self.replacement_policy),
-                        cwd=OPTS.temp_path,
-                        shell=True,
-                        stdout=self.stdout,
-                        stderr=self.stderr) < 0:
-                    debug.error("    OpenRAM failed!", 1)
+                self.run_openram("{0}_{1}_array_config.py".format(OPTS.temp_path + self.name,
+                                                                  self.replacement_policy))
         else:
             debug.print_raw("    Skipping to run OpenRAM since already run")
 
@@ -269,6 +237,19 @@ class verify:
             debug.print_raw("    Synthesis successful")
         else:
             debug.error("    Synthesis failed!", 1)
+
+
+    def run_openram(self, config_path):
+        """ Run OpenRAM to generate Verilog modules. """
+
+        openram_command = "python3 $OPENRAM_HOME/openram.py"
+
+        if call("{0} {1}".format(openram_command, config_path),
+                cwd=OPTS.temp_path,
+                shell=True,
+                stdout=self.stdout,
+                stderr=self.stderr) < 0:
+            debug.error("    OpenRAM failed!", -1)
 
 
     def convert_to_blacbox(self, file_path):
