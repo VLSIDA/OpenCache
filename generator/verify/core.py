@@ -33,6 +33,11 @@ class core:
         self.cf.write("  sim_files:\n")
         self.cf.write("    files:\n")
         self.cf.write("      - dram.v\n")
+
+        if self.replacement_policy not in [None, "random"]:
+            self.cf.write("      - {0}_{1}_array.v\n".format(self.name,
+                                                             self.replacement_policy))
+
         self.cf.write("      - {}_tag_array.v\n".format(self.name))
         self.cf.write("      - {}_data_array.v\n".format(self.name))
         self.cf.write("      - {}.v\n".format(self.name))
@@ -43,6 +48,11 @@ class core:
 
         self.cf.write("  synth_files:\n")
         self.cf.write("    files:\n")
+
+        if self.replacement_policy not in [None, "random"]:
+            self.cf.write("      - {0}_{1}_array.v\n".format(self.name,
+                                                             self.replacement_policy))
+
         self.cf.write("      - {}_tag_array.v\n".format(self.name))
         self.cf.write("      - {}_data_array.v\n".format(self.name))
         self.cf.write("      - {}.v\n".format(self.name))
