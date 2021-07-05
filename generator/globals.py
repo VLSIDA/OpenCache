@@ -95,6 +95,8 @@ def init_opencache(config_file, is_unit_test=True):
 
     read_config(config_file, is_unit_test)
 
+    fix_config()
+
     include_paths()
 
     init_paths()
@@ -148,14 +150,18 @@ def read_config(config_file, is_unit_test=True):
             OPTS.__dict__[k] = v
             OPTS.overridden[k] = True
 
-    # Fix replacement policy here
-    # Direct cache doesn't have a replacement policy
-    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
-        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
-
     OPTS.is_unit_test = is_unit_test
 
-    # If config didn't set output name, make a reasonable default.
+
+def fix_config():
+    """ Fix and update options from the config file. """
+
+    # Direct cache doesn't have a replacement policy
+    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
+        OPTS.replacement_policy = None
+        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
+
+    # If config didn't set output name, make a reasonable default
     if (OPTS.output_name == ""):
         OPTS.output_name = "cache_{0}b_{1}b_{2}_{3}".format(OPTS.total_size,
                                                             OPTS.word_size,
