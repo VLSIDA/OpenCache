@@ -28,13 +28,13 @@ class simulate_test(unittest.TestCase):
 
         from cache import cache
         c = cache(cache_config=conf,
-                       name=OPTS.output_name)
+                  name=OPTS.output_name)
 
         c.save()
 
         from verify import verify
         v = verify(cache_config=conf,
-                name=OPTS.output_name)
+                   name=OPTS.output_name)
 
         v.verify()
 
