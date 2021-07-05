@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import VERSION
+from globals import OPTS, VERSION
 
 
 class core:
@@ -13,13 +13,10 @@ class core:
     Class to generate the CORE file for FuseSoC.
     """
 
-    def __init__(self, cache_config, name):
-
-        cache_config.set_local_config(self)
-        self.name = name
+    def __init__(self):
 
         # This is used in FuseSoC for the current run
-        self.core_name = "opencache:cache:{0}:{1}".format(name,
+        self.core_name = "opencache:cache:{0}:{1}".format(OPTS.output_name,
                                                           VERSION)
 
 
@@ -37,13 +34,13 @@ class core:
         self.cf.write("    files:\n")
         self.cf.write("      - dram.v\n")
 
-        if self.replacement_policy not in [None, "random"]:
-            self.cf.write("      - {0}_{1}_array.v\n".format(self.name,
-                                                             self.replacement_policy))
+        if OPTS.replacement_policy not in [None, "random"]:
+            self.cf.write("      - {0}_{1}_array.v\n".format(OPTS.output_name,
+                                                             OPTS.replacement_policy))
 
-        self.cf.write("      - {}_tag_array.v\n".format(self.name))
-        self.cf.write("      - {}_data_array.v\n".format(self.name))
-        self.cf.write("      - {}.v\n".format(self.name))
+        self.cf.write("      - {}_tag_array.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}_data_array.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}.v\n".format(OPTS.output_name))
         self.cf.write("      - test_bench.v\n")
         self.cf.write("      - test_data.v:\n")
         self.cf.write("          is_include_file: true\n")
@@ -52,13 +49,13 @@ class core:
         self.cf.write("  synth_files:\n")
         self.cf.write("    files:\n")
 
-        if self.replacement_policy not in [None, "random"]:
-            self.cf.write("      - {0}_{1}_array.v\n".format(self.name,
-                                                             self.replacement_policy))
+        if OPTS.replacement_policy not in [None, "random"]:
+            self.cf.write("      - {0}_{1}_array.v\n".format(OPTS.output_name,
+                                                             OPTS.replacement_policy))
 
-        self.cf.write("      - {}_tag_array.v\n".format(self.name))
-        self.cf.write("      - {}_data_array.v\n".format(self.name))
-        self.cf.write("      - {}.v\n".format(self.name))
+        self.cf.write("      - {}_tag_array.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}_data_array.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}.v\n".format(OPTS.output_name))
         self.cf.write("    file_type: verilogSource\n\n")
 
 
@@ -86,6 +83,6 @@ class core:
         self.cf.write("    tools:\n")
         self.cf.write("      yosys:\n")
         self.cf.write("        arch: xilinx\n")
-        self.cf.write("    toplevel: {}\n".format(self.name))
+        self.cf.write("    toplevel: {}\n".format(OPTS.output_name))
 
         self.cf.close()

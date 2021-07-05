@@ -28,7 +28,7 @@ class verify:
         cache_config.set_local_config(self)
         self.name = name
 
-        self.core = core(cache_config, name)
+        self.core = core()
 
         if OPTS.simulate:
             self.tb   = test_bench(cache_config, name)
