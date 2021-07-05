@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import VERSION
+
 
 class core:
     """
@@ -17,7 +19,8 @@ class core:
         self.name = name
 
         # This is used in FuseSoC for the current run
-        self.core_name = "opencache:cache:{}:0.1.0".format(name)
+        self.core_name = "opencache:cache:{0}:{1}".format(name,
+                                                          VERSION)
 
 
     def write(self, core_path):

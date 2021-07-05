@@ -19,7 +19,7 @@ import re
 import copy
 import importlib
 
-VERSION = "??"
+VERSION = "0.0.1"
 NAME = "OpenCache v{}".format(VERSION)
 USAGE = "opencache.py [options] <config file>\nUse -h for help.\n"
 
