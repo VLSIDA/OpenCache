@@ -118,7 +118,7 @@ class verify:
 
         # Run FuseSoc for simulation
         debug.print_raw("    Running FuseSoC for simulation...")
-        self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, False)
+        self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, True)
 
         # Check the result of the simulation
         if self.check_sim_result(OPTS.temp_path, "icarus.log"):
