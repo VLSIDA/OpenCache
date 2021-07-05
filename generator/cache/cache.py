@@ -61,7 +61,7 @@ class cache:
         # Write the config file
         cpaths = [OPTS.output_path + self.c.name + "_data_array_config.py",
                   OPTS.output_path + self.c.name + "_tag_array_config.py"]
-        if self.replacement_policy:
+        if self.replacement_policy not in [None, "random"]:
             cpaths.append(OPTS.output_path + self.c.name + "_{0}_array_config.py".format(self.replacement_policy))
         for cpath in cpaths:
             debug.print_raw("  Config: Writing to {}".format(cpath))
