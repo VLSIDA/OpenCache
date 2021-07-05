@@ -148,6 +148,11 @@ def read_config(config_file, is_unit_test=True):
             OPTS.__dict__[k] = v
             OPTS.overridden[k] = True
 
+    # Fix replacement policy here
+    # Direct cache doesn't have a replacement policy
+    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
+        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
+
     OPTS.is_unit_test = is_unit_test
 
     # If config didn't set output name, make a reasonable default.
@@ -241,7 +246,7 @@ def report_status():
     """
     global OPTS
 
-    # Check if all arguments are integers for bits, size, banks
+    # Check if argument types are correct
     if type(OPTS.total_size) is not int :
         debug.error("{} is not an integer in config file.".format(OPTS.total_size))
     if type(OPTS.word_size) is not int:
@@ -257,10 +262,6 @@ def report_status():
     if OPTS.total_size % OPTS.word_size:
         debug.error("Total size is not divisible by word size.", -1)
 
-    # Direct cache doesn't have a replacement policy
-    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
-        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
-    
     # Options below are not implemented yet
     if not OPTS.is_data_cache:
         debug.error("Instruction cache is not yet supported.", -1)
@@ -269,6 +270,7 @@ def report_status():
     if OPTS.return_type != "word":
         debug.error("Only returning word is supported at the moment.", -1)
 
+    # Print cache info
     debug.print_raw("\nCache type: {}".format("Data" if OPTS.is_data_cache else "Instruction"))
     debug.print_raw("Word size: {}".format(OPTS.word_size))
     debug.print_raw("Words per line: {}".format(OPTS.words_per_line))
