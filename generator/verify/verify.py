@@ -93,19 +93,6 @@ class verify:
             debug.error("    Simulation failed!", 1)
 
 
-    def check_sim_result(self, path, file_name):
-        """ Read the log file of the simulation. """
-
-        # Result of the simulation is supposed to be
-        # at the end of the log file
-        with open("{0}build/{1}/sim-icarus/{2}".format(path,
-                                                       self.core.core_name.replace(":", "_"),
-                                                       file_name)) as f:
-            for line in f:
-                pass
-            return line.rstrip() == self.tb.success_message
-
-
     def synthesize(self):
         """
         Save required files and synthesize the design
@@ -214,6 +201,25 @@ class verify:
         os.remove(path + "fusesoc.conf")
 
 
+    def copy_config_file(self, file_name, dest):
+        """ Copy and modify the config file for simulation and synthesis. """
+
+        new_file = open(dest + file_name, "w")
+
+        with open(OPTS.output_path + file_name) as f:
+            for line in f:
+                if line.startswith("output_path"):
+                    new_file.write("output_path = \"{}\"\n".format(dest))
+                else:
+                    new_file.write(line)
+
+        # Verification needs only the Verilog files
+        # This option will decrease OpenRAM's runtime (hopefully)
+        new_file.write("netlist_only = True\n")
+
+        new_file.close()
+
+
     def convert_to_blacbox(self, file_path):
         """ Convert the given Verilog module file to blackbox. """
 
@@ -256,20 +262,14 @@ class verify:
         return True
 
 
-    def copy_config_file(self, file_name, dest):
-        """ Copy and modify the config file for simulation and synthesis. """
+    def check_sim_result(self, path, file_name):
+        """ Read the log file of the simulation. """
 
-        new_file = open(dest + file_name, "w")
-
-        with open(OPTS.output_path + file_name) as f:
+        # Result of the simulation is supposed to be
+        # at the end of the log file
+        with open("{0}build/{1}/sim-icarus/{2}".format(path,
+                                                       self.core.core_name.replace(":", "_"),
+                                                       file_name)) as f:
             for line in f:
-                if line.startswith("output_path"):
-                    new_file.write("output_path = \"{}\"\n".format(dest))
-                else:
-                    new_file.write(line)
-
-        # Verification needs only the Verilog files
-        # This option will decrease OpenRAM's runtime (hopefully)
-        new_file.write("netlist_only = True\n")
-
-        new_file.close()
+                pass
+            return line.rstrip() == self.tb.success_message
