@@ -24,7 +24,7 @@ class test_data:
     def generate_data(self):
         """  Generate random test data and expected outputs. """
 
-        test_size = 2
+        test_size = 8
         self.web  = []
         self.addr = []
         self.data = []
@@ -32,8 +32,15 @@ class test_data:
         # TODO: How to create random data in a smart way?
         # Write random data to random addresses initially
         for i in range(test_size):
+            random_tag = randrange(2 ** self.tag_size)
+            # Write to first two sets only so that
+            # we can test replacement
+            random_set = randrange(2)
+            random_offset = randrange(2 ** self.offset_size)
+            random_address = self.sc.merge_address(random_tag, random_set, random_offset)
+
             self.web.append(0)
-            self.addr.append(randrange(2 ** self.address_size))
+            self.addr.append(random_address)
             self.data.append(randrange(2 ** self.word_size))
 
         indices = list(range(test_size))
@@ -53,7 +60,14 @@ class test_data:
         while i < len(self.web):
             stall_cycles = 0
             if not self.sc.is_hit(self.addr[i]):
-                stall_cycles = 4 * (2 if self.sc.is_dirty(self.addr[i]) else 1)
+                # Find the evicted address
+                _, set_decimal, _ = self.sc.parse_address(self.addr[i])
+                evicted_way  = self.sc.way_to_evict(set_decimal)
+                evicted_tag  = self.sc.tag_array[set_decimal][evicted_way]
+                evicted_addr = self.sc.merge_address(evicted_tag, set_decimal, 0)
+
+                # If a way is written back before being replaced, cache stalls for 2n+1 cycles in total
+                stall_cycles = (4 * 2 + 1 if self.sc.is_dirty(evicted_addr) else 4)
 
                 self.web[i+1:i+1]  = [None] * stall_cycles
                 self.addr[i+1:i+1] = [None] * stall_cycles
@@ -82,7 +96,7 @@ class test_data:
 
         # Check delay during reset
         for i in range(self.num_rows - 2):
-            self.tdf.write("// No operation (Test #{}, reset)\n".format(test_count))
+            self.tdf.write("// No operation while reset (Test #{})\n".format(test_count))
             self.tdf.write("#(CLOCK_DELAY * 2);\n")
             self.tdf.write("check_stall({});\n\n".format(test_count))
 
@@ -91,8 +105,9 @@ class test_data:
         # Check requests
         i = 0
         while i < len(self.web):
-            self.tdf.write("// {0} operation (Test #{1})\n".format("Read" if self.web[i] else "Write",
-                                                                   test_count))
+            self.tdf.write("// {0} operation on address {1} (Test #{2})\n".format("Read" if self.web[i] else "Write",
+                                                                                  self.addr[i],
+                                                                                  test_count))
 
             if not prev_delayed:
                 self.tdf.write("#(CLOCK_DELAY * 2);\n")
@@ -105,7 +120,6 @@ class test_data:
 
             if not self.web[i]:
                 self.tdf.write("cache_din  = {};\n".format(self.data[i]))
-
 
             self.tdf.write("#(CLOCK_DELAY * 2);\n\n")
 
