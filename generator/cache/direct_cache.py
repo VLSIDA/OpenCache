@@ -251,7 +251,7 @@ class direct_cache(cache_base):
         if self.data_hazard:
             self.vf.write("          new_tag_next  = 0;\n")
             self.vf.write("          new_data_next = 0;\n")
-            self.vf.write("          if ((new_tag[TAG_WIDTH+1] && new_tag[TAG_WIDTH-1:0] == tag) || (tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag)) begin // Hit\n")
+            self.vf.write("          if ((new_tag[TAG_WIDTH+1] && new_tag[TAG_WIDTH-1:0] == tag) || (!new_tag[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag)) begin // Hit\n")
         else:
             self.vf.write("          if (tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag) begin // Hit\n")
 
@@ -316,7 +316,7 @@ class direct_cache(cache_base):
 
         # Miss (dirty)
         if self.data_hazard:
-            self.vf.write("          end else if (new_tag[TAG_WIDTH +: 2] == 2'b11 || tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
+            self.vf.write("          end else if (new_tag[TAG_WIDTH +: 2] == 2'b11 || (!new_tag[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH +: 2] == 2'b11)) begin // Miss (valid and dirty)\n")
         else:
             self.vf.write("          end else if (tag_read_dout[TAG_WIDTH +: 2] == 2'b11) begin // Miss (valid and dirty)\n")
 
