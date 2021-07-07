@@ -164,13 +164,18 @@ class test_bench:
     def write_tasks(self):
         """ Write the tasks of the test bench. """
 
-        self.tbf.write("  // Stall signal of the cache is supposed be high when this task is called\n")
+        self.tbf.write("  // Check for a number of stall cycles starting from the current cycle\n")
         self.tbf.write("  task check_stall;\n")
+        self.tbf.write("    input integer cycle_count;\n")
         self.tbf.write("    input [MAX_TEST_SIZE-1:0] test_count;\n")
+        self.tbf.write("    integer i;\n")
         self.tbf.write("    begin\n")
-        self.tbf.write("      if (!cache_stall) begin\n")
-        self.tbf.write("        $display(\"Error at test #%0d! Cache stall is expected to be high but it is low.\", test_count);\n")
-        self.tbf.write("        error_count = error_count + 1;\n")
+        self.tbf.write("      for (i = 1; i <= cycle_count; i = i + 1) begin\n")
+        self.tbf.write("        if (!cache_stall) begin\n")
+        self.tbf.write("          $display(\"Error at test #%0d! Cache stall #%0d is expected to be high but it is low.\", test_count, i);\n")
+        self.tbf.write("          error_count = error_count + 1;\n")
+        self.tbf.write("        end\n")
+        self.tbf.write("        #(CLOCK_DELAY * 2);\n")
         self.tbf.write("      end\n")
         self.tbf.write("    end\n")
         self.tbf.write("  endtask\n\n")

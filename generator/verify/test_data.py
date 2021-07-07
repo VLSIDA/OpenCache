@@ -24,10 +24,11 @@ class test_data:
     def generate_data(self):
         """  Generate random test data and expected outputs. """
 
-        test_size = 8
-        self.web  = []
-        self.addr = []
-        self.data = []
+        test_size  = 8
+        self.web   = [] # Write enable
+        self.addr  = [] # Address
+        self.data  = [] # Data input/output
+        self.stall = [] # Number of stall cycles after the request
 
         # TODO: How to create random data in a smart way?
         # Write random data to random addresses initially
@@ -42,6 +43,7 @@ class test_data:
             self.web.append(0)
             self.addr.append(random_address)
             self.data.append(randrange(2 ** self.word_size))
+            self.stall.append(0)
 
         indices = list(range(test_size))
 
@@ -52,67 +54,68 @@ class test_data:
             self.web.append(1)
             self.addr.append(self.addr[index])
             self.data.append(self.data[index])
+            self.stall.append(0)
 
             indices.remove(index)
 
-        # Insert noop entries for miss stalls
-        i = 0
-        while i < len(self.web):
-            stall_cycles = 0
+        # Update stall values
+        for i in range(len(self.web)):
+            # First request has 1 more stall since it starts
+            # from the IDLE state
+            stall_cycles = int(i == 0)
+
             if not self.sc.is_hit(self.addr[i]):
+                # Stalls 1 cycle in the COMPARE state since
+                # the request is a miss
+                stall_cycles += 1
+
                 # Find the evicted address
                 _, set_decimal, _ = self.sc.parse_address(self.addr[i])
                 evicted_way  = self.sc.way_to_evict(set_decimal)
                 evicted_tag  = self.sc.tag_array[set_decimal][evicted_way]
                 evicted_addr = self.sc.merge_address(evicted_tag, set_decimal, 0)
 
-                # If a way is written back before being replaced, cache stalls for 2n+1 cycles in total
-                stall_cycles = (4 * 2 + 1 if self.sc.is_dirty(evicted_addr) else 4)
+                # If a way is written back before being replaced,
+                # cache stalls for 2n+1 cycles in total:
+                # - n while writing
+                # - 1 for sending the read request to DRAM
+                # - n while reading
+                stall_cycles += (4 * 2 + 1 if self.sc.is_dirty(evicted_addr) else 4)
 
-                self.web[i+1:i+1]  = [None] * stall_cycles
-                self.addr[i+1:i+1] = [None] * stall_cycles
-                self.data[i+1:i+1] = [None] * stall_cycles
+            self.stall[i] = stall_cycles
 
             if self.web[i]:
                 self.sc.read(self.addr[i])
             else:
                 self.sc.write(self.addr[i], self.data[i])
 
-            i += stall_cycles + 1
-
 
     def write(self, data_path):
         """ Write the test data file. """
 
-        pipeline_filled = False
-        prev_delayed    = False
-        test_count      = 0
+        test_count = 0
 
         self.tdf = open(data_path, "w")
+
         self.tdf.write("// Initial delay to align with the cache and SRAMs.\n")
         self.tdf.write("// SRAMs return data at the negedge of the clock.\n")
-        self.tdf.write("// Therefore, cache's output will be valid at the negedge.\n")
+        self.tdf.write("// Therefore, cache's output will be valid after the negedge.\n")
         self.tdf.write("#(CLOCK_DELAY + DELAY + 1);\n\n")
 
-        # Check delay during reset
-        for i in range(self.num_rows - 2):
-            self.tdf.write("// No operation while reset (Test #{})\n".format(test_count))
-            self.tdf.write("#(CLOCK_DELAY * 2);\n")
-            self.tdf.write("check_stall({});\n\n".format(test_count))
+        # Check stall during reset
+        self.tdf.write("// No operation while reset (Test #{})\n".format(test_count))
+        # Check for num_rows-1 stall cycles since
+        # stall will be low at the last cycle
+        # (which is the cycle #num_rows)
+        self.tdf.write("check_stall({0}, {1});\n\n".format(self.num_rows - 1, test_count))
 
-            test_count += 1
+        test_count += 1
 
         # Check requests
-        i = 0
-        while i < len(self.web):
+        for i in range(len(self.web)):
             self.tdf.write("// {0} operation on address {1} (Test #{2})\n".format("Read" if self.web[i] else "Write",
                                                                                   self.addr[i],
                                                                                   test_count))
-
-            if not prev_delayed:
-                self.tdf.write("#(CLOCK_DELAY * 2);\n")
-
-            prev_delayed = False
 
             self.tdf.write("cache_csb  = 0;\n")
             self.tdf.write("cache_web  = {};\n".format(self.web[i]))
@@ -121,33 +124,15 @@ class test_data:
             if not self.web[i]:
                 self.tdf.write("cache_din  = {};\n".format(self.data[i]))
 
-            self.tdf.write("#(CLOCK_DELAY * 2);\n\n")
+            self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
 
-            if not pipeline_filled:
-                pipeline_filled = True
-                self.tdf.write("// Delay for the IDLE state\n")
-                self.tdf.write("#(CLOCK_DELAY * 2);\n\n")
-
-            old_i = i
-            old_test_count = test_count
-
-            # Check stall signal while waiting for the request to be completed
-            while i + 1 < len(self.web) and self.web[i + 1] is None:
-                i += 1
-                test_count += 1
-
-                self.tdf.write("// No operation (Test #{})\n".format(test_count))
-                self.tdf.write("#(CLOCK_DELAY * 2);\n")
-                self.tdf.write("check_stall({});\n\n".format(test_count))
+            if self.stall[i]:
+                self.tdf.write("check_stall({0}, {1});\n\n".format(self.stall[i], test_count))
 
             # Check read request after stalls
-            if self.web[old_i]:
-                prev_delayed = True
-                self.tdf.write("// Test #{} continues here\n".format(old_test_count))
-                self.tdf.write("#(CLOCK_DELAY * 2);\n")
-                self.tdf.write("check_dout({0}, {1});\n\n".format(self.data[old_i], old_test_count))
+            if self.web[i]:
+                self.tdf.write("check_dout({0}, {1});\n\n".format(self.data[i], test_count))
 
-            i += 1
             test_count += 1
 
         self.tdf.write("end_simulation();\n")
