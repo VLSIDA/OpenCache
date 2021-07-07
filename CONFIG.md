@@ -39,8 +39,20 @@ This is whether data hazard may occur in the internal SRAM arrays. Currently Ope
 However, this parameter can be set `False` if the user can guarantee that SRAM arrays are going to be *"data hazard proof"*
 or OpenRAM SRAM arrays are read-after-write in the future.
 
+## `simulate`
+This is whether to simulate the design after saving files.
+
+## `synthesze`
+This is whether to synthesize the design after saving files.
+
 ## `output_path`
 This is where output files are going to be saved to.
 
 ## `output_name`
 This is what the names of output files are going to be.
+
+## `temp_path`
+This is where temporary verification files are going to be saved to.
+
+## `keep_temp`
+This is whether to keep temporary verification files after the execution.
