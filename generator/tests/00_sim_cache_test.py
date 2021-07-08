@@ -95,7 +95,7 @@ def check_reset(sc):
     sc.reset()
 
     # Request to address 0 must be miss
-    if sc.is_hit(0):
+    if sc.find_way(0):
         return False
 
     # Read unknown data from address 0
@@ -125,19 +125,19 @@ def check_flush(sc):
 
 
 def check_hit(sc):
-    """ Check if is_hit() functions properly. """
+    """ Check if find_way() functions properly. """
 
     reset(sc)
 
     # Address 0 is miss
-    if sc.is_hit(0):
+    if sc.find_way(0):
         return False
 
     # Read from address 0
     sc.read(0)
 
     # Address 0 is hit
-    if not sc.is_hit(0):
+    if sc.find_way(0) is None:
         return False
 
     return True
@@ -202,7 +202,7 @@ def check_fifo(sc):
     sc.write(address_2, 3)
 
     # address_0 must be replaced
-    if sc.is_hit(address_0):
+    if sc.find_way(address_0):
         return False
 
     # Read 1 from address_0
@@ -210,7 +210,7 @@ def check_fifo(sc):
         return False
 
     # address_1 must be replaced
-    if sc.is_hit(address_1):
+    if sc.find_way(address_1):
         return False
 
     return True
@@ -236,7 +236,7 @@ def check_lru(sc):
     sc.write(address_2, 3)
 
     # address_1 must be replaced
-    if sc.is_hit(address_1):
+    if sc.find_way(address_1):
         return False
 
     # Read 2 from address_1
@@ -244,7 +244,7 @@ def check_lru(sc):
         return False
 
     # address_0 must be replaced
-    if sc.is_hit(address_0):
+    if sc.find_way(address_0):
         return False
 
     return True

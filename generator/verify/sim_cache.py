@@ -90,27 +90,29 @@ class sim_cache:
         return (tag_decimal, set_decimal, offset_decimal)
 
 
-    def is_hit(self, address):
-        """ Compare tags for the given address. """
+    def find_way(self, address):
+        """ Find the way which has the given address' data. """
 
         tag_decimal, set_decimal, _ = self.parse_address(address)
 
-        for i in range(self.num_ways):
-            if self.valid_array[set_decimal][i] and self.tag_array[set_decimal][i] == tag_decimal:
-                return True
+        for way in range(self.num_ways):
+            if self.valid_array[set_decimal][way] and self.tag_array[set_decimal][way] == tag_decimal:
+                return way
 
-        return False
+        # Return None if not found
+        return None
 
 
     def is_dirty(self, address):
         """ Return the dirty bit of the given address. """
 
-        tag_decimal, set_decimal, _ = self.parse_address(address)
+        _, set_decimal, _ = self.parse_address(address)
+        way = self.find_way(address)
 
-        for i in range(self.num_ways):
-            if self.valid_array[set_decimal][i] and self.tag_array[set_decimal][i] == tag_decimal:
-                return self.dirty_array[set_decimal][i]
+        if way is not None:
+            return self.dirty_array[set_decimal][way]
 
+        # Return None if not found
         return None
 
 
@@ -159,13 +161,12 @@ class sim_cache:
         """ Read the data of an address. """
 
         tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
+        way = self.find_way(address)
 
-        if self.is_hit(address):
-            for i in range(self.num_ways):
-                if self.tag_array[set_decimal][i] == tag_decimal:
-                    self.update_replacement_bits(set_decimal, i)
-                    return self.data_array[set_decimal][i][offset_decimal]
-        else:
+        if way is not None: # Hit
+            self.update_replacement_bits(set_decimal, way)
+            return self.data_array[set_decimal][way][offset_decimal]
+        else: # Miss
             evict_way = self.way_to_evict(set_decimal)
 
             # Write-back
@@ -187,15 +188,13 @@ class sim_cache:
         """ Write the data to an address. """
 
         tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
+        way = self.find_way(address)
 
-        if self.is_hit(address):
-            for i in range(self.num_ways):
-                if self.tag_array[set_decimal][i] == tag_decimal:
-                    self.dirty_array[set_decimal][i] = 1
-                    self.data_array[set_decimal][i][offset_decimal] = data_input
-                    self.update_replacement_bits(set_decimal, i)
-                    return
-        else:
+        if way is not None: # Hit
+            self.dirty_array[set_decimal][way] = 1
+            self.data_array[set_decimal][way][offset_decimal] = data_input
+            self.update_replacement_bits(set_decimal, way)
+        else: # Miss
             evict_way = self.way_to_evict(set_decimal)
 
             # Write-back
