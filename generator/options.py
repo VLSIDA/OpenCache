@@ -51,6 +51,10 @@ class options(optparse.Values):
     # Define the output file base name
     output_name = ""
 
+    #############################
+    #     Unit test options     #
+    #############################
+
     # Temp path for verification and unit testing
     temp_path = ""
     # Keep verification 
@@ -60,6 +64,8 @@ class options(optparse.Values):
     simulate = False
     # Verify the design by synthesizing
     synthesize = False
+
+    num_threads = 1
 
     verbose_level = 0
 
