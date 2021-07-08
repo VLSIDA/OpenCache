@@ -40,6 +40,9 @@ class sim_cache:
         if self.replacement_policy == "lru":
             self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
 
+        if self.replacement_policy == "random":
+            self.random = 0
+
 
     def reset_dram(self):
         """ Reset the DRAM. """
@@ -140,23 +143,6 @@ class sim_cache:
             return randrange(2)
 
 
-    def update_replacement_bits(self, set_decimal, way):
-        """ Update the replacement bits according to the last used way of a set. """
-
-        if self.replacement_policy in [None, "random"]:
-            return
-
-        if self.replacement_policy == "fifo":
-            self.fifo_array[set_decimal] += 1
-            self.fifo_array[set_decimal] %= self.num_ways
-
-        if self.replacement_policy == "lru":
-            for i in range(self.num_ways):
-                if self.lru_array[set_decimal][i] > self.lru_array[set_decimal][way]:
-                    self.lru_array[set_decimal][i] -= 1
-            self.lru_array[set_decimal][way] = self.num_ways - 1
-
-
     def read(self, address):
         """ Read the data of an address. """
 
@@ -164,13 +150,16 @@ class sim_cache:
         way = self.find_way(address)
 
         if way is not None: # Hit
-            self.update_replacement_bits(set_decimal, way)
+            self.update_lru(set_decimal, way)
+
             return self.data_array[set_decimal][way][offset_decimal]
         else: # Miss
             evict_way = self.way_to_evict(set_decimal)
 
             # Write-back
             if self.is_dirty(address):
+                self.update_fifo(set_decimal)
+
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
@@ -180,7 +169,8 @@ class sim_cache:
             self.tag_array[set_decimal][evict_way]   = tag_decimal
             self.data_array[set_decimal][evict_way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
 
-            self.update_replacement_bits(set_decimal, evict_way)
+            self.update_lru(set_decimal, evict_way)
+
             return self.data_array[set_decimal][evict_way][offset_decimal]
 
 
@@ -191,14 +181,17 @@ class sim_cache:
         way = self.find_way(address)
 
         if way is not None: # Hit
+            self.update_lru(set_decimal, way)
+
             self.dirty_array[set_decimal][way] = 1
             self.data_array[set_decimal][way][offset_decimal] = data_input
-            self.update_replacement_bits(set_decimal, way)
         else: # Miss
             evict_way = self.way_to_evict(set_decimal)
 
             # Write-back
             if self.dirty_array[set_decimal][evict_way]:
+                self.update_fifo(set_decimal)
+
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
@@ -208,4 +201,48 @@ class sim_cache:
             self.tag_array[set_decimal][evict_way]   = tag_decimal
             self.data_array[set_decimal][evict_way][offset_decimal] = data_input
 
-            self.update_replacement_bits(set_decimal, evict_way)
+            self.update_lru(set_decimal, evict_way)
+
+
+    def update_fifo(self, set_decimal):
+        """ Update the FIFO number of the latest replaced set. """
+
+        # Check if replacement policy matches
+        if self.replacement_policy == "fifo":
+            # Starting from 0, increase the FIFO number every time a
+            # new data is brought from DRAM.
+            #
+            # When it reaches the max value, go back to 0 and proceed.
+            self.fifo_array[set_decimal] += 1
+            self.fifo_array[set_decimal] %= self.num_ways
+
+
+    def update_lru(self, set_decimal, way):
+        """ Update the LRU numbers of the latest used way. """
+
+        # Check if replacement policy matches
+        if self.replacement_policy == "lru":
+            # There is a number for each way in a set. They are ordered
+            # by their access time relative to each other.
+            #
+            # When a way is accessed (read or write), it is brought to
+            # the top of the order (highest possible number) and numbers
+            # which are more than its previous value are decreased by one.
+            for i in range(self.num_ways):
+                if self.lru_array[set_decimal][i] > self.lru_array[set_decimal][way]:
+                    self.lru_array[set_decimal][i] -= 1
+            self.lru_array[set_decimal][way] = self.num_ways - 1
+
+
+    def update_random(self, cycles):
+        """ Update the random counter for a number of cycles. """
+
+        # Check if replacement policy matches
+        if self.replacement_policy == "random":
+            # In the real hardware, random caches have a register acting 
+            # like a counter. This register is incremented at every posedge
+            # of the clock.
+            # Since we cannot guarantee how many cycles a miss will take,
+            # this register essentially has random values.
+            self.random += cycles
+            self.random %= self.num_ways
