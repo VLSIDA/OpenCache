@@ -21,6 +21,7 @@ class synthesize_test(unittest.TestCase):
 
         OPTS.num_ways = 2
         OPTS.replacement_policy = "lru"
+        OPTS.simulate = False
         OPTS.synthesize = True
 
         from cache_config import cache_config
