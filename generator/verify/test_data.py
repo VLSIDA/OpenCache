@@ -64,7 +64,7 @@ class test_data:
             # from the IDLE state
             stall_cycles = int(i == 0)
 
-            if not self.sc.is_hit(self.addr[i]):
+            if self.sc.find_way(self.addr[i]) is None:
                 # Stalls 1 cycle in the COMPARE state since
                 # the request is a miss
                 stall_cycles += 1
