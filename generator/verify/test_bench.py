@@ -64,7 +64,8 @@ class test_bench:
         self.tbf.write("  localparam ADDR_WIDTH    = TAG_WIDTH + SET_WIDTH + OFFSET_WIDTH;\n\n")
 
         self.tbf.write("  parameter  CLOCK_DELAY   = 5;\n")
-        self.tbf.write("  parameter  RESET_DELAY   = 20;\n")
+        self.tbf.write("  // Reset is asserted for 1.5 cycles\n")
+        self.tbf.write("  parameter  RESET_DELAY   = 15;\n")
         self.tbf.write("  parameter  DELAY         = 3;\n\n")
 
         self.tbf.write("  // Test data: web + address + word\n")
