@@ -120,7 +120,7 @@ class sim_cache:
 
 
     def way_to_evict(self, set_decimal):
-        """ Return the way to evict. """
+        """ Return the way to evict according to the replacement policy. """
 
         if self.replacement_policy is None:
             return 0
@@ -140,7 +140,7 @@ class sim_cache:
         # "random way selector". Therefore, this function must do
         # the same.
         if self.replacement_policy == "random":
-            return randrange(2)
+            return self.random
 
 
     def read(self, address):
@@ -157,9 +157,7 @@ class sim_cache:
             evict_way = self.way_to_evict(set_decimal)
 
             # Write-back
-            if self.is_dirty(address):
-                self.update_fifo(set_decimal)
-
+            if self.dirty_array[set_decimal][evict_way]:
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
@@ -169,6 +167,7 @@ class sim_cache:
             self.tag_array[set_decimal][evict_way]   = tag_decimal
             self.data_array[set_decimal][evict_way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
 
+            self.update_fifo(set_decimal)
             self.update_lru(set_decimal, evict_way)
 
             return self.data_array[set_decimal][evict_way][offset_decimal]
@@ -190,8 +189,6 @@ class sim_cache:
 
             # Write-back
             if self.dirty_array[set_decimal][evict_way]:
-                self.update_fifo(set_decimal)
-
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
@@ -201,6 +198,7 @@ class sim_cache:
             self.tag_array[set_decimal][evict_way]   = tag_decimal
             self.data_array[set_decimal][evict_way][offset_decimal] = data_input
 
+            self.update_fifo(set_decimal)
             self.update_lru(set_decimal, evict_way)
 
 
