@@ -143,12 +143,13 @@ def read_config(config_file, is_unit_test=True):
         config = importlib.import_module(module_name)
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file), 2)
-    
+
     OPTS.overridden = {}
     for k, v in config.__dict__.items():
-        if k not in OPTS.__dict__:
-            OPTS.__dict__[k] = v
-            OPTS.overridden[k] = True
+        # Options will be overwritten every time a config
+        # file is read (for regression testing).
+        OPTS.__dict__[k] = v
+        OPTS.overridden[k] = True
 
     OPTS.is_unit_test = is_unit_test
 
@@ -196,7 +197,7 @@ def cleanup_paths():
     global OPTS
 
     if OPTS.keep_temp:
-        debug.info(0, "Preserving temp directory: {}".format(OPTS.temp_path))
+        debug.info(1, "Preserving temp directory: {}".format(OPTS.temp_path))
         return
     elif os.path.exists(OPTS.temp_path):
         purge_temp()
@@ -253,7 +254,7 @@ def report_status():
     global OPTS
 
     # Check if argument types are correct
-    if type(OPTS.total_size) is not int :
+    if type(OPTS.total_size) is not int:
         debug.error("{} is not an integer in config file.".format(OPTS.total_size))
     if type(OPTS.word_size) is not int:
         debug.error("{} is not an integer in config file.".format(OPTS.word_size))
