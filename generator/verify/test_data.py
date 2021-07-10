@@ -53,6 +53,9 @@ class test_data:
 
             self.web.append(1)
             self.addr.append(self.addr[index])
+            # If the same address is written twice, this data may be old.
+            # Therefore, data values for read operations are going to be
+            # overwritten in the next for loop.
             self.data.append(self.data[index])
             self.stall.append(0)
 
@@ -85,7 +88,8 @@ class test_data:
             self.stall[i] = stall_cycles
 
             if self.web[i]:
-                self.sc.read(self.addr[i])
+                # Overwrite data for read to prevent bugs
+                self.data[i] = self.sc.read(self.addr[i])
             else:
                 self.sc.write(self.addr[i], self.data[i])
 
