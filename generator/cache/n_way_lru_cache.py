@@ -46,10 +46,9 @@ class n_way_lru_cache(cache_base):
 
         super().write_parameters()
 
-        # These parameters are used to update LRU bits
-        self.vf.write("  // These are used in LRU multiplexer.\n")
-        for i in range(self.num_ways):
-            self.vf.write("  localparam NUM_{0} = {0};\n".format(i))
+        # This parameter is used to update LRU bits
+        self.vf.write("  // Maximum value of a way.\n")
+        self.vf.write("  localparam WAY_LIMIT = {};\n".format(self.num_ways - 1))
         self.vf.write("\n")
 
 
@@ -395,16 +394,16 @@ class n_way_lru_cache(cache_base):
         self.vf.write("              state_next     = IDLE; // If nothing is requested, go back to IDLE\n")
         self.vf.write("              main_csb       = 1;\n")
         self.vf.write("              lru_write_csb  = 0;\n")
-        self.vf.write("              lru_write_addr = 0;\n")
+        self.vf.write("              lru_write_addr = set;\n")
 
         if self.data_hazard:
             self.vf.write("              if (data_hazard) begin\n")
-            self.write_lru_mux(8, True, False)
+            self.write_lru_update(8, True, False, "j")
             self.vf.write("              end else begin\n")
-            self.write_lru_mux(8, False, False)
+            self.write_lru_update(8, False, False, "j")
             self.vf.write("              end\n")
         else:
-            self.write_lru_mux(7, False, False)
+            self.write_lru_update(7, False, False, "j")
 
         self.vf.write("              if (web_reg) // Read request\n")
 
@@ -452,11 +451,11 @@ class n_way_lru_cache(cache_base):
             self.vf.write("                if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                  data_hazard_next = 1;\n")
             self.vf.write("                  if (data_hazard) begin\n")
-            self.write_lru_mux(10, True, True)
+            self.write_lru_update(10, True, True, "j")
             self.vf.write("                    new_tag_next  = new_tag;\n")
             self.vf.write("                    new_data_next = new_data;\n")
             self.vf.write("                  end else begin\n")
-            self.write_lru_mux(10, False, True)
+            self.write_lru_update(10, False, True, "j")
             self.vf.write("                    new_tag_next  = tag_read_dout;\n")
             self.vf.write("                    new_data_next = data_read_dout;\n")
             self.vf.write("                  end\n")
@@ -530,7 +529,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("            lru_write_csb  = 0;\n")
         self.vf.write("            lru_write_addr = set;\n")
 
-        self.write_lru_mux(6, False, False)
+        self.write_lru_update(6, False, False)
 
         self.vf.write("            tag_write_csb  = 0;\n")
         self.vf.write("            tag_write_addr = set;\n")
@@ -568,7 +567,7 @@ class n_way_lru_cache(cache_base):
             self.vf.write("              if (addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin // Avoid data hazard\n")
             self.vf.write("                data_hazard_next = 1;\n")
 
-            self.write_lru_mux(8, False, True)
+            self.write_lru_update(8, False, True)
 
             self.vf.write("                new_tag_next     = tag_read_dout;\n")
             self.vf.write("                new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = 1'b1;\n")
@@ -595,7 +594,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          end\n")
 
 
-    def write_lru_mux(self, base_indent, data_hazard, update_bypass_regs):
+    def write_lru_update(self, base_indent, data_hazard, update_bypass_regs, way_var="way"):
         """ Write a multiplexer to update LRU bits of the cache. """
 
         if type(base_indent) == int:
@@ -611,18 +610,13 @@ class n_way_lru_cache(cache_base):
         else:
             lhs = "lru_write_din"
 
-        self.vf.write(base_indent + "{0} = {1};\n".format(lhs, rhs))
-        self.vf.write(base_indent + "for (m = 0; m < WAY_DEPTH; m = m + 1) begin // Update LRU bits\n")
-        self.vf.write(base_indent + "  if (j == m) begin\n")
-        self.vf.write(base_indent + "    for (n = 0; n < WAY_WIDTH; n = n + 1)\n")
-        self.vf.write(base_indent + "      {0}[j * WAY_WIDTH + n] = NUM_{1}[n];\n".format(lhs, self.num_ways - 1))
-        self.vf.write(base_indent + "  end else if ({0}[m * WAY_WIDTH +: WAY_WIDTH] > {0}[j * WAY_WIDTH +: WAY_WIDTH]) begin\n".format(rhs))
-        self.vf.write(base_indent + "    for (n = 0; n < WAY_WIDTH; n = n + 1) begin\n")
-        self.vf.write(base_indent + "      case ({}[m * WAY_WIDTH +: WAY_WIDTH])\n".format(rhs))
-        self.vf.write(base_indent + "        NUM_0: {}[m * WAY_WIDTH + n] = NUM_0[n];\n".format(lhs))
-        for i in range(self.num_ways - 1):
-            self.vf.write(base_indent + "        NUM_{0}: {1}[m * WAY_WIDTH + n] = NUM_{2}[n];\n".format(i + 1, lhs, i))
-        self.vf.write(base_indent + "      endcase\n")
-        self.vf.write(base_indent + "    end\n")
-        self.vf.write(base_indent + "  end\n")
-        self.vf.write(base_indent + "end\n")
+        for i in range(self.num_ways):
+            lsb = i * self.way_size
+            self.vf.write(base_indent + "{0}[{1}:{2}] = {3}[{1}:{2}] - ({3}[{1}:{2}] > {3}[{4} * WAY_WIDTH +: WAY_WIDTH]);\n".format(lhs,
+                                                                                                                                     lsb + self.way_size - 1,
+                                                                                                                                     lsb,
+                                                                                                                                     rhs,
+                                                                                                                                     way_var))
+
+        self.vf.write(base_indent + "for (n = 0; n < WAY_WIDTH; n = n + 1)\n")
+        self.vf.write(base_indent + "  {0}[{1} * WAY_WIDTH + n] = WAY_LIMIT[n];\n".format(lhs, way_var))
