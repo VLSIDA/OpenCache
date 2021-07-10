@@ -12,9 +12,7 @@ configuration (.py) files for OpenRAM compiler
 a Verilog (.v) file for the cache logic
 """
 
-from os import scandir
 import sys
-import datetime
 import globals as g
 
 (OPTS, args) = g.parse_args()

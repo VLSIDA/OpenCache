@@ -5,9 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from random import randrange
-from globals import OPTS
-
 
 class sim_cache:
     """

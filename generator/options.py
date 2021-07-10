@@ -6,8 +6,6 @@
 # All rights reserved.
 #
 import optparse
-import getpass
-import os
 
 class options(optparse.Values):
     """

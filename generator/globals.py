@@ -16,7 +16,6 @@ import optparse
 import options
 import sys
 import re
-import copy
 import importlib
 
 VERSION = "0.0.1"
