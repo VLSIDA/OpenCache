@@ -5,7 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import OPTS
+from globals import OPTS, NAME
+from textwrap import wrap
 
 
 class cache_base:
@@ -28,7 +29,6 @@ class cache_base:
 
         self.dcf.write("word_size = {}\n".format(self.row_size))
         self.dcf.write("num_words = {}\n".format(self.num_rows))
-
         self.dcf.write("num_rw_ports = 0\n")
         self.dcf.write("num_r_ports  = 1\n")
         self.dcf.write("num_w_ports  = 1\n")
@@ -43,7 +43,6 @@ class cache_base:
 
         self.tcf.write("word_size = {}\n".format((2 + self.tag_size) * self.num_ways))
         self.tcf.write("num_words = {}\n".format(self.num_rows))
-
         self.tcf.write("num_rw_ports = 0\n")
         self.tcf.write("num_r_ports  = 1\n")
         self.tcf.write("num_w_ports  = 1\n")
@@ -60,7 +59,7 @@ class cache_base:
 
         self.vf = open(verilog_path, "w")
 
-        self.write_banner()
+        self.write_cache_banner()
 
         # Cache module
         self.vf.write("module {} (\n".format(self.name))
@@ -71,41 +70,64 @@ class cache_base:
         self.vf.write(");\n\n")
 
         self.write_parameters()
-
         self.write_io_ports()
-
         self.write_registers()        
-
         self.write_internal_arrays()
-
-        self.write_flops()
-
         self.write_temp_variables()
+        self.write_logic_blocks()
 
-        self.write_logic_block()
+        self.vf.write("endmodule\n")
 
         self.vf.close()
 
 
-    def write_banner(self):
-        """ Write the banner of features of the cache. """
+    def write_title_banner(self, title, descr=None, indent=0):
+        """ Write a title banner. """
 
-        self.vf.write("// ########## OpenCache Module ##########\n")
-        self.vf.write("// Cache type         : {}\n".format("Data" if self.is_data_cache else "Instruction"))
-        self.vf.write("// Word size          : {}-bit\n".format(self.word_size))
-        self.vf.write("// Words per line     : {}\n".format(self.words_per_line))
-        self.vf.write("// Data array size    : {}-bit\n".format(self.total_size))
-        self.vf.write("// Placement policy   : {}\n".format("Direct-mapped" if self.num_ways == 1 else
-                                                            "{}-way Set Assocative".format(self.num_ways) if self.set_size else
-                                                            "Fully Associative"))
-        self.vf.write("// Replacement policy : {}\n".format("First In First Out" if self.replacement_policy == "fifo" else
-                                                            "Least Recently Used" if self.replacement_policy == "lru" else
-                                                            "Random" if self.replacement_policy == "random" else
-                                                            "None"))
-        self.vf.write("// Write policy       : {}\n".format(self.write_policy.capitalize()))
+        self.vf.write(("  " * indent) + "///" + ("/" * 50) + "///\n")
+        self.vf.write(("  " * indent) + "// " + " ".center(50) + " //\n")
+        self.vf.write(("  " * indent) + "// " + title.center(50) + " //\n")
+        self.vf.write(("  " * indent) + "// " + " ".center(50) + " //\n")
+        self.vf.write(("  " * indent) + "///" + ("/" * 50) + "///\n")
+
+        if descr is not None:
+            self.vf.write(("  " * indent) + "// " + " ".center(50) + " //\n")
+            for wline in wrap(descr, 50):
+                self.vf.write(("  " * indent) + "// " + wline.ljust(50) + " //\n")
+            self.vf.write(("  " * indent) + "// " + " ".center(50) + " //\n")
+            self.vf.write(("  " * indent) + "///" + ("/" * 50) + "///\n")
+
+
+    def write_cache_banner(self):
+        """ Write the banner of cache features. """
+
+        cache_type = "Data" if self.is_data_cache else "Instruction"
+        word_size  = "{}-bit".format(self.word_size)
+        words_per_line = str(self.words_per_line)
+        array_size = "{}-bit".format(self.total_size)
+        placement_policy = "Direct-mapped" if self.num_ways == 1 else \
+                           "{}-way Set Assocative".format(self.num_ways) if self.set_size else \
+                           "Fully Associative"
+        replacement_policy = "First In First Out" if self.replacement_policy == "fifo" else \
+                             "Least Recently Used" if self.replacement_policy == "lru" else \
+                             "Random" if self.replacement_policy == "random" else \
+                             "None"
+        write_policy = self.write_policy.capitalize()
         # TODO: How to adjust the data return size?
-        self.vf.write("// Return type        : {}\n".format(self.return_type.capitalize()))
-        self.vf.write("// Data hazard        : {}\n\n".format(self.data_hazard))
+        return_type = self.return_type.capitalize()
+        data_hazard = str(self.data_hazard)
+
+        self.write_title_banner(NAME)
+        self.vf.write("// Cache type         :" + cache_type.rjust(30) + " //\n")
+        self.vf.write("// Word size          :" + word_size.rjust(30) + " //\n")
+        self.vf.write("// Words per line     :" + words_per_line.rjust(30) + " //\n")
+        self.vf.write("// Data array size    :" + array_size.rjust(30) + " //\n")
+        self.vf.write("// Placement policy   :" + placement_policy.rjust(30) + " //\n")
+        self.vf.write("// Replacement policy :" + replacement_policy.rjust(30) + " //\n")
+        self.vf.write("// Write policy       :" + write_policy.rjust(30) + " //\n")
+        self.vf.write("// Return type        :" + return_type.rjust(30) + " //\n")
+        self.vf.write("// Data hazard        :" + data_hazard.rjust(30) + " //\n")
+        self.vf.write("///" + ("/" * 50) + "///\n\n")
 
 
     def write_parameters(self):
@@ -226,5 +248,5 @@ class cache_base:
         raise NotImplementedError("cache_base is an abstract class.")
 
 
-    def write_logic_block(self):
+    def write_logic_blocks(self):
         raise NotImplementedError("cache_base is an abstract class.")
