@@ -165,7 +165,7 @@ class verify:
                 cwd=OPTS.temp_path,
                 shell=True,
                 stdout=self.stdout,
-                stderr=self.stderr) < 0:
+                stderr=self.stderr) != 0:
             debug.error("    OpenRAM failed!", -1)
 
 
@@ -184,7 +184,7 @@ class verify:
                 cwd=path,
                 shell=True,
                 stdout=self.stdout,
-                stderr=self.stderr) < 0:
+                stderr=self.stderr) != 0:
             debug.error("    FuseSoC failed to add library!", -1)
 
         # Run the library for simulation or synthesis
@@ -192,7 +192,7 @@ class verify:
                 cwd=path,
                 shell=True,
                 stdout=self.stdout,
-                stderr=self.stderr) < 0:
+                stderr=self.stderr) != 0:
             debug.error("    FuseSoC failed to run!", -1)
 
         # Delete the temporary CONF file
