@@ -224,6 +224,8 @@ class verify:
         """ Convert the given Verilog module file to blackbox. """
 
         keep = []
+        # Save blackbox file as "filename_bb.v"
+        bb_file_path = file_path[:-2] + "_bb.v"
 
         with open(file_path, "r") as f:
             delete = False
@@ -237,7 +239,7 @@ class verify:
 
         keep.append("endmodule\n")
 
-        f = open(file_path, "w")
+        f = open(bb_file_path, "w")
 
         f.writelines(keep)
 
