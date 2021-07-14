@@ -137,7 +137,13 @@ class sim_cache:
         # "random way selector". Therefore, this function must do
         # the same.
         if self.replacement_policy == "random":
-            return self.random
+            way = None
+            for i in range(self.num_ways):
+                if not self.valid_array[set_decimal][i]:
+                    way = i
+            if way is None:
+                way = self.random
+            return way
 
 
     def read(self, address):
