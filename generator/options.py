@@ -63,6 +63,11 @@ class options(optparse.Values):
     # Verify the design by synthesizing
     synthesize = False
 
+    # OpenRAM needs to be run for verification. If the output of
+    # it has already been generated, this can be set False for
+    # faster verification.
+    run_openram = True
+
     num_threads = 1
 
     verbose_level = 0

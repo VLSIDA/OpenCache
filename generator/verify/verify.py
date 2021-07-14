@@ -133,27 +133,30 @@ class verify:
         debug.print_raw("  Copying the cache design file to the temp subfolder")
         copyfile(OPTS.output_path + self.name + ".v", cache_path)
 
-        # Copy the configuration files
-        debug.print_raw("  Copying the config files to the temp subfolder")
-        self.copy_config_file(self.name + "_data_array_config.py", OPTS.temp_path)
-        self.copy_config_file(self.name + "_tag_array_config.py", OPTS.temp_path)
+        if OPTS.run_openram:
+            # Copy the configuration files
+            debug.print_raw("  Copying the config files to the temp subfolder")
+            self.copy_config_file(self.name + "_data_array_config.py", OPTS.temp_path)
+            self.copy_config_file(self.name + "_tag_array_config.py", OPTS.temp_path)
 
-        # Random replacement policy doesn't need a separate SRAM array
-        if self.replacement_policy not in [None, "random"]:
-            self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), OPTS.temp_path)
+            # Random replacement policy doesn't need a separate SRAM array
+            if self.replacement_policy not in [None, "random"]:
+                self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), OPTS.temp_path)
 
-        # Run OpenRAM to generate Verilog files of SRAMs
-        debug.print_raw("  Running OpenRAM for the data array...")
-        self.run_openram("{}_data_array_config.py".format(OPTS.temp_path + self.name))
+            # Run OpenRAM to generate Verilog files of SRAMs
+            debug.print_raw("  Running OpenRAM for the data array...")
+            self.run_openram("{}_data_array_config.py".format(OPTS.temp_path + self.name))
 
-        debug.print_raw("  Running OpenRAM for the tag array...")
-        self.run_openram("{}_tag_array_config.py".format(OPTS.temp_path + self.name))
+            debug.print_raw("  Running OpenRAM for the tag array...")
+            self.run_openram("{}_tag_array_config.py".format(OPTS.temp_path + self.name))
 
-        # Random replacement policy doesn't need a separate SRAM array
-        if self.replacement_policy not in [None, "random"]:
-            debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-            self.run_openram("{0}_{1}_array_config.py".format(OPTS.temp_path + self.name,
-                                                              self.replacement_policy))
+            # Random replacement policy doesn't need a separate SRAM array
+            if self.replacement_policy not in [None, "random"]:
+                debug.print_raw("  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
+                self.run_openram("{0}_{1}_array_config.py".format(OPTS.temp_path + self.name,
+                                                                self.replacement_policy))
+        else:
+            debug.print_raw("  Skipping to run OpenRAM")
 
 
     def run_openram(self, config_path):
