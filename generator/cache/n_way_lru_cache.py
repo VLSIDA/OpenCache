@@ -69,7 +69,7 @@ class n_way_lru_cache(cache_base):
         # guaranteed to be data hazard proof
         if self.data_hazard:
             self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
-            self.vf.write("  reg data_hazard, data_hazard_next;                             // high if write and read from arrays must be done at the same cycle\n")
+            self.vf.write("  reg bypass, bypass_next;                                       // high if write and read from arrays must be done at the same cycle\n")
             self.vf.write("  reg [WAY_WIDTH * WAY_DEPTH-1:0]       new_lru, new_lru_next;   // new replacement bits from the previous cycle\n")
             self.vf.write("  reg [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] new_tag, new_tag_next;   // new tag line from the previous cycle\n")
             self.vf.write("  reg [LINE_WIDTH * WAY_DEPTH-1:0]      new_data, new_data_next; // new data line from the previous cycle\n\n")
@@ -149,19 +149,19 @@ class n_way_lru_cache(cache_base):
 
         self.write_title_banner(title, descr, indent=1)
         self.vf.write("  always @(posedge clk) begin\n")
-        self.vf.write("    state       <= #(DELAY) state_next;\n")
-        self.vf.write("    way         <= #(DELAY) way_next;\n")
-        self.vf.write("    tag         <= #(DELAY) tag_next;\n")
-        self.vf.write("    set         <= #(DELAY) set_next;\n")
-        self.vf.write("    offset      <= #(DELAY) offset_next;\n")
-        self.vf.write("    web_reg     <= #(DELAY) web_reg_next;\n")
-        self.vf.write("    din_reg     <= #(DELAY) din_reg_next;\n")
+        self.vf.write("    state    <= #(DELAY) state_next;\n")
+        self.vf.write("    way      <= #(DELAY) way_next;\n")
+        self.vf.write("    tag      <= #(DELAY) tag_next;\n")
+        self.vf.write("    set      <= #(DELAY) set_next;\n")
+        self.vf.write("    offset   <= #(DELAY) offset_next;\n")
+        self.vf.write("    web_reg  <= #(DELAY) web_reg_next;\n")
+        self.vf.write("    din_reg  <= #(DELAY) din_reg_next;\n")
 
         if self.data_hazard:
-            self.vf.write("    data_hazard <= #(DELAY) data_hazard_next;\n")
-            self.vf.write("    new_lru     <= #(DELAY) new_lru_next;\n")
-            self.vf.write("    new_tag     <= #(DELAY) new_tag_next;\n")
-            self.vf.write("    new_data    <= #(DELAY) new_data_next;\n")
+            self.vf.write("    bypass   <= #(DELAY) bypass_next;\n")
+            self.vf.write("    new_lru  <= #(DELAY) new_lru_next;\n")
+            self.vf.write("    new_tag  <= #(DELAY) new_tag_next;\n")
+            self.vf.write("    new_data <= #(DELAY) new_data_next;\n")
 
         self.vf.write("  end\n\n\n")
 
@@ -278,14 +278,14 @@ class n_way_lru_cache(cache_base):
 
         self.vf.write("            // Find the least recently used way (the way having 0 LRU number)\n")
         if self.data_hazard:
-            self.vf.write("            if ((data_hazard && !new_lru[var_0 * WAY_WIDTH +: WAY_WIDTH]) || (!data_hazard && !lru_read_dout[var_0 * WAY_WIDTH +: WAY_WIDTH])) begin // Find the LRU way\n")
+            self.vf.write("            if ((bypass && !new_lru[var_0 * WAY_WIDTH +: WAY_WIDTH]) || (!bypass && !lru_read_dout[var_0 * WAY_WIDTH +: WAY_WIDTH])) begin // Find the LRU way\n")
         else:
             self.vf.write("            if (!lru_read_dout[var_0 * WAY_WIDTH +: WAY_WIDTH]) begin // Find the LRU way\n")
 
         self.vf.write("              // Assuming that current request is miss, check if it is a dirty miss\n")
 
         if self.data_hazard:
-            self.vf.write("              if ((data_hazard && new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!data_hazard && tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
+            self.vf.write("              if ((bypass && new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!bypass && tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
         else:
             self.vf.write("              if (tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin\n")
 
@@ -303,7 +303,7 @@ class n_way_lru_cache(cache_base):
 
         if self.data_hazard:
             self.vf.write("                  // Use bypass registers if needed\n")
-            self.vf.write("                  if (data_hazard) begin\n")
+            self.vf.write("                  if (bypass) begin\n")
             self.vf.write("                    main_addr = {new_tag[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
             self.vf.write("                    main_din  = new_data[var_0 * LINE_WIDTH +: LINE_WIDTH];\n")
             self.vf.write("                  end else begin\n")
@@ -333,9 +333,9 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          for (var_0 = 0; var_0 < WAY_DEPTH; var_0 = var_0 + 1)\n")
 
         if self.data_hazard:
-            self.vf.write("            if ((data_hazard && new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin // Hit\n")
+            self.vf.write("            if ((bypass && new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
         else:
-            self.vf.write("            if (tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin // Hit\n")
+            self.vf.write("            if (tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
 
         self.vf.write("              // Set main memory's csb to 1 again since it could be set 0 above\n")
         self.vf.write("              main_csb = 1;\n")
@@ -348,7 +348,7 @@ class n_way_lru_cache(cache_base):
 
         if self.data_hazard:
             self.vf.write("                // Use bypass registers if needed\n")
-            self.vf.write("                if (data_hazard) begin\n")
+            self.vf.write("                if (bypass) begin\n")
             self.vf.write("                  tag_write_din  = new_tag;\n")
             self.vf.write("                  data_write_din = new_data;\n")
             self.vf.write("                end else begin\n")
@@ -530,14 +530,14 @@ class n_way_lru_cache(cache_base):
         self.vf.write("      for (var_3 = 0; var_3 < WAY_DEPTH; var_3 = var_3 + 1) begin\n")
 
         if self.data_hazard:
-            self.vf.write("        if ((data_hazard && !new_lru[var_3 * WAY_WIDTH +: WAY_WIDTH]) || (!data_hazard && !lru_read_dout[var_3 * WAY_WIDTH +: WAY_WIDTH])) begin // Find the LRU way\n")
+            self.vf.write("        if ((bypass && !new_lru[var_3 * WAY_WIDTH +: WAY_WIDTH]) || (!bypass && !lru_read_dout[var_3 * WAY_WIDTH +: WAY_WIDTH])) begin\n")
         else:
-            self.vf.write("        if (!lru_read_dout[var_3 * WAY_WIDTH +: WAY_WIDTH]) begin // Find the LRU way\n")
+            self.vf.write("        if (!lru_read_dout[var_3 * WAY_WIDTH +: WAY_WIDTH]) begin\n")
 
         self.vf.write("        // Assuming that current request is miss, check if it is a dirty miss\n")
 
         if self.data_hazard:
-            self.vf.write("          if ((data_hazard && new_tag[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!data_hazard && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
+            self.vf.write("          if ((bypass && new_tag[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!bypass && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
         else:
             self.vf.write("          if (tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin\n")
 
@@ -560,10 +560,12 @@ class n_way_lru_cache(cache_base):
         self.vf.write("      // value is smaller than least recently used way's var_3 value.\n")
         self.vf.write("      // TODO: This should be optimized.\n")
         self.vf.write("      for (var_3 = 0; var_3 < WAY_DEPTH; var_3 = var_3 + 1) begin\n")
+
         if self.data_hazard:
-            self.vf.write("        if ((data_hazard && new_tag[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
+            self.vf.write("        if ((bypass && new_tag[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
         else:
-            self.vf.write("        if (tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin // Hit\n")
+            self.vf.write("        if (tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
+
         self.vf.write("          if (csb)\n")
         self.vf.write("            state_next = IDLE;\n")
         self.vf.write("          else\n")
@@ -669,7 +671,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("        if ((state == IDLE)\n")
 
         if self.data_hazard:
-            self.vf.write("        || (state == COMPARE && ((data_hazard && new_tag[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)))\n")
+            self.vf.write("        || (state == COMPARE && ((bypass && new_tag[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)))\n")
         else:
             self.vf.write("        || (state == COMPARE && tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)\n")
 
@@ -728,14 +730,14 @@ class n_way_lru_cache(cache_base):
         self.vf.write("      for (var_5 = 0; var_5 < WAY_DEPTH; var_5 = var_5 + 1) begin\n")
 
         if self.data_hazard:
-            self.vf.write("        if ((data_hazard && new_tag[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
+            self.vf.write("        if ((bypass && new_tag[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
         else:
             self.vf.write("        if (tag_read_dout[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
 
         self.vf.write("          stall = 0;\n")
 
         if self.data_hazard:
-            self.vf.write("          if (data_hazard)\n")
+            self.vf.write("          if (bypass)\n")
             self.vf.write("            dout = new_data[var_5 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
             self.vf.write("          else\n")
             self.vf.write("            dout = data_read_dout[var_5 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
@@ -832,7 +834,7 @@ class n_way_lru_cache(cache_base):
 
         self.vf.write("        // Find the least recently used way (the way having 0 LRU number)\n")
         if self.data_hazard:
-            self.vf.write("        if ((data_hazard && !new_lru[var_9 * WAY_WIDTH +: WAY_WIDTH]) || (!data_hazard && !lru_read_dout[var_9 * WAY_WIDTH +: WAY_WIDTH])) begin\n")
+            self.vf.write("        if ((bypass && !new_lru[var_9 * WAY_WIDTH +: WAY_WIDTH]) || (!bypass && !lru_read_dout[var_9 * WAY_WIDTH +: WAY_WIDTH])) begin\n")
         else:
             self.vf.write("        if (!lru_read_dout[var_9 * WAY_WIDTH +: WAY_WIDTH]) begin // Find the LRU way\n")
 
@@ -840,7 +842,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          // Check if current request is a dirty miss\n")
 
         if self.data_hazard:
-            self.vf.write("          if ((!data_hazard || new_tag[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] != 2'b11) && (data_hazard || tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] != 2'b11)) begin // Miss (valid and dirty)\n")
+            self.vf.write("          if ((!bypass || new_tag[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] != 2'b11) && (bypass || tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] != 2'b11)) begin // Miss (valid and dirty)\n")
         else:
             self.vf.write("          if (tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] != 2'b11) begin // Miss (valid and dirty)\n")
 
@@ -852,7 +854,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("          for (var_9 = 0; var_9 < WAY_DEPTH; var_9 = var_9 + 1) begin\n")
 
         if self.data_hazard:
-            self.vf.write("            if ((data_hazard && new_tag[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
+            self.vf.write("            if ((bypass && new_tag[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
         else:
             self.vf.write("            if (tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
 
@@ -867,7 +869,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("              // have LRU numbers more than accessed way's LRU number are decremented\n")
         self.vf.write("              // by 1.\n")
         if self.data_hazard:
-            self.vf.write("              if (data_hazard) begin\n")
+            self.vf.write("              if (bypass) begin\n")
             self.write_lru_update(8, True, False, "var_9", for_var="var_10")
             self.vf.write("              end else begin\n")
             self.write_lru_update(8, False, False, "var_9", for_var="var_10")
@@ -922,10 +924,10 @@ class n_way_lru_cache(cache_base):
 
         self.write_title_banner(title, descr, indent=1)
         self.vf.write("  always @* begin\n")
-        self.vf.write("    data_hazard_next = 0;\n")
-        self.vf.write("    new_lru_next     = new_lru;\n")
-        self.vf.write("    new_tag_next     = new_tag;\n")
-        self.vf.write("    new_data_next    = new_data;\n\n")
+        self.vf.write("    bypass_next   = 0;\n")
+        self.vf.write("    new_lru_next  = new_lru;\n")
+        self.vf.write("    new_tag_next  = new_tag;\n")
+        self.vf.write("    new_data_next = new_data;\n\n")
 
         self.vf.write("    // If rst is high or state is IDLE, no need to use bypass registers.\n")
         self.vf.write("    if (rst || state == IDLE) begin\n")
@@ -949,16 +951,11 @@ class n_way_lru_cache(cache_base):
         self.vf.write("      //   Next address is in the same set\n")
         self.vf.write("      if (!csb) begin\n")
         self.vf.write("        for (var_6 = 0; var_6 < WAY_DEPTH; var_6 = var_6 + 1) begin\n")
-
-        if self.data_hazard:
-            self.vf.write("          if (((data_hazard && new_tag[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!data_hazard && tag_read_dout[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag))\n")
-        else:
-            self.vf.write("          if ((tag_read_dout[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin // Hit\n")
-
+        self.vf.write("          if (((bypass && new_tag[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag))\n")
         self.vf.write("          && addr[OFFSET_WIDTH +: SET_WIDTH] == set)\n")
         self.vf.write("          begin\n")
-        self.vf.write("            data_hazard_next = 1;\n")
-        self.vf.write("            if (data_hazard) begin\n")
+        self.vf.write("            bypass_next = 1;\n")
+        self.vf.write("            if (bypass) begin\n")
         self.write_lru_update(7, True, True, "var_6", "var_8")
         self.vf.write("              new_tag_next  = new_tag;\n")
         self.vf.write("              new_data_next = new_data;\n")
@@ -994,7 +991,7 @@ class n_way_lru_cache(cache_base):
         self.vf.write("        //   CPU is sending a new request\n")
         self.vf.write("        //   Next address is in the same set\n")
         self.vf.write("        if (!csb && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin\n")
-        self.vf.write("          data_hazard_next = 1;\n")
+        self.vf.write("          bypass_next = 1;\n")
         self.write_lru_update(5, False, True, for_var="var_6")
         self.vf.write("          new_tag_next     = tag_read_dout;\n")
         self.vf.write("          new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = 1'b1;\n")
