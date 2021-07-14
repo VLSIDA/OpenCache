@@ -199,6 +199,7 @@ class sim_cache:
             self.valid_array[set_decimal][evict_way] = 1
             self.dirty_array[set_decimal][evict_way] = 1
             self.tag_array[set_decimal][evict_way]   = tag_decimal
+            self.data_array[set_decimal][evict_way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
             self.data_array[set_decimal][evict_way][offset_decimal] = data_input
 
             self.update_fifo(set_decimal)
