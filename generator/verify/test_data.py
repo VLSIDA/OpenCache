@@ -74,16 +74,15 @@ class test_data:
 
                 # Find the evicted address
                 _, set_decimal, _ = self.sc.parse_address(self.addr[i])
-                evicted_way  = self.sc.way_to_evict(set_decimal)
-                evicted_tag  = self.sc.tag_array[set_decimal][evicted_way]
-                evicted_addr = self.sc.merge_address(evicted_tag, set_decimal, 0)
+                evicted_way = self.sc.way_to_evict(set_decimal)
+                is_dirty    = self.sc.dirty_array[set_decimal][evicted_way]
 
                 # If a way is written back before being replaced,
                 # cache stalls for 2n+1 cycles in total:
                 # - n while writing
                 # - 1 for sending the read request to DRAM
                 # - n while reading
-                stall_cycles += (4 * 2 + 1 if self.sc.is_dirty(evicted_addr) else 4)
+                stall_cycles += (4 * 2 + 1 if is_dirty else 4)
 
             self.stall[i] = stall_cycles
 
