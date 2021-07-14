@@ -258,6 +258,9 @@ class verify:
                 # Check if error count is nonzero
                 if line.find(error_prefix) != -1 and int(findall(r"\d+", line)[0]) != 0:
                     return False
+                # Check if there is an "ERROR"
+                if line.find("ERROR") != -1:
+                    return False
 
         return True
 
