@@ -18,6 +18,11 @@ class n_way_random_cache(cache_base):
 
         super().__init__(cache_config, name)
 
+        self.bypass_regs = {
+            "tag_read_dout":  "new_tag",
+            "data_read_dout": "new_data"
+        }
+
 
     def write_registers(self):
         """ Write the registers of the cache. """
@@ -235,11 +240,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("        COMPARE: begin\n")
         self.vf.write("          // Assuming that current request is miss, check if it is a dirty miss\n")
 
-        if self.data_hazard:
-            self.vf.write("          if ((bypass && new_tag[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!bypass && tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
-        else:
-            self.vf.write("          if (tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin\n")
+        lines = "tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("          if ({}) begin\n".format(lines))
         self.vf.write("            // If main memory is busy, switch to WRITE and wait for\n")
         self.vf.write("            // main memory to be available.\n")
         self.vf.write("            if (main_stall) begin\n")
@@ -252,19 +256,13 @@ class n_way_random_cache(cache_base):
         self.vf.write("              main_csb = 0;\n")
         self.vf.write("              main_web = 0;\n")
 
-        if self.data_hazard:
-            self.vf.write("              // Use bypass registers if needed\n")
-            self.vf.write("              if (bypass) begin\n")
-            self.vf.write("                main_addr = {new_tag[random * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-            self.vf.write("                main_din  = new_data[random * LINE_WIDTH +: LINE_WIDTH];\n")
-            self.vf.write("              end else begin\n")
-            self.vf.write("                main_addr = {tag_read_dout[random * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-            self.vf.write("                main_din  = data_read_dout[random * LINE_WIDTH +: LINE_WIDTH];\n")
-            self.vf.write("              end\n")
-        else:
-            self.vf.write("              main_addr = {tag_read_dout[random * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-            self.vf.write("              main_din  = data_read_dout[random * LINE_WIDTH +: LINE_WIDTH];\n")
+        lines = [
+            "main_addr = {tag_read_dout[random * (TAG_WIDTH + 2) +: TAG_WIDTH], set};",
+            "main_din  = data_read_dout[random * LINE_WIDTH +: LINE_WIDTH];"
+        ]
+        lines = self.wrap_data_hazard(lines, indent=7)
 
+        self.vf.writelines(lines)
         self.vf.write("            end\n")
         self.vf.write("          end\n")
         self.vf.write("          // Else, assume that current request is a clean miss\n")
@@ -280,11 +278,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("          // before evicting a random way.\n")
         self.vf.write("          for (var_0 = 0; var_0 < WAY_DEPTH; var_0 = var_0 + 1)\n")
 
-        if self.data_hazard:
-            self.vf.write("            if ((bypass && !new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]) || (!bypass && !tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1])) begin\n")
-        else:
-            self.vf.write("            if (!tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]) begin\n")
+        lines = "!tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("            if ({}) begin\n".format(lines))
         self.vf.write("              if (!main_stall) begin\n")
         self.vf.write("                tag_read_addr  = set;\n")
         self.vf.write("                data_read_addr = set;\n")
@@ -299,11 +296,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("          // tag, only one of them can match at most.\n")
         self.vf.write("          for (var_0 = 0; var_0 < WAY_DEPTH; var_0 = var_0 + 1)\n")
 
-        if self.data_hazard:
-            self.vf.write("            if ((bypass && new_tag[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
-        else:
-            self.vf.write("            if (tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
+        lines = "tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("            if ({}) begin\n".format(lines))
         self.vf.write("              // Set main memory's csb to 1 again since it could be set 0 above\n")
         self.vf.write("              main_csb   = 1;\n")
         self.vf.write("              // Perform the write request\n")
@@ -313,19 +309,13 @@ class n_way_random_cache(cache_base):
         self.vf.write("                data_write_csb  = 0;\n")
         self.vf.write("                data_write_addr = set;\n")
 
-        if self.data_hazard:
-            self.vf.write("                // Use bypass registers if needed\n")
-            self.vf.write("                if (bypass) begin\n")
-            self.vf.write("                  tag_write_din  = new_tag;\n")
-            self.vf.write("                  data_write_din = new_data;\n")
-            self.vf.write("                end else begin\n")
-            self.vf.write("                  tag_write_din  = tag_read_dout;\n")
-            self.vf.write("                  data_write_din = data_read_dout;\n")
-            self.vf.write("                end\n")
-        else:
-            self.vf.write("                tag_write_din  = tag_read_dout;\n")
-            self.vf.write("                data_write_din = data_read_dout;\n")
+        lines = [
+            "tag_write_din  = tag_read_dout;",
+            "data_write_din = data_read_dout;"
+        ]
+        lines = self.wrap_data_hazard(lines, indent=8)
 
+        self.vf.writelines(lines)
         self.vf.write("                // Update dirty bit in the tag line\n")
         self.vf.write("                tag_write_din[var_0 * (2 + TAG_WIDTH) + TAG_WIDTH] = 1'b1;\n")
         self.vf.write("                // Overwrite the word\n")
@@ -494,11 +484,11 @@ class n_way_random_cache(cache_base):
         self.vf.write("    //   WAIT_READ  if current request is clean miss and main memory is available\n")
         self.vf.write("    else if (state == COMPARE) begin\n")
         self.vf.write("      // Assuming that current request is miss, check if it is a dirty miss\n")
-        if self.data_hazard:
-            self.vf.write("      if ((bypass && new_tag[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) || (!bypass && tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11)) begin\n")
-        else:
-            self.vf.write("      if (tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11) begin\n")
 
+        lines = "tag_read_dout[random * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
+        lines = self.wrap_data_hazard(lines)
+
+        self.vf.write("      if ({}) begin\n".format(lines))
         self.vf.write("        if (main_stall)\n")
         self.vf.write("          state_next = WRITE;\n")
         self.vf.write("        else\n")
@@ -515,11 +505,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("      // Check if there is an empty way\n")
         self.vf.write("      for (var_2 = 0; var_2 < WAY_DEPTH; var_2 = var_2 + 1) begin\n")
 
-        if self.data_hazard:
-            self.vf.write("        if ((bypass && !new_tag[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]) || (!bypass && !tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1])) begin\n")
-        else:
-            self.vf.write("        if (!tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]) begin\n")
+        lines = "!tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("        if ({}) begin\n".format(lines))
         self.vf.write("          if (main_stall)\n")
         self.vf.write("            state_next = READ;\n")
         self.vf.write("          else\n")
@@ -533,11 +522,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("      // tag, only one of them can match at most.\n")
         self.vf.write("      for (var_2 = 0; var_2 < WAY_DEPTH; var_2 = var_2 + 1)\n")
 
-        if self.data_hazard:
-            self.vf.write("        if ((bypass && new_tag[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_2 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_2 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
-        else:
-            self.vf.write("        if (tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_2 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
+        lines = "tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_2 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("        if ({}) begin\n".format(lines))
         self.vf.write("          if (csb)\n")
         self.vf.write("            state_next = IDLE;\n")
         self.vf.write("          else\n")
@@ -639,11 +627,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("      for (var_3 = 0; var_3 < WAY_DEPTH; var_3 = var_3 + 1) begin\n")
         self.vf.write("        if ((state == IDLE)\n")
 
-        if self.data_hazard:
-            self.vf.write("        || (state == COMPARE && ((bypass && new_tag[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)))\n")
-        else:
-            self.vf.write("        || (state == COMPARE && tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)\n")
+        lines = "tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("        || (state == COMPARE && ({}))\n".format(lines))
         self.vf.write("        || (state == WAIT_READ && !main_stall))\n")
         self.vf.write("        begin\n")
         self.vf.write("          tag_next     = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
@@ -698,21 +685,16 @@ class n_way_random_cache(cache_base):
         self.vf.write("      // Check if current request is hit\n")
         self.vf.write("      for (var_4 = 0; var_4 < WAY_DEPTH; var_4 = var_4 + 1) begin\n")
 
-        if self.data_hazard:
-            self.vf.write("        if ((bypass && new_tag[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag)) begin\n")
-        else:
-            self.vf.write("        if (tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) begin\n")
+        lines = "tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("        if ({}) begin\n".format(lines))
         self.vf.write("          stall = 0;\n")
 
-        if self.data_hazard:
-            self.vf.write("          if (bypass)\n")
-            self.vf.write("            dout = new_data[var_4 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
-            self.vf.write("          else\n")
-            self.vf.write("            dout = data_read_dout[var_4 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
-        else:
-            self.vf.write("          dout = data_read_dout[var_4 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];\n")
+        lines = ["dout = data_read_dout[var_4 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];"]
+        lines = self.wrap_data_hazard(lines, indent=5)
 
+        self.vf.writelines(lines)
         self.vf.write("        end\n")
         self.vf.write("      end\n")
         self.vf.write("    end\n\n")
@@ -787,11 +769,10 @@ class n_way_random_cache(cache_base):
         self.vf.write("      // the random way.\n")
         self.vf.write("      for (var_7 = 0; var_7 < WAY_DEPTH; var_7 = var_7 + 1) begin\n")
 
-        if self.data_hazard:
-            self.vf.write("        if ((bypass && !new_tag[var_7 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]) || (!bypass && !tag_read_dout[var_7 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]))\n")
-        else:
-            self.vf.write("        if (!tag_read_dout[var_7 * (TAG_WIDTH + 2) + TAG_WIDTH + 1])\n")
+        lines = "!tag_read_dout[var_7 * (TAG_WIDTH + 2) + TAG_WIDTH + 1]"
+        lines = self.wrap_data_hazard(lines)
 
+        self.vf.write("        if ({})\n".format(lines))
         self.vf.write("          way_next = var_7;\n")
         self.vf.write("      end\n")
         self.vf.write("    end\n\n")

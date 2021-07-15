@@ -250,3 +250,43 @@ class cache_base:
 
     def write_logic_blocks(self):
         raise NotImplementedError("cache_base is an abstract class.")
+
+
+    def wrap_data_hazard(self, lines, indent=0):
+        """ Wrap given Verilog lines with data hazard control. """
+
+        # If data_hazard is false, return the original lines
+        if not self.data_hazard:
+            if type(lines) is str:
+                for line in lines:
+                    line = (indent * "  ") + line
+            return lines
+
+        # Given lines are if statements
+        # Assuming that statement is given in a single line
+        if type(lines) is str:
+            dh_line = lines
+            for or_reg, bp_reg in self.bypass_regs.items():
+                dh_line = dh_line.replace(or_reg, bp_reg)
+            new_line = "(bypass && {0}) || (!bypass && {1})".format(dh_line, lines)
+            return new_line
+        
+        else:
+            new_lines = [
+                (indent * "  ") + "// Use bypass registers if needed\n",
+                (indent * "  ") + "if (bypass) begin\n"
+            ]
+            for line in lines:
+                dh_line = line
+                for or_reg, bp_reg in self.bypass_regs.items():
+                    dh_line = dh_line.replace(or_reg, bp_reg)
+                new_lines.append(((indent + 1) * "  ") + dh_line + "\n")
+
+            new_lines.append((indent * "  ") + "end else begin\n")
+
+            for line in lines:
+                new_lines.append(((indent + 1) * "  ") + line + "\n")
+
+            new_lines.append((indent * "  ") + "end\n")
+
+            return new_lines
