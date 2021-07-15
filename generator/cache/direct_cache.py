@@ -613,7 +613,7 @@ class direct_cache(cache_base):
         self.vf.write("      if ({}) begin\n".format(lines))
         self.vf.write("        stall = 0;\n")
 
-        lines = ["dout = new_data[offset * WORD_WIDTH +: WORD_WIDTH];"]
+        lines = ["dout = data_read_dout[offset * WORD_WIDTH +: WORD_WIDTH];"]
         lines = self.wrap_data_hazard(lines, indent=4)
 
         self.vf.writelines(lines)
