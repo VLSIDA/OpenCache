@@ -38,7 +38,12 @@ class sim_cache:
             self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
 
         if self.replacement_policy == "random":
+            # Random register is reset when rst is high.
+            # During the RESET state, it keeps getting incremented.
+            # Therefore, random is num_rows + 2 when the first
+            # request is in the COMPARE state.
             self.random = 0
+            self.update_random(self.num_rows + 2)
 
 
     def reset_dram(self):
@@ -58,6 +63,8 @@ class sim_cache:
                     old_data = self.data_array[row_i][way_i].copy()
                     self.dram[(old_tag << self.set_size) + row_i] = old_data
 
+        # TODO: Update random counter after flush.
+
 
     def merge_address(self, tag_decimal, set_decimal, offset_decimal):
         """
@@ -76,7 +83,7 @@ class sim_cache:
 
 
     def parse_address(self, address):
-        """ Parse the given address into tag, set, and offset. """
+        """ Parse the given address into tag, set, and offset values. """
 
         address_binary = "{0:0{1}b}".format(address, self.address_size)
         tag_binary     = address_binary[:self.tag_size]
@@ -132,10 +139,6 @@ class sim_cache:
                     way = i
             return way
 
-        # TODO: Random way should be the same as the hardware design.
-        # In the hardware design, there is a counter serving as the
-        # "random way selector". Therefore, this function must do
-        # the same.
         if self.replacement_policy == "random":
             way = None
             for i in range(self.num_ways):
@@ -151,11 +154,13 @@ class sim_cache:
 
         tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
         way = self.find_way(address)
+        data_out = None
 
         if way is not None: # Hit
             self.update_lru(set_decimal, way)
+            self.update_random(1)
 
-            return self.data_array[set_decimal][way][offset_decimal]
+            data_out = self.data_array[set_decimal][way][offset_decimal]
         else: # Miss
             evict_way = self.way_to_evict(set_decimal)
 
@@ -164,6 +169,7 @@ class sim_cache:
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
+                self.update_random(4 + 1)
 
             self.valid_array[set_decimal][evict_way] = 1
             self.dirty_array[set_decimal][evict_way] = 0
@@ -172,8 +178,11 @@ class sim_cache:
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, evict_way)
+            self.update_random(1 + 4 + 1)
 
-            return self.data_array[set_decimal][evict_way][offset_decimal]
+            data_out = self.data_array[set_decimal][evict_way][offset_decimal]
+
+        return data_out
 
 
     def write(self, address, data_input):
@@ -184,6 +193,7 @@ class sim_cache:
 
         if way is not None: # Hit
             self.update_lru(set_decimal, way)
+            self.update_random(1)
 
             self.dirty_array[set_decimal][way] = 1
             self.data_array[set_decimal][way][offset_decimal] = data_input
@@ -195,6 +205,7 @@ class sim_cache:
                 old_tag  = self.tag_array[set_decimal][evict_way]
                 old_data = self.data_array[set_decimal][evict_way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
+                self.update_random(4 + 1)
 
             self.valid_array[set_decimal][evict_way] = 1
             self.dirty_array[set_decimal][evict_way] = 1
@@ -204,6 +215,7 @@ class sim_cache:
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, evict_way)
+            self.update_random(1 + 4 + 1)
 
 
     def update_fifo(self, set_decimal):
@@ -244,6 +256,7 @@ class sim_cache:
             # In the real hardware, random caches have a register acting 
             # like a counter. This register is incremented at every posedge
             # of the clock.
+            #
             # Since we cannot guarantee how many cycles a miss will take,
             # this register essentially has random values.
             self.random += cycles
