@@ -236,14 +236,15 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.", -1)
 
-    # Make the temp folder
-    try:
-        os.makedirs(OPTS.temp_path, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.temp_path, 0o750)
-    except:
-        debug.error("Unable to make temp directory.", -1)
+    # Make the temp folder if only needed
+    if OPTS.simulate or OPTS.synthesize:
+        try:
+            os.makedirs(OPTS.temp_path, 0o750)
+        except OSError as e:
+            if e.errno == 17:  # errno.EEXIST
+                os.chmod(OPTS.temp_path, 0o750)
+        except:
+            debug.error("Unable to make temp directory.", -1)
 
 
 def report_status():
