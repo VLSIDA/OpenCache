@@ -202,7 +202,7 @@ def check_fifo(sc):
     sc.write(address_2, 3)
 
     # address_0 must be replaced
-    if sc.find_way(address_0):
+    if sc.find_way(address_0) is not None:
         return False
 
     # Read 1 from address_0
@@ -210,7 +210,7 @@ def check_fifo(sc):
         return False
 
     # address_1 must be replaced
-    if sc.find_way(address_1):
+    if sc.find_way(address_1) is not None:
         return False
 
     return True
@@ -236,7 +236,7 @@ def check_lru(sc):
     sc.write(address_2, 3)
 
     # address_1 must be replaced
-    if sc.find_way(address_1):
+    if sc.find_way(address_1) is not None:
         return False
 
     # Read 2 from address_1
@@ -244,7 +244,7 @@ def check_lru(sc):
         return False
 
     # address_0 must be replaced
-    if sc.find_way(address_0):
+    if sc.find_way(address_0) is not None:
         return False
 
     return True
@@ -255,8 +255,35 @@ def check_random(sc):
 
     reset(sc)
 
-    # TODO: sim_cache must imitate the random counter.
-    return False
+    # Write 1 to address_0
+    address_0 = sc.merge_address(0, 0, 0)
+    sc.write(address_0, 1)
+
+    # Write 2 to address_1
+    address_1 = sc.merge_address(1, 0, 0)
+    sc.write(address_1, 2)
+
+    # Read hit couple of times
+    sc.read(address_1)
+    sc.read(address_1)
+
+    # Write 3 to address_2
+    address_2 = sc.merge_address(2, 0, 0)
+    sc.write(address_2, 3)
+
+    # address_1 must be replaced
+    if sc.find_way(address_1) is not None:
+        return False
+
+    # Read 2 from address_1
+    if sc.read(address_1) != 2:
+        return False
+
+    # address_0 must be replaced
+    if sc.find_way(address_0) is not None:
+        return False
+
+    return True
 
 
 # Run the test from the terminal
