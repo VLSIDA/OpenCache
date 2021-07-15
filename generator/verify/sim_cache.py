@@ -149,73 +149,54 @@ class sim_cache:
             return way
 
 
-    def read(self, address):
-        """ Read the data of an address. """
+    def request(self, address):
+        """ Prepare arrays for a request of address. """
 
-        tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
+        tag_decimal, set_decimal, _ = self.parse_address(address)
         way = self.find_way(address)
-        data_out = None
 
         if way is not None: # Hit
             self.update_lru(set_decimal, way)
             self.update_random(1)
-
-            data_out = self.data_array[set_decimal][way][offset_decimal]
         else: # Miss
-            evict_way = self.way_to_evict(set_decimal)
+            way = self.way_to_evict(set_decimal)
 
             # Write-back
-            if self.dirty_array[set_decimal][evict_way]:
-                old_tag  = self.tag_array[set_decimal][evict_way]
-                old_data = self.data_array[set_decimal][evict_way].copy()
+            if self.dirty_array[set_decimal][way]:
+                old_tag  = self.tag_array[set_decimal][way]
+                old_data = self.data_array[set_decimal][way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
                 self.update_random(4 + 1)
 
-            self.valid_array[set_decimal][evict_way] = 1
-            self.dirty_array[set_decimal][evict_way] = 0
-            self.tag_array[set_decimal][evict_way]   = tag_decimal
-            self.data_array[set_decimal][evict_way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
+            # Bring data line from DRAM
+            self.valid_array[set_decimal][way] = 1
+            self.dirty_array[set_decimal][way] = 0
+            self.tag_array[set_decimal][way]   = tag_decimal
+            self.data_array[set_decimal][way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
 
             self.update_fifo(set_decimal)
-            self.update_lru(set_decimal, evict_way)
+            self.update_lru(set_decimal, way)
             self.update_random(1 + 4 + 1)
 
-            data_out = self.data_array[set_decimal][evict_way][offset_decimal]
+        # Return the valid way
+        return way
 
-        return data_out
+
+    def read(self, address):
+        """ Read data from an address. """
+
+        _, set_decimal, offset_decimal = self.parse_address(address)
+        way = self.request(address)
+        return self.data_array[set_decimal][way][offset_decimal]
 
 
     def write(self, address, data_input):
-        """ Write the data to an address. """
+        """ Write data to an address. """
 
-        tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
-        way = self.find_way(address)
-
-        if way is not None: # Hit
-            self.update_lru(set_decimal, way)
-            self.update_random(1)
-
-            self.dirty_array[set_decimal][way] = 1
-            self.data_array[set_decimal][way][offset_decimal] = data_input
-        else: # Miss
-            evict_way = self.way_to_evict(set_decimal)
-
-            # Write-back
-            if self.dirty_array[set_decimal][evict_way]:
-                old_tag  = self.tag_array[set_decimal][evict_way]
-                old_data = self.data_array[set_decimal][evict_way].copy()
-                self.dram[(old_tag << self.set_size) + set_decimal] = old_data
-                self.update_random(4 + 1)
-
-            self.valid_array[set_decimal][evict_way] = 1
-            self.dirty_array[set_decimal][evict_way] = 1
-            self.tag_array[set_decimal][evict_way]   = tag_decimal
-            self.data_array[set_decimal][evict_way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
-            self.data_array[set_decimal][evict_way][offset_decimal] = data_input
-
-            self.update_fifo(set_decimal)
-            self.update_lru(set_decimal, evict_way)
-            self.update_random(1 + 4 + 1)
+        _, set_decimal, offset_decimal = self.parse_address(address)
+        way = self.request(address)
+        self.dirty_array[set_decimal][way] = 1
+        self.data_array[set_decimal][way][offset_decimal] = data_input
 
 
     def update_fifo(self, set_decimal):
