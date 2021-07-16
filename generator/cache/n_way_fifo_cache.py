@@ -526,19 +526,11 @@ class n_way_fifo_cache(cache_base):
         lines = "tag_read_dout[fifo_read_dout * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
         lines = self.wrap_data_hazard(lines)
 
-        self.vf.write("          if ({}) begin\n".format(lines))
-        self.vf.write("            if (main_stall)\n")
-        self.vf.write("              state_next = WRITE;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = WAIT_WRITE;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          if ({})\n".format(lines))
+        self.vf.write("            state_next = main_stall ? WRITE : WAIT_WRITE;\n")
         self.vf.write("          // Else, assume that current request is a clean miss\n")
-        self.vf.write("          else begin\n")
-        self.vf.write("            if (main_stall)\n")
-        self.vf.write("              state_next = READ;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = WAIT_READ;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          else\n")
+        self.vf.write("            state_next = main_stall ? READ : WAIT_READ;\n")
 
         self.vf.write("          // Check if current request is hit.\n")
         self.vf.write("          // Compare all ways' tags to find a hit. Since each way has a different\n")
@@ -548,12 +540,8 @@ class n_way_fifo_cache(cache_base):
         lines = "tag_read_dout[var_2 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_2 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
         lines = self.wrap_data_hazard(lines)
 
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("              if (csb)\n")
-        self.vf.write("                state_next = IDLE;\n")
-        self.vf.write("              else\n")
-        self.vf.write("                state_next = COMPARE;\n")
-        self.vf.write("            end\n")
+        self.vf.write("            if ({})\n".format(lines))
+        self.vf.write("              state_next = csb ? IDLE : COMPARE;\n")
         self.vf.write("        end\n\n")
 
         # WRITE state
@@ -588,12 +576,8 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("        //   IDLE    if CPU isn't sending a new request\n")
         self.vf.write("        //   COMPARE if CPU is sending a new request\n")
         self.vf.write("        WAIT_READ: begin\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            if (csb)\n")
-        self.vf.write("              state_next = IDLE;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = COMPARE;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          if (!main_stall)\n")
+        self.vf.write("            state_next = csb ? IDLE : COMPARE;\n")
         self.vf.write("        end\n\n")
 
         self.vf.write("        default: state_next = state;\n\n")

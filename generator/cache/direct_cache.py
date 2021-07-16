@@ -458,30 +458,18 @@ class direct_cache(cache_base):
         lines = "tag_read_dout[TAG_WIDTH+1] && tag_read_dout[TAG_WIDTH-1:0] == tag"
         lines = self.wrap_data_hazard(lines)
 
-        self.vf.write("          if ({}) begin\n".format(lines))
-        self.vf.write("            if (csb)\n")
-        self.vf.write("              state_next = IDLE;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = COMPARE;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          if ({})\n".format(lines))
+        self.vf.write("            state_next = csb ? IDLE : COMPARE;\n")
         self.vf.write("          // Check if current request is dirty miss\n")
 
         lines = "tag_read_dout[TAG_WIDTH +: 2] == 2'b11"
         lines = self.wrap_data_hazard(lines)
 
-        self.vf.write("          else if ({}) begin\n".format(lines))
-        self.vf.write("            if (main_stall)\n")
-        self.vf.write("              state_next = WRITE;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = WAIT_WRITE;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          else if ({})\n".format(lines))
+        self.vf.write("            state_next = main_stall ? WRITE : WAIT_WRITE;\n")
         self.vf.write("          // Else, current request is clean a miss\n")
-        self.vf.write("          else begin\n")
-        self.vf.write("            if (main_stall)\n")
-        self.vf.write("              state_next = READ;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = WAIT_READ;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          else\n")
+        self.vf.write("            state_next = main_stall ? READ : WAIT_READ;\n")
         self.vf.write("        end\n\n")
 
         # WRITE state
@@ -516,12 +504,8 @@ class direct_cache(cache_base):
         self.vf.write("        //   IDLE    if CPU isn't sending a new request\n")
         self.vf.write("        //   COMPARE if CPU is sending a new request\n")
         self.vf.write("        WAIT_READ: begin\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            if (csb)\n")
-        self.vf.write("              state_next = IDLE;\n")
-        self.vf.write("            else\n")
-        self.vf.write("              state_next = COMPARE;\n")
-        self.vf.write("          end\n")
+        self.vf.write("          if (!main_stall)\n")
+        self.vf.write("            state_next = csb ? IDLE : COMPARE;\n")
         self.vf.write("        end\n\n")
 
         self.vf.write("        default: state_next = state;\n\n")
