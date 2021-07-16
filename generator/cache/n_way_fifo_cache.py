@@ -259,7 +259,7 @@ class n_way_fifo_cache(cache_base):
         self.vf.write("            // FIXME: This might cause a problem, need to recheck.\n")
         self.vf.write("            // Data input to data_array is made unknown in order to\n")
         self.vf.write("            // prevent writing other lines' data to the data array.\n")
-        self.vf.write("            data_write_din = {LINE_WIDTH * WAY_DEPTH{1'bx}};\n")
+        self.vf.write("            data_write_din = 'bx;\n")
         self.vf.write("          end\n")
         self.vf.write("        end\n\n")
 
@@ -683,7 +683,7 @@ class n_way_fifo_cache(cache_base):
         self.write_title_banner(title, descr, indent=1)
         self.vf.write("  always @* begin\n")
         self.vf.write("    stall = 1;\n")
-        self.vf.write("    dout  = {WORD_WIDTH{1'bx}};\n\n")
+        self.vf.write("    dout  = 'bx;\n\n")
 
         self.vf.write("    case (state)\n\n")
 
@@ -754,7 +754,7 @@ class n_way_fifo_cache(cache_base):
 
         self.vf.write("      default: begin\n")
         self.vf.write("        stall = 1;\n")
-        self.vf.write("        dout  = {WORD_WIDTH{1'bx}};\n")
+        self.vf.write("        dout  = 'bx;\n")
         self.vf.write("      end\n\n")
 
         self.vf.write("    endcase\n\n")
