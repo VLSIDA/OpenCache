@@ -237,7 +237,7 @@ def init_paths():
         debug.error("Unable to make output directory.", -1)
 
     # Make the temp folder if only needed
-    if OPTS.simulate or OPTS.synthesize:
+    if OPTS.simulate or OPTS.synthesize or OPTS.is_unit_test:
         try:
             os.makedirs(OPTS.temp_path, 0o750)
         except OSError as e:
