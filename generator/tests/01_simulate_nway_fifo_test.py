@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2021 Regents of the University of California and The Board
