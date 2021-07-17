@@ -18,6 +18,7 @@ import sys
 import re
 import copy
 import importlib
+import getpass
 
 VERSION = "0.0.1"
 NAME = "OpenCache v{}".format(VERSION)
@@ -182,17 +183,24 @@ def fix_config():
         debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
 
     # If config didn't set output name, make a reasonable default
-    if (OPTS.output_name == ""):
+    if OPTS.output_name == "":
         OPTS.output_name = "cache_{0}b_{1}b_{2}_{3}".format(OPTS.total_size,
                                                             OPTS.word_size,
                                                             OPTS.num_ways,
                                                             OPTS.replacement_policy)
+        if OPTS.is_unit_test:
+            OPTS.output_name = "uut"
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     if not OPTS.output_path.startswith('/'):
         OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
+
+    # Create a new folder for each process of unit tests
+    if OPTS.is_unit_test:
+        OPTS.output_path += "opencache_{0}_{1}/".format(getpass.getuser(),
+                                                             os.getpid())
 
     # Create a new folder for this run
     OPTS.output_path += OPTS.output_name + "/"
