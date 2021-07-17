@@ -8,10 +8,11 @@
 import unittest
 import sys
 import globals
+from testutils import *
 from globals import OPTS
 
 
-class synthesize_test(unittest.TestCase):
+class synthesize_test(opencache_test):
 
     def runTest(self):
         # FIXME: Config file path may not be found
@@ -37,7 +38,7 @@ class synthesize_test(unittest.TestCase):
         v = verify(cache_config=conf,
                    name=OPTS.output_name)
 
-        v.verify()
+        self.check_verification(v)
 
         globals.end_opencache()
 
@@ -46,4 +47,5 @@ class synthesize_test(unittest.TestCase):
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
+    header(__file__)
     unittest.main()

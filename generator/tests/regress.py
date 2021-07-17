@@ -13,6 +13,9 @@ import globals
 (OPTS, args) = globals.parse_args()
 del sys.argv[1:]
 
+from testutils import *
+header(__file__)
+
 # Get a list of all files in the tests directory
 files = os.listdir(format(sys.path[0]))
 

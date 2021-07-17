@@ -8,10 +8,11 @@
 import unittest
 import sys
 import globals
+from testutils import *
 from globals import OPTS
 
 
-class sim_cache_test(unittest.TestCase):
+class sim_cache_test(opencache_test):
 
     def runTest(self):
         # FIXME: Config file path may not be found
@@ -46,24 +47,24 @@ class sim_cache_test(unittest.TestCase):
 
         sc = setup_sim_cache()
 
-        self.assertTrue(check_reset(sc))
+        self.check_true(check_reset(sc))
 
-        self.assertTrue(check_flush(sc))
+        self.check_true(check_flush(sc))
 
-        self.assertTrue(check_hit(sc))
+        self.check_true(check_hit(sc))
 
-        self.assertTrue(check_dirty(sc))
+        self.check_true(check_dirty(sc))
 
-        self.assertTrue(check_read_write(sc))
+        self.check_true(check_read_write(sc))
 
         if OPTS.replacement_policy == "fifo":
-            self.assertTrue(check_fifo(sc))
+            self.check_true(check_fifo(sc))
 
         if OPTS.replacement_policy == "lru":
-            self.assertTrue(check_lru(sc))
+            self.check_true(check_lru(sc))
 
         if OPTS.replacement_policy == "random":
-            self.assertTrue(check_random(sc))
+            self.check_true(check_random(sc))
 
 
 def setup_sim_cache():
@@ -290,4 +291,5 @@ def check_random(sc):
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
+    header(__file__)
     unittest.main()
