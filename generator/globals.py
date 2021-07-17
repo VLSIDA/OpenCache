@@ -16,6 +16,7 @@ import optparse
 import options
 import sys
 import re
+import copy
 import importlib
 
 VERSION = "0.0.1"
@@ -100,6 +101,24 @@ def init_opencache(config_file, is_unit_test=True):
 
     init_paths()
 
+    global OPTS
+    global CHECKPOINT_OPTS
+
+    # This is a hack. If we are running a unit test and have checkpointed
+    # the options, load them rather than reading the config file.
+    # This way, the configuration is reloaded at the start of every unit test.
+    # If a unit test fails,
+    # we don't have to worry about restoring the old config values
+    # that may have been tested.
+    if is_unit_test and CHECKPOINT_OPTS:
+        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy()
+        return
+
+    # Make a checkpoint of the options so we can restore
+    # after each unit test
+    if not CHECKPOINT_OPTS:
+        CHECKPOINT_OPTS = copy.copy(OPTS)
+
 
 def read_config(config_file, is_unit_test=True):
     """
@@ -145,10 +164,11 @@ def read_config(config_file, is_unit_test=True):
 
     OPTS.overridden = {}
     for k, v in config.__dict__.items():
-        # Options will be overwritten every time a config
-        # file is read (for regression testing).
-        OPTS.__dict__[k] = v
-        OPTS.overridden[k] = True
+        # The command line will over-ride the config file
+        # Note that if we re-read a config file, nothing will get read again!
+        if k not in OPTS.__dict__:
+            OPTS.__dict__[k] = v
+            OPTS.overridden[k] = True
 
     OPTS.is_unit_test = is_unit_test
 
