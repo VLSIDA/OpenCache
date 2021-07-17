@@ -179,8 +179,9 @@ def fix_config():
     debug.info(1, "Output saved in " + OPTS.output_path)
 
     # Make a temp folder if not given
+    # This folder is used for verification files
     if OPTS.temp_path == "":
-        OPTS.temp_path = OPTS.output_path + "temp/"
+        OPTS.temp_path = OPTS.output_path + "tmp/"
 
 
 def end_opencache():
