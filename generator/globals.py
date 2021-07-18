@@ -41,7 +41,23 @@ def parse_args():
                              metavar="FILE"),
         optparse.make_option("-p", "--outpath",
                              dest="output_path",
-                             help="Output file(s) location")
+                             help="Output file(s) location"),
+        optparse.make_option("-v", "--verbose",
+                             action="count",
+                             dest="verbose_level",
+                             help="Increase the verbosity level"),
+        optparse.make_option("-k", "--keeptemp",
+                             action="store_true",
+                             dest="keep_temp",
+                             help="Keep the contents of the temp directory after a successful run"),
+        optparse.make_option("--sim",
+                             action="store_true",
+                             dest="simulate",
+                             help="Enable verification via simulation"),
+        optparse.make_option("--synth",
+                             action="store_true",
+                             dest="synthesize",
+                             help="Enable verification via synthesis")
         # -h --help is implicit.
     }
 
