@@ -12,7 +12,7 @@ This serves as the documentation of OpenCache that explains how generated caches
 | `flush`   | 1-bit     | Flush                     | `main_csb`   | 1-bit     | Chip Select (Active Low)  |
 | `csb`     | 1-bit     | Chip Select (Active Low)  | `main_web`   | 1-bit     | Write Enable (Active Low) |
 | `web`     | 1-bit     | Write Enable (Active Low) | `main_addr`  | n-bit     | Address                   |
-| `byte_en` | (w/8)-bit | Byte Enable               | `main_din`   | w-bit     | Data Input                |
+| `wmask  ` | (w/8)-bit | Write mask                | `main_din`   | w-bit     | Data Input                |
 | `addr`    | n-bit     | Address                   | `main_dout`  | w-bit     | Data Output               |
 | `din`     | w-bit     | Data Input                | `main_stall` | 1-bit     | Stall                     |
 | `dout`    | w-bit     | Data Output               |

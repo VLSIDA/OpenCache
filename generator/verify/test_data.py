@@ -26,6 +26,8 @@ class test_data:
 
         test_size  = 8
         self.web   = [] # Write enable
+        # TODO: Write test data for write mask
+        self.wmask = [] # Write mask
         self.addr  = [] # Address
         self.data  = [] # Data input/output
         self.stall = [] # Number of stall cycles after the request
@@ -41,6 +43,7 @@ class test_data:
             random_address = self.sc.merge_address(random_tag, random_set, random_offset)
 
             self.web.append(0)
+            self.wmask.append("1" * self.num_bytes)
             self.addr.append(random_address)
             self.data.append(randrange(2 ** self.word_size))
             self.stall.append(0)
@@ -52,6 +55,7 @@ class test_data:
             index = choice(indices)
 
             self.web.append(1)
+            self.wmask.append("0" * self.num_bytes)
             self.addr.append(self.addr[index])
             # If the same address is written twice, this data may be old.
             # Therefore, data values for read operations are going to be
@@ -120,12 +124,13 @@ class test_data:
                                                                                   self.addr[i],
                                                                                   test_count))
 
-            self.tdf.write("cache_csb  = 0;\n")
-            self.tdf.write("cache_web  = {};\n".format(self.web[i]))
-            self.tdf.write("cache_addr = {};\n".format(self.addr[i]))
+            self.tdf.write("cache_csb   = 0;\n")
+            self.tdf.write("cache_web   = {};\n".format(self.web[i]))
+            self.tdf.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
+            self.tdf.write("cache_addr  = {};\n".format(self.addr[i]))
 
             if not self.web[i]:
-                self.tdf.write("cache_din  = {};\n".format(self.data[i]))
+                self.tdf.write("cache_din   = {};\n".format(self.data[i]))
 
             self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
 

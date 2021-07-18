@@ -70,3 +70,6 @@ class cache_config:
 
         # Way size is used in replacement policy
         self.way_size = ceil(log2(self.num_ways))
+
+        # Number of bytes in a word
+        self.num_bytes = ceil(self.word_size / 8)

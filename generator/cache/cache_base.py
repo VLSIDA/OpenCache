@@ -64,7 +64,7 @@ class cache_base:
         # Cache module
         self.vf.write("module {} (\n".format(self.name))
         self.vf.write("  // CPU interface\n")
-        self.vf.write("  clk, rst, flush, csb, web, addr, din, dout, stall,\n")
+        self.vf.write("  clk, rst, flush, csb, web, wmask, addr, din, dout, stall,\n")
         self.vf.write("  // Main memory interface\n")
         self.vf.write("  main_csb, main_web, main_addr, main_din, main_dout, main_stall\n")
         self.vf.write(");\n\n")
@@ -144,6 +144,7 @@ class cache_base:
         self.vf.write("\n")
 
         self.vf.write("  parameter  WORD_WIDTH   = {};\n".format(self.word_size))
+        self.vf.write("  parameter  BYTE_COUNT   = {};\n".format(self.num_bytes))
         self.vf.write("  parameter  WORD_COUNT   = {};\n".format(self.words_per_line))
 
         self.vf.write("  localparam LINE_WIDTH   = WORD_WIDTH * WORD_COUNT;\n\n")
@@ -177,15 +178,16 @@ class cache_base:
     def write_io_ports(self):
         """ Write the IO ports of the cache. """
 
-        self.vf.write("  input  clk;                   // clock\n")
-        self.vf.write("  input  rst;                   // reset\n")
-        self.vf.write("  input  flush;                 // flush\n")
-        self.vf.write("  input  csb;                   // active low chip select\n")
-        self.vf.write("  input  web;                   // active low write control\n")
-        self.vf.write("  input  [ADDR_WIDTH-1:0] addr; // address\n")
-        self.vf.write("  input  [WORD_WIDTH-1:0] din;  // data input\n")
-        self.vf.write("  output [WORD_WIDTH-1:0] dout; // data output\n")
-        self.vf.write("  output stall;                 // pipeline stall\n\n")
+        self.vf.write("  input  clk;                    // clock\n")
+        self.vf.write("  input  rst;                    // reset\n")
+        self.vf.write("  input  flush;                  // flush\n")
+        self.vf.write("  input  csb;                    // active low chip select\n")
+        self.vf.write("  input  web;                    // active low write control\n")
+        self.vf.write("  input  [BYTE_COUNT-1:0] wmask; // write mask\n")
+        self.vf.write("  input  [ADDR_WIDTH-1:0] addr;  // address\n")
+        self.vf.write("  input  [WORD_WIDTH-1:0] din;   // data input\n")
+        self.vf.write("  output [WORD_WIDTH-1:0] dout;  // data output\n")
+        self.vf.write("  output stall;                  // pipeline stall\n\n")
 
         self.vf.write("  output main_csb;                                // main memory active low chip select\n")
         self.vf.write("  output main_web;                                // main memory active low write control\n")
