@@ -29,6 +29,7 @@ class code_format_test(opencache_test):
         for code in source_codes:
             errors += check_file_tab(code)
             errors += check_file_carriage(code)
+            errors += check_file_whitespace(code)
 
         for code in source_codes:
             if re.search("opencache.py$", code):
@@ -102,6 +103,31 @@ def check_file_carriage(file_name):
         debug.info(0, "\nFound {0} carriage returns in {1} (lines {2})".format(len(key_positions),
                                                                                file_name,
                                                                                ",".join(str(x) for x in line_numbers)))
+    f.close()
+    return len(key_positions)
+
+
+def check_file_whitespace(file_name):
+    """
+    Check if file contains a line with only whitespace (except \n)
+    and return the number of whitespace only lines.
+    """
+
+    f = open(file_name, 'r')
+    key_positions = []
+    for num, line in enumerate(f.readlines()):
+        if re.match(r'^\s+\n\Z', line):
+            key_positions.append(num)
+    if len(key_positions) > 0:
+        # If there are more than 10 whitespace lines,
+        # don't print all line numbers.
+        if len(key_positions) > 10:
+            line_numbers = key_positions[:10] + [" ..."]
+        else:
+            line_numbers = key_positions
+        debug.info(0, "\nFound {0} whitespace only lines in {1} (lines {2})".format(len(key_positions),
+                                                                                    file_name,
+                                                                                    ",".join(str(x) for x in line_numbers)))
     f.close()
     return len(key_positions)
 
