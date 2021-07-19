@@ -57,8 +57,7 @@ def warning(str):
 
 
 def print_raw(str):
-    if not globals.OPTS.is_unit_test:
-        print(str)
+    print(str)
     log(str)
 
 
