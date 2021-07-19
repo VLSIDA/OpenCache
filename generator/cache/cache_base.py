@@ -270,7 +270,7 @@ class cache_base:
                 dh_line = dh_line.replace(or_reg, bp_reg)
             new_line = "(bypass && {0}) || (!bypass && {1})".format(dh_line, lines)
             return new_line
-        
+
         else:
             new_lines = [
                 (indent * "  ") + "// Use bypass registers if needed\n",

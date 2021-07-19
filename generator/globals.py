@@ -258,7 +258,7 @@ def purge_temp():
 
 def include_paths():
     """ Include script folders to the sys path. """
-    
+
     sys.path.insert(0, "./cache")
 
     if OPTS.is_unit_test or OPTS.simulate or OPTS.synthesize:
