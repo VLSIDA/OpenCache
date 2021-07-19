@@ -243,9 +243,7 @@ class verify:
         keep.append("endmodule\n")
 
         f = open(bb_file_path, "w")
-
         f.writelines(keep)
-
         f.close()
 
 
@@ -266,7 +264,6 @@ class verify:
                 # Check if there is an "ERROR"
                 if line.find("ERROR") != -1:
                     return False
-
         return True
 
 

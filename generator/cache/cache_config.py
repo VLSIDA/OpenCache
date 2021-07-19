@@ -39,7 +39,7 @@ class cache_config:
 
 
     def compute_configs(self):
-        """  Compute some of the configuration variables. """
+        """ Compute some of the configuration variables. """
 
         # Direct-mapped cache doesn't have a replacement policy
         if self.num_ways == 1:

@@ -17,7 +17,6 @@ class cache:
     def __init__(self, cache_config, name):
 
         cache_config.set_local_config(self)
-
         self.name = name
 
         if self.num_ways == 1:

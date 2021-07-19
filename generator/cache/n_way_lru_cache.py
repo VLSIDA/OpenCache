@@ -33,16 +33,14 @@ class n_way_lru_cache(cache_base):
 
         self.lcf = open(config_paths[-1], "w")
 
-        self.lcf.write("word_size = {}\n".format(self.way_size * self.num_ways))
-        self.lcf.write("num_words = {}\n".format(self.num_rows))
-
+        self.lcf.write("word_size    = {}\n".format(self.way_size * self.num_ways))
+        self.lcf.write("num_words    = {}\n".format(self.num_rows))
         self.lcf.write("num_rw_ports = 0\n")
         self.lcf.write("num_r_ports  = 1\n")
         self.lcf.write("num_w_ports  = 1\n")
-
         # OpenRAM outputs of the LRU array are saved to a separate folder
-        self.lcf.write("output_path = \"{}/lru_array\"\n".format(OPTS.output_path))
-        self.lcf.write("output_name = \"{}_lru_array\"\n".format(self.name))
+        self.lcf.write("output_path  = \"{}/lru_array\"\n".format(OPTS.output_path))
+        self.lcf.write("output_name  = \"{}_lru_array\"\n".format(self.name))
 
         self.lcf.close()
 

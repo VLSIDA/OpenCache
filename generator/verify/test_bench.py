@@ -42,7 +42,7 @@ class test_bench:
         self.write_tasks()
 
         self.tbf.write("  initial begin\n")
-        self.tbf.write("  	`include \"test_data.v\"\n")
+        self.tbf.write("    `include \"test_data.v\"\n")
         self.tbf.write("  end\n\n")
         self.tbf.write("endmodule\n")
 

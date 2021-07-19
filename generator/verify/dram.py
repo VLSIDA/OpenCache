@@ -25,11 +25,8 @@ class dram:
         self.df.write("module dram (clk, rst, csb, web, addr, din, dout, stall);\n\n")
 
         self.write_parameters()
-
         self.write_io_ports()
-
         self.write_registers()
-
         self.write_logic_block()
 
         self.df.write("endmodule\n")

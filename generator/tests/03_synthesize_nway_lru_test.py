@@ -18,7 +18,6 @@ class synthesize_test(opencache_test):
     def runTest(self):
         # FIXME: Config file path may not be found
         config_file = "tests/configs/config.py"
-
         globals.init_opencache(config_file)
 
         OPTS.num_ways = 2

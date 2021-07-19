@@ -58,7 +58,6 @@ class core:
         self.cf.write("      - {}.v\n".format(OPTS.output_name))
         self.cf.write("    file_type: verilogSource\n\n")
 
-
         # FIXME: What is the default fileset?
         self.cf.write("targets:\n")
         self.cf.write("  default:\n")
