@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from dram import DRAM_DELAY
+
 
 class sim_cache:
     """
@@ -166,7 +168,7 @@ class sim_cache:
                 old_tag  = self.tag_array[set_decimal][way]
                 old_data = self.data_array[set_decimal][way].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
-                self.update_random(4 + 1)
+                self.update_random(DRAM_DELAY + 1)
 
             # Bring data line from DRAM
             self.valid_array[set_decimal][way] = 1
@@ -176,7 +178,7 @@ class sim_cache:
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, way)
-            self.update_random(1 + 4 + 1)
+            self.update_random(1 + DRAM_DELAY + 1)
 
         # Return the valid way
         return way

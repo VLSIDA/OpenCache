@@ -7,6 +7,7 @@
 #
 from random import randrange, choice
 from sim_cache import sim_cache
+from dram import DRAM_DELAY
 
 
 class test_data:
@@ -86,7 +87,7 @@ class test_data:
                 # - n while writing
                 # - 1 for sending the read request to DRAM
                 # - n while reading
-                stall_cycles += (4 * 2 + 1 if is_dirty else 4)
+                stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
 
             self.stall[i] = stall_cycles
 

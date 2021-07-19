@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+DRAM_DELAY = 4
+
 
 class dram:
     """
@@ -41,7 +43,7 @@ class dram:
         self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(self.tag_size + self.set_size))
         self.df.write("  localparam DRAM_DEPTH  = 1 << ADDR_WIDTH;\n\n")
         self.df.write("  // This delay is used to \"imitate\" DRAMs' low frequencies\n")
-        self.df.write("  parameter  CYCLE_DELAY = 4;\n")
+        self.df.write("  parameter  CYCLE_DELAY = {};\n".format(DRAM_DELAY))
         self.df.write("  parameter  DELAY       = 3;\n\n")
 
 
