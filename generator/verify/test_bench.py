@@ -67,11 +67,7 @@ class test_bench:
         self.tbf.write("  parameter  CLOCK_DELAY   = 5;\n")
         self.tbf.write("  // Reset is asserted for 1.5 cycles\n")
         self.tbf.write("  parameter  RESET_DELAY   = 15;\n")
-        self.tbf.write("  parameter  DELAY         = 3;\n\n")
-
-        self.tbf.write("  // Test data: web + address + word\n")
-        self.tbf.write("  localparam DATA_WIDTH    = 1 + ADDR_WIDTH + WORD_WIDTH;\n")
-        self.tbf.write("  parameter  TEST_SIZE     = {};\n".format(4))
+        self.tbf.write("  parameter  DELAY         = 3;\n")
         self.tbf.write("  parameter  MAX_TEST_SIZE = 64;\n\n")
 
 
