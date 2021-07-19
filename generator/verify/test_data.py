@@ -68,9 +68,7 @@ class test_data:
 
         # Update stall values
         for i in range(len(self.web)):
-            # First request has 1 more stall since it starts
-            # from the IDLE state
-            stall_cycles = int(i == 0)
+            stall_cycles = 0
 
             if self.sc.find_way(self.addr[i]) is None:
                 # Stalls 1 cycle in the COMPARE state since
@@ -115,7 +113,7 @@ class test_data:
         # Check for num_rows-1 stall cycles since
         # stall will be low at the last cycle
         # (which is the cycle #num_rows)
-        self.tdf.write("check_stall({0}, {1});\n\n".format(self.num_rows - 1, test_count))
+        self.tdf.write("check_stall({0}, {1});\n\n".format(self.num_rows, test_count))
 
         test_count += 1
 

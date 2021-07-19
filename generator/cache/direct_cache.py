@@ -629,28 +629,12 @@ class direct_cache(cache_base):
 
         self.vf.write("    case (state)\n\n")
 
-        # RESET state
-        self.vf.write("      // In the RESET state, stall is low if reset is completed.\n")
-        self.vf.write("      RESET: begin\n")
-        self.vf.write("        // When set reaches the limit, the last write request is sent\n")
-        self.vf.write("        // to the tag array.\n")
-        self.vf.write("        stall = set != CACHE_DEPTH - 1;\n")
-        self.vf.write("      end\n\n")
-
-        # FLUSH state
-        self.vf.write("      // In the FLUSH state, stall is low if flush is completed.\n")
-        self.vf.write("      FLUSH: begin\n")
-        self.vf.write("        // If main memory completes the last write request, stall is low.\n")
-        self.vf.write("        // The line below is the inverse of:\n")
-        self.vf.write("        //   !main_stall && set == CACHE_DEPTH - 1\n")
-        self.vf.write("        stall = !main_stall && set == CACHE_DEPTH - 1;\n")
-        self.vf.write("      end\n\n")
-
         # IDLE state
         self.vf.write("      // In the IDLE state, stall is low while there is no request from\n")
-        self.vf.write("      // the CPU.\n")
+        self.vf.write("      // the CPU. When there is a request, state switches to COMPARE and\n")
+        self.vf.write("      // stall becomes high in the next cycle.\n")
         self.vf.write("      IDLE: begin\n")
-        self.vf.write("        stall = !csb;\n")
+        self.vf.write("        stall = 0;\n")
         self.vf.write("      end\n\n")
 
         # COMPARE state
