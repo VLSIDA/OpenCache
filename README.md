@@ -12,7 +12,7 @@ The OpenCache has only one dependency:
 + Python 3.5 or higher
 
 If you are going to verify the design via simulation and/or synthesis, you will need:
-+ [OpenRAM] and all of its dependencies
++ [OpenRAM]
 + [FuseSoC]
 + [Icarus] (for simulation)
 + [yosys] (for synthesis)
@@ -21,11 +21,13 @@ If you are going to verify the design via simulation and/or synthesis, you will 
 ## Basic Usage
 Clone the repository.
 ```
-git clone git@github.com:biarmic/OpenCache.git
+git clone https://github.com/VLSIDA/OpenCache.git
 cd OpenCache/generator
 ```
 Create a Python configuration file. All configuration parameters can be found in [here](CONFIG.md). A simple configuration file is:
 ```python
+from policy import ReplacementPolicy, WritePolicy
+
 # data array size
 total_size = 1024
 
@@ -42,7 +44,10 @@ address_size = 11
 num_ways = 1
 
 # replacement policy
-replacement_policy = None
+replacement_policy = ReplacementPolicy.NONE
+
+# write policy
+write_policy = WritePolicy.WR_BACK
 
 # output file name
 output_name = "cache"
