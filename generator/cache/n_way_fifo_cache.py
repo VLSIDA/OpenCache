@@ -40,7 +40,7 @@ class n_way_fifo_cache(cache_base):
         self.fcf.write("num_w_ports  = 1\n")
         # OpenRAM outputs of the FIFO array are saved to a separate folder
         self.fcf.write("output_path  = \"{}/fifo_array\"\n".format(OPTS.output_path))
-        self.fcf.write("output_name  = \"{}_fifo_array\"\n".format(self.name))
+        self.fcf.write("output_name  = \"{}\"\n".format(OPTS.use_array_name))
 
         self.fcf.close()
 

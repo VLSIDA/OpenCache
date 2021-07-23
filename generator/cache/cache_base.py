@@ -34,7 +34,7 @@ class cache_base:
         self.dcf.write("num_w_ports  = 1\n")
         # OpenRAM outputs of the data array are saved to a separate folder
         self.dcf.write("output_path  = \"{}/data_array\"\n".format(OPTS.output_path))
-        self.dcf.write("output_name  = \"{}_data_array\"\n".format(self.name))
+        self.dcf.write("output_name  = \"{}\"\n".format(OPTS.data_array_name))
 
         self.dcf.close()
 
@@ -47,7 +47,7 @@ class cache_base:
         self.tcf.write("num_w_ports  = 1\n")
         # OpenRAM outputs of the tag array are saved to a separate folder
         self.tcf.write("output_path  = \"{}/tag_array\"\n".format(OPTS.output_path))
-        self.tcf.write("output_name  = \"{}_tag_array\"\n".format(self.name))
+        self.tcf.write("output_name  = \"{}\"\n".format(OPTS.tag_array_name))
 
         self.tcf.close()
 
@@ -202,7 +202,7 @@ class cache_base:
 
         # Random replacement policy doesn't require a separate SRAM array
         if self.replacement_policy not in [None, "random"]:
-            self.vf.write("  {0}_{1}_array {1}_array (\n".format(self.name, self.replacement_policy))
+            self.vf.write("  {0} {1}_array (\n".format(OPTS.use_array_name, self.replacement_policy))
             self.vf.write("    .clk0  (clk),\n")
             self.vf.write("    .csb0  ({}_write_csb),\n".format(self.replacement_policy))
             self.vf.write("    .addr0 ({}_write_addr),\n".format(self.replacement_policy))
@@ -213,7 +213,7 @@ class cache_base:
             self.vf.write("    .dout1 ({}_read_dout)\n".format(self.replacement_policy))
             self.vf.write("  );\n\n")
 
-        self.vf.write("  {}_tag_array tag_array (\n".format(self.name))
+        self.vf.write("  {} tag_array (\n".format(OPTS.tag_array_name))
         self.vf.write("    .clk0  (clk),\n")
         self.vf.write("    .csb0  (tag_write_csb),\n")
         self.vf.write("    .addr0 (tag_write_addr),\n")
@@ -224,7 +224,7 @@ class cache_base:
         self.vf.write("    .dout1 (tag_read_dout)\n")
         self.vf.write("  );\n\n")
 
-        self.vf.write("  {}_data_array data_array (\n".format(self.name))
+        self.vf.write("  {} data_array (\n".format(OPTS.data_array_name))
         self.vf.write("    .clk0  (clk),\n")
         self.vf.write("    .csb0  (data_write_csb),\n")
         self.vf.write("    .addr0 (data_write_addr),\n")

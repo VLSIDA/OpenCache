@@ -7,6 +7,7 @@
 #
 import optparse
 
+
 class options(optparse.Values):
     """
     Class for holding all of the OpenCache options. All
@@ -48,6 +49,11 @@ class options(optparse.Values):
     output_path = "outputs/"
     # Define the output file base name
     output_name = ""
+
+    # Internal SRAM file and module names
+    tag_array_name = ""
+    data_array_name = ""
+    use_array_name = ""
 
     #############################
     #     Unit test options     #

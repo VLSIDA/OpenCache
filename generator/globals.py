@@ -207,6 +207,15 @@ def fix_config():
         if OPTS.is_unit_test:
             OPTS.output_name = "uut"
 
+    # If config didn't set SRAM array names, make reasonable defaults
+    if OPTS.tag_array_name == "":
+        OPTS.tag_array_name = "{}_tag_array".format(OPTS.output_name)
+    if OPTS.data_array_name == "":
+        OPTS.data_array_name = "{}_data_array".format(OPTS.output_name)
+    if OPTS.use_array_name == "":
+        OPTS.use_array_name = "{0}_{1}_array".format(OPTS.output_name,
+                                                     OPTS.replacement_policy)
+
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"

@@ -103,11 +103,11 @@ class verify:
 
         # Convert SRAM modules to blackbox
         debug.info(1, "    Converting OpenRAM modules to blackbox...")
-        self.convert_to_blacbox(OPTS.temp_path + self.name + "_tag_array.v")
-        self.convert_to_blacbox(OPTS.temp_path + self.name + "_data_array.v")
+        self.convert_to_blacbox(OPTS.temp_path + OPTS.tag_array_name + ".v")
+        self.convert_to_blacbox(OPTS.temp_path + OPTS.data_array_name + ".v")
 
         if self.replacement_policy not in [None, "random"]:
-            self.convert_to_blacbox(OPTS.temp_path + self.name + "_" + self.replacement_policy + "_array.v")
+            self.convert_to_blacbox(OPTS.temp_path + OPTS.use_array_name + ".v")
 
         # Run FuseSoc for synthesis
         debug.info(1, "    Running FuseSoC for synthesis...")
@@ -136,25 +136,24 @@ class verify:
         if OPTS.run_openram:
             # Copy the configuration files
             debug.info(1, "  Copying the config files to the temp subfolder")
-            self.copy_config_file(self.name + "_data_array_config.py", OPTS.temp_path)
-            self.copy_config_file(self.name + "_tag_array_config.py", OPTS.temp_path)
+            self.copy_config_file(OPTS.data_array_name + "_config.py", OPTS.temp_path)
+            self.copy_config_file(OPTS.tag_array_name + "_config.py", OPTS.temp_path)
 
             # Random replacement policy doesn't need a separate SRAM array
             if self.replacement_policy not in [None, "random"]:
-                self.copy_config_file("{0}_{1}_array_config.py".format(self.name, self.replacement_policy), OPTS.temp_path)
+                self.copy_config_file(OPTS.use_array_name + "_config.py", OPTS.temp_path)
 
             # Run OpenRAM to generate Verilog files of SRAMs
             debug.info(1, "  Running OpenRAM for the data array...")
-            self.run_openram("{}_data_array_config.py".format(OPTS.temp_path + self.name))
+            self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.data_array_name))
 
             debug.info(1, "  Running OpenRAM for the tag array...")
-            self.run_openram("{}_tag_array_config.py".format(OPTS.temp_path + self.name))
+            self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.tag_array_name))
 
             # Random replacement policy doesn't need a separate SRAM array
             if self.replacement_policy not in [None, "random"]:
                 debug.info(1, "  Running OpenRAM for the {} array".format(self.replacement_policy.upper()))
-                self.run_openram("{0}_{1}_array_config.py".format(OPTS.temp_path + self.name,
-                                                                self.replacement_policy))
+                self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.use_array_name))
         else:
             debug.info(1, "  Skipping to run OpenRAM")
 

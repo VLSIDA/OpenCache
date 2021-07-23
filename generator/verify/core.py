@@ -35,11 +35,10 @@ class core:
         self.cf.write("      - dram.v\n")
 
         if OPTS.replacement_policy not in [None, "random"]:
-            self.cf.write("      - {0}_{1}_array.v\n".format(OPTS.output_name,
-                                                             OPTS.replacement_policy))
+            self.cf.write("      - {}.v\n".format(OPTS.use_array_name))
 
-        self.cf.write("      - {}_tag_array.v\n".format(OPTS.output_name))
-        self.cf.write("      - {}_data_array.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}.v\n".format(OPTS.tag_array_name))
+        self.cf.write("      - {}.v\n".format(OPTS.data_array_name))
         self.cf.write("      - {}.v\n".format(OPTS.output_name))
         self.cf.write("      - test_bench.v\n")
         self.cf.write("      - test_data.v:\n")
@@ -50,11 +49,10 @@ class core:
         self.cf.write("    files:\n")
 
         if OPTS.replacement_policy not in [None, "random"]:
-            self.cf.write("      - {0}_{1}_array_bb.v\n".format(OPTS.output_name,
-                                                             OPTS.replacement_policy))
+            self.cf.write("      - {}_bb.v\n".format(OPTS.use_array_name))
 
-        self.cf.write("      - {}_tag_array_bb.v\n".format(OPTS.output_name))
-        self.cf.write("      - {}_data_array_bb.v\n".format(OPTS.output_name))
+        self.cf.write("      - {}_bb.v\n".format(OPTS.tag_array_name))
+        self.cf.write("      - {}_bb.v\n".format(OPTS.data_array_name))
         self.cf.write("      - {}.v\n".format(OPTS.output_name))
         self.cf.write("    file_type: verilogSource\n\n")
 
