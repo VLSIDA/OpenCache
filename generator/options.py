@@ -32,7 +32,7 @@ class options(optparse.Values):
 
     # Cache can be write-back or write-through
     #! Write-through is not yet supported
-    write_policy = "write-back"
+    write_policy = None
     # Cache can be a data cache or an instruction cache
     #! Instruction cache is not yet supported
     is_data_cache = True

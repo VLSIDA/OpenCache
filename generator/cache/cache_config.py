@@ -7,6 +7,7 @@
 #
 import debug
 from math import log2, ceil
+from policy import Associativity as AS, ReplacementPolicy as RP
 
 
 class cache_config:
@@ -41,14 +42,6 @@ class cache_config:
     def compute_configs(self):
         """ Compute some of the configuration variables. """
 
-        # Direct-mapped cache doesn't have a replacement policy
-        if self.num_ways == 1:
-            self.replacement_policy = None
-
-        # Lowercase the replacement policy string
-        if self.replacement_policy is not None:
-            self.replacement_policy.lower()
-
         # A data line consists of multiple words
         self.line_size = self.word_size * self.words_per_line
 
@@ -73,3 +66,15 @@ class cache_config:
 
         # Number of bytes in a word
         self.num_bytes = ceil(self.word_size / 8)
+
+        # Set the associativity of the cache
+        if self.num_ways == 1:
+            self.associativity = AS.DIRECT
+        elif self.set_size > 0:
+            self.associativity = AS.N_WAY
+        else:
+            self.associativity = AS.FULLY
+
+        # Direct-mapped cache doesn't have a replacement policy
+        if self.associativity == AS.DIRECT:
+            self.replacement_policy = RP.NONE

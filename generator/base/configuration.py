@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from policy import ReplacementPolicy as RP
 from globals import OPTS
 
 
@@ -55,11 +55,11 @@ class configuration:
         config_opts.append(tag_opts)
 
         # Use array of the cache
-        if self.replacement_policy not in [None, "random"]:
+        if self.replacement_policy.has_sram_array():
             use_opts = {}
             use_opts["path"] = paths["use"]
             use_opts["opts"] = {}
-            if self.replacement_policy == "fifo":
+            if self.replacement_policy == RP.FIFO:
                 use_opts["opts"]["word_size"]    = self.way_size
                 use_opts["opts"]["num_words"]    = self.num_rows
                 use_opts["opts"]["num_rw_ports"] = 0
@@ -67,7 +67,7 @@ class configuration:
                 use_opts["opts"]["num_w_ports"]  = 1
                 use_opts["opts"]["output_path"]  = '"{}/fifo_array"'.format(OPTS.output_path)
                 use_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.use_array_name)
-            if self.replacement_policy == "lru":
+            if self.replacement_policy == RP.LRU:
                 use_opts["opts"]["word_size"]    = self.way_size * self.num_ways
                 use_opts["opts"]["num_words"]    = self.num_rows
                 use_opts["opts"]["num_rw_ports"] = 0

@@ -10,6 +10,7 @@ import unittest
 import sys
 import globals
 from testutils import *
+from base.policy import ReplacementPolicy as RP
 from globals import OPTS
 
 
@@ -21,8 +22,7 @@ class synthesize_test(opencache_test):
         globals.init_opencache(config_file)
 
         OPTS.num_ways = 2
-        OPTS.replacement_policy = "random"
-        OPTS.simulate = False
+        OPTS.replacement_policy = RP.RANDOM
         OPTS.synthesize = True
 
         from cache_config import cache_config

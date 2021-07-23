@@ -193,17 +193,20 @@ def read_config(config_file, is_unit_test=True):
 def fix_config():
     """ Fix and update options from the config file. """
 
-    # Direct cache doesn't have a replacement policy
-    if OPTS.num_ways == 1 and OPTS.replacement_policy is not None:
-        OPTS.replacement_policy = None
-        debug.warning("Cache is direct-mapped. Replacement policy of {} will be ignored.".format(OPTS.replacement_policy))
+    # Get default policies if not specified in the config file
+    if OPTS.replacement_policy is None:
+        from policy import ReplacementPolicy as RP
+        OPTS.replacement_policy = RP.get_default()
+    if OPTS.write_policy is None:
+        from policy import WritePolicy as WP
+        OPTS.write_policy = WP.get_default()
 
     # If config didn't set output name, make a reasonable default
     if OPTS.output_name == "":
-        OPTS.output_name = "cache_{0}b_{1}b_{2}_{3}".format(OPTS.total_size,
-                                                            OPTS.word_size,
-                                                            OPTS.num_ways,
-                                                            OPTS.replacement_policy)
+        OPTS.output_name = "cache_{0}b_{1}b_{2}_{3!s}".format(OPTS.total_size,
+                                                              OPTS.word_size,
+                                                              OPTS.num_ways,
+                                                              OPTS.replacement_policy)
         if OPTS.is_unit_test:
             OPTS.output_name = "uut"
 
@@ -213,8 +216,8 @@ def fix_config():
     if OPTS.data_array_name == "":
         OPTS.data_array_name = "{}_data_array".format(OPTS.output_name)
     if OPTS.use_array_name == "":
-        OPTS.use_array_name = "{0}_{1}_array".format(OPTS.output_name,
-                                                     OPTS.replacement_policy)
+        OPTS.use_array_name = "{0}_{1!s}_array".format(OPTS.output_name,
+                                                       OPTS.replacement_policy)
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
@@ -342,7 +345,7 @@ def report_status():
     debug.print_raw("Word size: {}".format(OPTS.word_size))
     debug.print_raw("Words per line: {}".format(OPTS.words_per_line))
     debug.print_raw("Number of ways: {}".format(OPTS.num_ways))
-    debug.print_raw("Replacement policy: {}".format(OPTS.replacement_policy.capitalize() if OPTS.num_ways > 1 else None))
-    debug.print_raw("Write policy: {}".format(OPTS.write_policy.capitalize()))
+    debug.print_raw("Replacement policy: {}".format(OPTS.replacement_policy.long_name()))
+    debug.print_raw("Write policy: {}".format(OPTS.write_policy.long_name()))
     debug.print_raw("Return type: {}".format(OPTS.return_type.capitalize()))
     debug.print_raw("Data hazard: {}\n".format(OPTS.data_hazard))

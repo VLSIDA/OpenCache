@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from policy import ReplacementPolicy as RP
 from dram import DRAM_DELAY
 
 
@@ -33,13 +34,13 @@ class sim_cache:
         self.tag_array   = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.data_array  = [[[None] * self.words_per_line for _ in range(self.num_ways)] for _ in range(self.num_rows)]
 
-        if self.replacement_policy == "fifo":
+        if self.replacement_policy == RP.FIFO:
             self.fifo_array = [0] * self.num_rows
 
-        if self.replacement_policy == "lru":
+        if self.replacement_policy == RP.LRU:
             self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
 
-        if self.replacement_policy == "random":
+        if self.replacement_policy == RP.RANDOM:
             # Random register is reset when rst is high.
             # During the RESET state, it keeps getting incremented.
             # Therefore, random is num_rows + 2 when the first
@@ -128,20 +129,20 @@ class sim_cache:
     def way_to_evict(self, set_decimal):
         """ Return the way to evict according to the replacement policy. """
 
-        if self.replacement_policy is None:
+        if self.replacement_policy == RP.NONE:
             return 0
 
-        if self.replacement_policy == "fifo":
+        if self.replacement_policy == RP.FIFO:
             return self.fifo_array[set_decimal]
 
-        if self.replacement_policy == "lru":
+        if self.replacement_policy == RP.LRU:
             way = None
             for i in range(self.num_ways):
                 if not self.lru_array[set_decimal][i]:
                     way = i
             return way
 
-        if self.replacement_policy == "random":
+        if self.replacement_policy == RP.RANDOM:
             way = None
             for i in range(self.num_ways):
                 if not self.valid_array[set_decimal][i]:
@@ -205,7 +206,7 @@ class sim_cache:
         """ Update the FIFO number of the latest replaced set. """
 
         # Check if replacement policy matches
-        if self.replacement_policy == "fifo":
+        if self.replacement_policy == RP.FIFO:
             # Starting from 0, increase the FIFO number every time a
             # new data is brought from DRAM.
             #
@@ -218,7 +219,7 @@ class sim_cache:
         """ Update the LRU numbers of the latest used way. """
 
         # Check if replacement policy matches
-        if self.replacement_policy == "lru":
+        if self.replacement_policy == RP.LRU:
             # There is a number for each way in a set. They are ordered
             # by their access time relative to each other.
             #
@@ -235,7 +236,7 @@ class sim_cache:
         """ Update the random counter for a number of cycles. """
 
         # Check if replacement policy matches
-        if self.replacement_policy == "random":
+        if self.replacement_policy == RP.RANDOM:
             # In the real hardware, random caches have a register acting 
             # like a counter. This register is incremented at every posedge
             # of the clock.

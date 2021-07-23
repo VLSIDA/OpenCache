@@ -68,14 +68,10 @@ class verilog:
         word_size  = "{}-bit".format(self.word_size)
         words_per_line = str(self.words_per_line)
         array_size = "{}-bit".format(self.total_size)
-        placement_policy = "Direct-mapped" if self.num_ways == 1 else \
-                           "{}-way Set Assocative".format(self.num_ways) if self.set_size else \
-                           "Fully Associative"
-        replacement_policy = "First In First Out" if self.replacement_policy == "fifo" else \
-                             "Least Recently Used" if self.replacement_policy == "lru" else \
-                             "Random" if self.replacement_policy == "random" else \
-                             "None"
-        write_policy = self.write_policy.capitalize()
+        associativity = str(self.associativity)
+        replacement_policy = self.replacement_policy.long_name()
+        num_ways = str(self.num_ways)
+        write_policy = self.write_policy.long_name()
         # TODO: How to adjust the data return size?
         return_type = self.return_type.capitalize()
         data_hazard = str(self.data_hazard)
@@ -85,8 +81,9 @@ class verilog:
         self.vf.write("// Word size          :" + word_size.rjust(30) + " //\n")
         self.vf.write("// Words per line     :" + words_per_line.rjust(30) + " //\n")
         self.vf.write("// Data array size    :" + array_size.rjust(30) + " //\n")
-        self.vf.write("// Placement policy   :" + placement_policy.rjust(30) + " //\n")
+        self.vf.write("// Associativity      :" + associativity.rjust(30) + " //\n")
         self.vf.write("// Replacement policy :" + replacement_policy.rjust(30) + " //\n")
+        self.vf.write("// Number of ways     :" + num_ways.rjust(30) + " //\n")
         self.vf.write("// Write policy       :" + write_policy.rjust(30) + " //\n")
         self.vf.write("// Return type        :" + return_type.rjust(30) + " //\n")
         self.vf.write("// Data hazard        :" + data_hazard.rjust(30) + " //\n")
@@ -159,16 +156,17 @@ class verilog:
         self.vf.write("  // For synthesis, modify OpenRAM modules or make these modules black box.\n")
 
         # Random replacement policy doesn't require a separate SRAM array
-        if self.replacement_policy not in [None, "random"]:
-            self.vf.write("  {0} {1}_array (\n".format(OPTS.use_array_name, self.replacement_policy))
+        if self.replacement_policy.has_sram_array():
+            rp_name = str(self.replacement_policy)
+            self.vf.write("  {0} {1}_array (\n".format(OPTS.use_array_name, rp_name))
             self.vf.write("    .clk0  (clk),\n")
-            self.vf.write("    .csb0  ({}_write_csb),\n".format(self.replacement_policy))
-            self.vf.write("    .addr0 ({}_write_addr),\n".format(self.replacement_policy))
-            self.vf.write("    .din0  ({}_write_din),\n".format(self.replacement_policy))
+            self.vf.write("    .csb0  ({}_write_csb),\n".format(rp_name))
+            self.vf.write("    .addr0 ({}_write_addr),\n".format(rp_name))
+            self.vf.write("    .din0  ({}_write_din),\n".format(rp_name))
             self.vf.write("    .clk1  (clk),\n")
-            self.vf.write("    .csb1  ({}_read_csb),\n".format(self.replacement_policy))
-            self.vf.write("    .addr1 ({}_read_addr),\n".format(self.replacement_policy))
-            self.vf.write("    .dout1 ({}_read_dout)\n".format(self.replacement_policy))
+            self.vf.write("    .csb1  ({}_read_csb),\n".format(rp_name))
+            self.vf.write("    .addr1 ({}_read_addr),\n".format(rp_name))
+            self.vf.write("    .dout1 ({}_read_dout)\n".format(rp_name))
             self.vf.write("  );\n\n")
 
         self.vf.write("  {} tag_array (\n".format(OPTS.tag_array_name))

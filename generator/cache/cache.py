@@ -7,6 +7,7 @@
 #
 import debug
 from globals import OPTS
+from policy import Associativity as AS, ReplacementPolicy as RP
 
 
 class cache:
@@ -19,22 +20,22 @@ class cache:
         cache_config.set_local_config(self)
         self.name = name
 
-        if self.num_ways == 1:
+        if self.associativity == AS.DIRECT:
             from direct_cache import direct_cache as cache
-        elif self.set_size:
-            if self.replacement_policy == "fifo":
+        elif self.associativity == AS.N_WAY:
+            if self.replacement_policy == RP.FIFO:
                 from n_way_fifo_cache import n_way_fifo_cache as cache
-            elif self.replacement_policy == "lru":
+            elif self.replacement_policy == RP.LRU:
                 from n_way_lru_cache import n_way_lru_cache as cache
-            elif self.replacement_policy == "random":
+            elif self.replacement_policy == RP.RANDOM:
                 from n_way_random_cache import n_way_random_cache as cache
             else:
                 debug.error("Invalid replacement policy.", -1)
-        elif not self.set_size:
+        elif self.associativity == AS.FULLY:
             # TODO: from full_cache import full_cache as cache
             debug.error("Fully associative cache is not supported at the moment.", -1)
         else:
-            debug.error("Invalid number of ways.", -1)
+            debug.error("Invalid associativity.", -1)
 
         self.c = cache(cache_config, name)
 
@@ -62,7 +63,7 @@ class cache:
             "tag":  OPTS.output_path + OPTS.tag_array_name + "_config.py",
             "use":  OPTS.output_path + OPTS.use_array_name + "_config.py"
         }
-        if self.replacement_policy in [None, "random"]: del cpaths["use"]
+        if not self.replacement_policy.has_sram_array(): del cpaths["use"]
         for k, cpath in cpaths.items():
             debug.print_raw("  Config: Writing to {}".format(cpath))
         self.config_write(cpaths)

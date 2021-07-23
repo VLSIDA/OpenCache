@@ -10,6 +10,7 @@ import unittest
 import sys
 import globals
 from testutils import *
+from base.policy import ReplacementPolicy as RP
 from globals import OPTS
 
 
@@ -22,22 +23,22 @@ class sim_cache_test(opencache_test):
 
         # Run tests for direct-mapped
         OPTS.num_ways = 1
-        OPTS.replacement_policy = None
+        OPTS.replacement_policy = RP.NONE
         self.run_all_tests()
 
         # Run tests for 2-way FIFO
         OPTS.num_ways = 2
-        OPTS.replacement_policy = "fifo"
+        OPTS.replacement_policy = RP.FIFO
         self.run_all_tests()
 
         # Run tests for 2-way LRU
         OPTS.num_ways = 2
-        OPTS.replacement_policy = "lru"
+        OPTS.replacement_policy = RP.LRU
         self.run_all_tests()
 
         # Run tests for 2-way random
         OPTS.num_ways = 2
-        OPTS.replacement_policy = "random"
+        OPTS.replacement_policy = RP.RANDOM
         self.run_all_tests()
 
         globals.end_opencache()
@@ -57,13 +58,13 @@ class sim_cache_test(opencache_test):
 
         self.check_true(check_read_write(sc))
 
-        if OPTS.replacement_policy == "fifo":
+        if OPTS.replacement_policy == RP.FIFO:
             self.check_true(check_fifo(sc))
 
-        if OPTS.replacement_policy == "lru":
+        if OPTS.replacement_policy == RP.LRU:
             self.check_true(check_lru(sc))
 
-        if OPTS.replacement_policy == "random":
+        if OPTS.replacement_policy == RP.RANDOM:
             self.check_true(check_random(sc))
 
 

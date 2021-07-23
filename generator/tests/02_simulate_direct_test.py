@@ -10,6 +10,7 @@ import unittest
 import sys
 import globals
 from testutils import *
+from base.policy import ReplacementPolicy as RP
 from globals import OPTS
 
 
@@ -21,7 +22,7 @@ class simulate_test(opencache_test):
         globals.init_opencache(config_file)
 
         OPTS.num_ways = 1
-        OPTS.replacement_policy = None
+        OPTS.replacement_policy = RP.NONE
         OPTS.simulate = True
 
         from cache_config import cache_config
