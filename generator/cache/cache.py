@@ -52,20 +52,22 @@ class cache:
 
 
     def save(self):
-        """ Save all the output files (Config and Verilog). """
+        """ Save all the output files. """
 
         debug.print_raw("Saving output files...")
 
-        # Write the config file
-        cpaths = [OPTS.output_path + OPTS.data_array_name + "_config.py",
-                  OPTS.output_path + OPTS.tag_array_name + "_config.py"]
-        if self.replacement_policy not in [None, "random"]:
-            cpaths.append(OPTS.output_path + OPTS.use_array_name + "_config.py")
-        for cpath in cpaths:
+        # Write the config files
+        cpaths = {
+            "data": OPTS.output_path + OPTS.data_array_name + "_config.py",
+            "tag":  OPTS.output_path + OPTS.tag_array_name + "_config.py",
+            "use":  OPTS.output_path + OPTS.use_array_name + "_config.py"
+        }
+        if self.replacement_policy in [None, "random"]: del cpaths["use"]
+        for k, cpath in cpaths.items():
             debug.print_raw("  Config: Writing to {}".format(cpath))
         self.config_write(cpaths)
 
-        # Write the Verilog model
+        # Write the Verilog file
         vpath = OPTS.output_path + self.c.name + ".v"
         debug.print_raw("  Verilog: Writing to {}".format(vpath))
         self.verilog_write(vpath)

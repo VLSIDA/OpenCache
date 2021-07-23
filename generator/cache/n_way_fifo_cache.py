@@ -26,25 +26,6 @@ class n_way_fifo_cache(cache_base):
         }
 
 
-    def config_write(self, config_paths):
-        """ Write the configuration files for OpenRAM SRAM arrays. """
-
-        super().config_write(config_paths[:-1])
-
-        self.fcf = open(config_paths[-1], "w")
-
-        self.fcf.write("word_size    = {}\n".format(self.way_size))
-        self.fcf.write("num_words    = {}\n".format(self.num_rows))
-        self.fcf.write("num_rw_ports = 0\n")
-        self.fcf.write("num_r_ports  = 1\n")
-        self.fcf.write("num_w_ports  = 1\n")
-        # OpenRAM outputs of the FIFO array are saved to a separate folder
-        self.fcf.write("output_path  = \"{}/fifo_array\"\n".format(OPTS.output_path))
-        self.fcf.write("output_name  = \"{}\"\n".format(OPTS.use_array_name))
-
-        self.fcf.close()
-
-
     def write_registers(self):
         """ Write the registers of the cache. """
 
