@@ -110,11 +110,11 @@ def init_opencache(config_file, is_unit_test=True):
 
     check_versions()
 
+    setup_paths()
+
     read_config(config_file, is_unit_test)
 
     fix_config()
-
-    include_paths()
 
     init_paths()
 
@@ -256,16 +256,22 @@ def purge_temp():
     shutil.rmtree(OPTS.temp_path, ignore_errors=True)
 
 
-def include_paths():
-    """ Include script folders to the sys path. """
+def setup_paths():
+    """ Include script directories to the sys path. """
 
-    sys.path.insert(0, "./cache")
+    # TODO: Don't assume that OpenCache is run from generator/ dir
+    home_path = os.getcwd()
 
-    if OPTS.is_unit_test or OPTS.simulate or OPTS.synthesize:
-        sys.path.insert(0, "./verify")
-
-    if OPTS.is_unit_test:
-        sys.path.insert(0, "./tests")
+    # # Add all of the subdirs to the python path
+    subdir_list = [item for item in os.listdir(home_path) if os.path.isdir(os.path.join(home_path, item))]
+    for subdir in subdir_list:
+        full_path = "{0}/{1}".format(home_path, subdir)
+        # Use sys.path.insert instead of sys.path.append
+        # Python searches in sequential order and common
+        # folders (such as verify) with OpenRAM can result
+        # in importing wrong source codes.
+        if "__pycache__" not in full_path:
+            sys.path.insert(1, "{}".format(full_path))
 
 
 def init_paths():
