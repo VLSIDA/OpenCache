@@ -37,7 +37,7 @@ class configuration:
         data_opts["opts"]["num_rw_ports"] = 0
         data_opts["opts"]["num_r_ports"]  = 1
         data_opts["opts"]["num_w_ports"]  = 1
-        data_opts["opts"]["output_path"]  = '"{}/data_array"'.format(OPTS.output_path)
+        data_opts["opts"]["output_path"]  = '"{}data_array"'.format(OPTS.output_path)
         data_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.data_array_name)
         config_opts.append(data_opts)
 
@@ -50,7 +50,7 @@ class configuration:
         tag_opts["opts"]["num_rw_ports"] = 0
         tag_opts["opts"]["num_r_ports"]  = 1
         tag_opts["opts"]["num_w_ports"]  = 1
-        tag_opts["opts"]["output_path"]  = '"{}/tag_array"'.format(OPTS.output_path)
+        tag_opts["opts"]["output_path"]  = '"{}tag_array"'.format(OPTS.output_path)
         tag_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.tag_array_name)
         config_opts.append(tag_opts)
 
@@ -65,7 +65,7 @@ class configuration:
                 use_opts["opts"]["num_rw_ports"] = 0
                 use_opts["opts"]["num_r_ports"]  = 1
                 use_opts["opts"]["num_w_ports"]  = 1
-                use_opts["opts"]["output_path"]  = '"{}/fifo_array"'.format(OPTS.output_path)
+                use_opts["opts"]["output_path"]  = '"{}fifo_array"'.format(OPTS.output_path)
                 use_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.use_array_name)
             if self.replacement_policy == RP.LRU:
                 use_opts["opts"]["word_size"]    = self.way_size * self.num_ways
@@ -73,7 +73,7 @@ class configuration:
                 use_opts["opts"]["num_rw_ports"] = 0
                 use_opts["opts"]["num_r_ports"]  = 1
                 use_opts["opts"]["num_w_ports"]  = 1
-                use_opts["opts"]["output_path"]  = '"{}/lru_array"'.format(OPTS.output_path)
+                use_opts["opts"]["output_path"]  = '"{}lru_array"'.format(OPTS.output_path)
                 use_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.use_array_name)
             config_opts.append(use_opts)
 
