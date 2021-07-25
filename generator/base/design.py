@@ -7,12 +7,13 @@
 #
 from globals import OPTS, NAME
 from textwrap import wrap
+from nmigen import *
 
 
-class verilog:
+class design(Elaboratable):
     """
-    Create the behavioral Verilog file.
-    This is inherited by the cache_base class.
+    This is the base class for "elaboratable" design
+    modules. Cache modules will inherit this.
     """
 
     def __init__(self):

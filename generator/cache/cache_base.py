@@ -6,11 +6,11 @@
 # All rights reserved.
 #
 from globals import OPTS
-from verilog import verilog
+from design import design
 from configuration import configuration
 
 
-class cache_base(verilog, configuration):
+class cache_base(design, configuration):
     """
     This is the abstract parent class of cache modules.
     Some common methods among different cache modules
@@ -18,7 +18,7 @@ class cache_base(verilog, configuration):
     """
 
     def __init__(self, cache_config, name):
-        verilog.__init__(self)
+        design.__init__(self)
         configuration.__init__(self)
 
         cache_config.set_local_config(self)
