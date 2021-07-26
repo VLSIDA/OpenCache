@@ -114,7 +114,10 @@ class direct_cache(cache_base):
                             m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                             m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
+                    with m.Elif(
+                        (self.bypass & (self.new_tag[-2:] == Const(3, 2))) |
+                        (~self.bypass & (self.tag_read_dout[-2:] == Const(3, 2)))
+                    ):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
                         with m.If(self.main_stall):
@@ -265,7 +268,10 @@ class direct_cache(cache_base):
                         with m.Else():
                             m.d.comb += self.state_next.eq(State.COMPARE)
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
+                    with m.Elif(
+                        (self.bypass & (self.new_tag[-2:] == Const(3, 2))) |
+                        (~self.bypass & (self.tag_read_dout[-2:] == Const(3, 2)))
+                    ):
                         with m.If(self.csb):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():
