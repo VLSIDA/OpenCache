@@ -156,6 +156,9 @@ class design(Elaboratable):
     def add_ff_block(self, m):
         """ Add flip-flop block to cache design. """
 
+        # In this block, flip-flop registers are updated at
+        # every positive edge of the clock.
+
         # NOTE: LHS register of a flip-flop must end with "_next"
         for k, v in self.__dict__.items():
             lhs_name = k + "_next"
