@@ -48,6 +48,9 @@ class design(Elaboratable):
 
         m = Module()
 
+        # NOTE: IO signals must be added before elaborating. Otherwise,
+        # nMigen fails to detect port signals and their directions.
+
         self.add_internal_signals()
         self.add_srams(m)
         self.add_ff_block(m)
@@ -55,13 +58,16 @@ class design(Elaboratable):
         self.add_state_block(m)
         self.add_request_block(m)
         self.add_output_block(m)
-        self.add_bypass_block(m)
+        if self.replacement_policy != RP.NONE:
+            self.add_replacement_block(m)
+        if self.data_hazard:
+            self.add_bypass_block(m)
 
         return m
 
 
     def add_io_signals(self):
-        """ Add the IO signals to cache design. """
+        """ Add IO signals to cache design. """
 
         # CPU interface
         self.clk   = ClockSignal()
@@ -85,7 +91,7 @@ class design(Elaboratable):
 
 
     def add_internal_signals(self):
-        """ Add the internal registers and wires to cache design. """
+        """ Add internal registers and wires to cache design. """
 
         # Keep inputs in FFs
         self.tag, self.tag_next             = get_ff_signals("tag", self.tag_size)
@@ -101,20 +107,21 @@ class design(Elaboratable):
         # Bypass FFs
         if self.data_hazard:
             self.bypass, self.bypass_next     = get_ff_signals("bypass")
-            self.new_tag, self.new_tag_next   = get_ff_signals("new_tag", self.tag_size + 2)
-            self.new_data, self.new_data_next = get_ff_signals("new_data", self.line_size)
+            self.new_tag, self.new_tag_next   = get_ff_signals("new_tag", (self.tag_size + 2) * self.num_ways)
+            self.new_data, self.new_data_next = get_ff_signals("new_data", self.line_size * self.num_ways)
 
 
     def add_srams(self, m):
-        """ Add the internal SRAM array instances to cache design. """
+        """ Add internal SRAM array instances to cache design. """
 
         # Tag array
+        word_size = (self.tag_size + 2) * self.num_ways
         self.tag_write_csb  = Signal(reset_less=True, reset=1)
         self.tag_write_addr = Signal(self.set_size, reset_less=True)
-        self.tag_write_din  = Signal(self.tag_size + 2, reset_less=True)
+        self.tag_write_din  = Signal(word_size, reset_less=True)
         self.tag_read_csb   = Signal(reset_less=True)
         self.tag_read_addr  = Signal(self.set_size, reset_less=True)
-        self.tag_read_dout  = Signal(self.tag_size + 2)
+        self.tag_read_dout  = Signal(word_size)
         m.submodules += Instance(OPTS.tag_array_name,
             ("i", "clk0",  self.clk),
             ("i", "csb0",  self.tag_write_csb),
@@ -127,12 +134,13 @@ class design(Elaboratable):
         )
 
         # Data array
+        word_size = self.line_size * self.num_ways
         self.data_write_csb  = Signal(reset_less=True, reset=1)
         self.data_write_addr = Signal(self.set_size, reset_less=True)
-        self.data_write_din  = Signal(self.line_size, reset_less=True)
+        self.data_write_din  = Signal(word_size, reset_less=True)
         self.data_read_csb   = Signal(reset_less=True)
         self.data_read_addr  = Signal(self.set_size, reset_less=True)
-        self.data_read_dout  = Signal(self.line_size)
+        self.data_read_dout  = Signal(word_size)
         m.submodules += Instance(OPTS.data_array_name,
             ("i", "clk0",  self.clk),
             ("i", "csb0",  self.data_write_csb),
@@ -144,32 +152,9 @@ class design(Elaboratable):
             ("o", "dout1", self.data_read_dout),
         )
 
-        # Use array
-        if self.replacement_policy.has_sram_array():
-            if self.replacement_policy == RP.FIFO:
-                word_size = self.way_size
-            if self.replacement_policy == RP.LRU:
-                word_size = self.way_size * self.num_ways
-            self.use_write_csb  = Signal(reset_less=True, reset=1)
-            self.use_write_addr = Signal(self.set_size, reset_less=True)
-            self.use_write_din  = Signal(word_size, reset_less=True)
-            self.use_read_csb   = Signal(reset_less=True)
-            self.use_read_addr  = Signal(self.set_size, reset_less=True)
-            self.use_read_dout  = Signal(word_size)
-            m.submodules += Instance(OPTS.use_array_name,
-                ("i", "clk0",  self.clk),
-                ("i", "csb0",  self.use_write_csb),
-                ("i", "addr0", self.use_write_addr),
-                ("i", "din0",  self.use_write_din),
-                ("i", "clk1",  self.clk),
-                ("i", "csb1",  self.use_read_csb),
-                ("i", "addr1", self.use_read_addr),
-                ("o", "dout1", self.use_read_dout),
-            )
-
 
     def add_ff_block(self, m):
-        """ Add the flip-flop block to cache design. """
+        """ Add flip-flop block to cache design. """
 
         # NOTE: LHS register of a flip-flop must end with "_next"
         for k, v in self.__dict__.items():
