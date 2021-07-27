@@ -37,7 +37,7 @@ class n_way_fifo_cache(cache_base):
 
 
     def add_srams(self, m):
-        """ Addhe internal SRAM array instances to cache design. """
+        """ Add internal SRAM array instances to cache design. """
 
         super().add_srams(m)
 
@@ -471,7 +471,7 @@ class n_way_fifo_cache(cache_base):
 
 
     def add_output_block(self, m):
-        """ Add stall always block to cache design. """
+        """ Add output always block to cache design. """
 
         # In this block, cache's output signals, which are
         # stall and dout, are controlled.

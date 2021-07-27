@@ -444,7 +444,7 @@ class direct_cache(cache_base):
 
 
     def add_bypass_block(self, m):
-        """ Add the bypass register always block to cache design. """
+        """ Add bypass register always block to cache design. """
 
         # In this block, bypass registers are controlled.
         # Bypass registers are used to prevent data hazard from SRAMs.
