@@ -184,7 +184,7 @@ class n_way_fifo_cache(cache_base):
                                 # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
                                 # Write the word over the write mask
-                                num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                                num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
                                 num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
                                 for j in range(self.num_bytes):
                                     with m.If(self.wmask_reg[j]):
@@ -267,7 +267,7 @@ class n_way_fifo_cache(cache_base):
                         # Perform the write request
                         with m.If(~self.web_reg):
                             # Write the word over the write mask
-                            num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                            num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
                             num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
                             for j in range(self.num_bytes):
                                 with m.If(self.wmask_reg[j]):

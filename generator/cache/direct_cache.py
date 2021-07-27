@@ -103,7 +103,7 @@ class direct_cache(cache_base):
                             # Use bypass registers if needed
                             m.d.comb += self.data_write_din.eq(Mux(self.bypass, self.new_data, self.data_read_dout))
                             # Write the word over the write mask
-                            num_bytes = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                            num_bytes = Const(self.num_bytes, log2_int(self.words_per_line))
                             for i in range(self.num_bytes):
                                 with m.If(self.wmask_reg[i]):
                                     m.d.comb += self.data_write_din.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
@@ -172,6 +172,7 @@ class direct_cache(cache_base):
 
                 # In the READ state, cache waits for main memory to be available.
                 # When main memory is available, read request is sent.
+                # TODO: Is this state really necessary? WAIT_WRITE state may be used instead.
                 with m.Case(State.READ):
                     # If main memory is busy, wait in this state.
                     # If main memory completes writing, switch to WAIT_READ and wait
@@ -199,7 +200,7 @@ class direct_cache(cache_base):
                         # Perform the write request
                         with m.If(~self.web_reg):
                             # Write the word over the write mask
-                            num_bytes = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                            num_bytes = Const(self.num_bytes, log2_int(self.words_per_line))
                             for i in range(self.num_bytes):
                                 with m.If(self.wmask_reg[i]):
                                     m.d.comb += self.data_write_din.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
@@ -480,7 +481,7 @@ class direct_cache(cache_base):
                     with m.Else():
                         m.d.comb += self.new_data_next.eq(self.data_read_dout)
                     # Write the word over the write mask
-                    num_bytes = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                    num_bytes = Const(self.num_bytes, log2_int(self.words_per_line))
                     for i in range(self.num_bytes):
                         with m.If(self.wmask_reg[i]):
                             m.d.comb += self.new_data_next.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
@@ -502,7 +503,7 @@ class direct_cache(cache_base):
                     # Perform the write request
                     with m.If(~self.web_reg):
                         # Write the word over the write mask
-                        num_bytes = Const(self.num_bytes, log2_int(self.words_per_line, self.num_bytes))
+                        num_bytes = Const(self.num_bytes, log2_int(self.words_per_line))
                         for i in range(self.num_bytes):
                             with m.If(self.wmask_reg[i]):
                                 m.d.comb += self.new_data_next.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
