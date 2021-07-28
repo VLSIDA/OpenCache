@@ -214,7 +214,7 @@ class n_way_random_cache(cache_base):
                 # available.
                 # When main memory is available, read request is sent.
                 # TODO: Is this state really necessary? WAIT_WRITE state may be used instead.
-                with m.Case(State.WAIT_WRITE):
+                with m.Case(State.READ):
                     # If main memory is busy, wait in this state.
                     # If main memory completes writing, switch to WAIT_READ
                     # and wait for main memory to complete reading.
