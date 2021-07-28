@@ -304,7 +304,7 @@ class n_way_lru_cache(cache_base):
             m.d.comb += self.state_next.eq(State.RESET)
 
         # If flush is high, state switches to FLUSH.
-        with m.If(self.flush):
+        with m.Elif(self.flush):
             m.d.comb += self.state_next.eq(State.FLUSH)
 
         with m.Else():
