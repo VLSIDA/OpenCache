@@ -708,12 +708,13 @@ class n_way_lru_cache(cache_base):
                             # Update dirty bit in the tag line
                             m.d.comb += self.new_tag_next.word_select(i, self.tag_size + 2).eq(Cat(self.tag, Const(3, 2)))
                             # Perform the write request
-                            # Write the word over the write mask
-                            num_bytes_per_word = Const(self.num_bytes)
-                            num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                            for j in range(self.num_bytes):
-                                with m.If(self.wmask_reg[j]):
-                                    m.d.comb += self.new_data_next.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+                            with m.If(~self.web_reg):
+                                # Write the word over the write mask
+                                num_bytes_per_word = Const(self.num_bytes)
+                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
+                                for j in range(self.num_bytes):
+                                    with m.If(self.wmask_reg[j]):
+                                        m.d.comb += self.new_data_next.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
 
             # In the WAIT_READ state, bypass registers will be used in the next
             # cycle if the next request is in the same set.
