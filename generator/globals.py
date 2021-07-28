@@ -97,10 +97,11 @@ def check_versions():
     """ Run some checks of required software versions. """
 
     # FIXME: Which version is required?
+    # NOTE: nMigen needs at least Python 3.6
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
     major_required = 3
-    minor_required = 5
+    minor_required = 6
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required, minor_required), -1)
 
