@@ -31,10 +31,6 @@ class n_way_lru_cache(cache_base):
         # Keep way chosen to be evicted in an FF
         self.way, self.way_next = get_ff_signals("way", self.way_size)
 
-        # Bypass FF for use array
-        if self.data_hazard:
-            self.new_use, self.new_use_next = get_ff_signals("new_use", self.way_size * self.num_ways)
-
 
     def add_srams(self, m):
         """ Add internal SRAM array instances to cache design. """
@@ -129,20 +125,20 @@ class n_way_lru_cache(cache_base):
                         # FIXME: Don't write 0 in testbench (might result in missed errors).
                         m.d.comb += self.data_write_din.eq(0)
 
+                # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
+                # Read requests are sent to tag and data arrays.
+                with m.Case(State.WAIT_HAZARD):
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+
                 # In the COMPARE state, cache compares tags.
                 # Stall and dout are driven by the Output Block.
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(
-                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
-                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
-                        ):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
                             # Assuming that current request is miss, check if it is a dirty miss
-                            with m.If(
-                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
-                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
-                            ):
+                            with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
                                 # If main memory is busy, switch to WRITE and wait for
                                 # main memory to be available.
                                 with m.If(self.main_stall):
@@ -153,12 +149,8 @@ class n_way_lru_cache(cache_base):
                                 with m.Else():
                                     m.d.comb += self.main_csb.eq(0)
                                     m.d.comb += self.main_web.eq(0)
-                                    with m.If(self.bypass):
-                                        m.d.comb += self.main_addr.eq(Cat(self.set, self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size)))
-                                        m.d.comb += self.main_din.eq(self.new_data.word_select(i, self.line_size))
-                                    with m.Else():
-                                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size)))
-                                        m.d.comb += self.main_din.eq(self.data_read_dout.word_select(i, self.line_size))
+                                    m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size)))
+                                    m.d.comb += self.main_din.eq(self.data_read_dout.word_select(i, self.line_size))
                             # Else, assume that current request is a clean miss
                             with m.Else():
                                 with m.If(~self.main_stall):
@@ -172,10 +164,7 @@ class n_way_lru_cache(cache_base):
                     # NOTE: This for loop should not be merged with the one above since hit
                     # should be checked after all miss assumptions are done.
                     for i in range(self.num_ways):
-                        with m.If(
-                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                        ):
+                        with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
                             # Set main memory's csb to 1 again since it could be set 0 above
                             m.d.comb += self.main_csb.eq(1)
                             # Perform the write request
@@ -184,12 +173,8 @@ class n_way_lru_cache(cache_base):
                                 m.d.comb += self.tag_write_addr.eq(self.set)
                                 m.d.comb += self.data_write_csb.eq(0)
                                 m.d.comb += self.data_write_addr.eq(self.set)
-                                with m.If(self.bypass):
-                                    m.d.comb += self.tag_write_din.eq(self.new_tag)
-                                    m.d.comb += self.data_write_din.eq(self.new_data)
-                                with m.Else():
-                                    m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
-                                    m.d.comb += self.data_write_din.eq(self.data_read_dout)
+                                m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
+                                m.d.comb += self.data_write_din.eq(self.data_read_dout)
                                 # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
                                 # Write the word over the write mask
@@ -199,8 +184,8 @@ class n_way_lru_cache(cache_base):
                                     with m.If(self.wmask_reg[j]):
                                         m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
                             # If CPU is sending a new request, read next lines from SRAMs.
-                            # Even if bypass registers are going to be used, read requests
-                            # are sent to SRAMs since read is non-destructive (hopefully?).
+                            # Even if cache is switching to WAIT_HAZARD, read requests are
+                            # sent to SRAMs since read is non-destructive (hopefully?).
                             with m.If(~self.csb):
                                 m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                                 m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -284,8 +269,8 @@ class n_way_lru_cache(cache_base):
                                 with m.If(self.wmask_reg[j]):
                                     m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
                         # If CPU is sending a new request, read next lines from SRAMs
-                        # Even if bypass registers are going to be used, read requests
-                        # are sent to SRAMs since read is non-destructive (hopefully?).
+                        # Even if cache is switching to WAIT_HAZARD, read requests are
+                        # sent to SRAMs since read is non-destructive (hopefully?).
                         with m.If(~self.csb):
                             m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                             m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -330,25 +315,29 @@ class n_way_lru_cache(cache_base):
                     with m.If(~self.csb):
                         m.d.comb += self.state_next.eq(State.COMPARE)
 
+                # In the WAIT_HAZARD state, state switches to COMPARE.
+                # This state is used to prevent data hazard.
+                # Data hazard might occur when there are read and write
+                # requests to the same address of SRAMs.
+                # This state delays the cache request 1 cycle so that read
+                # requests will be performed after write is completed.
+                with m.Case(State.WAIT_HAZARD):
+                    m.d.comb += self.state_next.eq(State.COMPARE)
+
                 # In the COMPARE state, state switches to:
-                #   IDLE       if current request is hit and CPU isn't sending a new request
-                #   COMPARE    if current request is hit and CPU is sending a new request
-                #   WRITE      if current request is dirty miss and main memory is busy
-                #   WAIT_WRITE if current request is dirty miss and main memory is available
-                #   READ       if current request is clean miss and main memory is busy
-                #   WAIT_READ  if current request is clean miss and main memory is available
+                #   IDLE        if current request is hit and CPU isn't sending a new request
+                #   COMPARE     if current request is hit and CPU is sending a new request
+                #   WAIT_HAZARD if current request is hit and data hazard is possible
+                #   WRITE       if current request is dirty miss and main memory is busy
+                #   WAIT_WRITE  if current request is dirty miss and main memory is available
+                #   READ        if current request is clean miss and main memory is busy
+                #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(
-                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
-                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
-                        ):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
                             # Assuming that current request is miss, check if it is a dirty miss
-                            with m.If(
-                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
-                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
-                            ):
+                            with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
                                 with m.If(self.main_stall):
                                     m.d.comb += self.state_next.eq(State.WRITE)
                                 with m.Else():
@@ -366,14 +355,14 @@ class n_way_lru_cache(cache_base):
                     # should be checked after all miss assumptions are done.
                     # TODO: This should be optimized.
                     for i in range(self.num_ways):
-                        with m.If(
-                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                        ):
+                        with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
                             with m.If(self.csb):
                                 m.d.comb += self.state_next.eq(State.IDLE)
                             with m.Else():
-                                m.d.comb += self.state_next.eq(State.COMPARE)
+                                with m.If(self.set == self.addr.bit_select(self.offset_size, self.set_size)):
+                                    m.d.comb += self.state_next.eq(State.WAIT_HAZARD)
+                                with m.Else():
+                                    m.d.comb += self.state_next.eq(State.COMPARE)
 
                 # In the WRITE state, state switches to:
                 #   WRITE      if main memory didn't respond yet
@@ -397,14 +386,18 @@ class n_way_lru_cache(cache_base):
                         m.d.comb += self.state_next.eq(State.WAIT_READ)
 
                 # In the WAIT_READ state, state switches to:
-                #   IDLE    if CPU isn't sending a request
-                #   COMPARE if CPU is sending a request
+                #   IDLE        if CPU isn't sending a request
+                #   WAIT_HAZARD if data hazard is possible
+                #   COMPARE     if CPU is sending a request
                 with m.Case(State.WAIT_READ):
                     with m.If(~self.main_stall):
                         with m.If(self.csb):
                             m.d.comb += self.state_next.eq(State.IDLE)
                         with m.Else():
-                            m.d.comb += self.state_next.eq(State.COMPARE)
+                            with m.If(self.set == self.addr.bit_select(self.offset_size, self.set_size)):
+                                m.d.comb += self.state_next.eq(State.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += self.state_next.eq(State.COMPARE)
 
 
     def add_request_block(self, m):
@@ -467,10 +460,7 @@ class n_way_lru_cache(cache_base):
                 # is hit.
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
-                        with m.If(
-                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                        ):
+                        with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
                             m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
                             m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
                             m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
@@ -513,23 +503,15 @@ class n_way_lru_cache(cache_base):
             with m.Case(State.COMPARE):
                 # Check if current request is hit
                 for i in range(self.num_ways):
-                    with m.If(
-                        (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                        (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                    ):
+                    with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
                         m.d.comb += self.stall.eq(0)
                         words_per_line = Const(self.words_per_line)
-                        with m.If(self.bypass):
-                            m.d.comb += self.dout.eq(self.new_data.word_select(i * words_per_line + self.offset, self.word_size))
-                        with m.Else():
-                            m.d.comb += self.dout.eq(self.data_read_dout.word_select(i * words_per_line + self.offset, self.word_size))
+                        m.d.comb += self.dout.eq(self.data_read_dout.word_select(i * words_per_line + self.offset, self.word_size))
 
             # In the WAIT_READ state, stall is low and data output is valid main
             # memory answers the read request.
             # Data output is valid even if the current request is write since read
             # is non-destructive.
-            # NOTE: No need to use bypass registers here since data hazard is not
-            # possible.
             with m.Case(State.WAIT_READ):
                 # Check if main memory answers to the read request
                 with m.If(~self.main_stall):
@@ -584,29 +566,25 @@ class n_way_lru_cache(cache_base):
                         m.d.comb += self.way_next.eq(0)
                         m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
+                # In the WAIT_READ state, corresponding line from the use array is
+                # requested.
+                with m.Case(State.WAIT_HAZARD):
+                    m.d.comb += self.use_read_addr.eq(self.set)
+
                 # In the COMPARE state, way is selected according to the replacement
                 # policy of the cache.
                 # Also use numbers are updated if current request is hit.
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(
-                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
-                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
-                        ):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
                             # Check if current request is a clean miss
                             m.d.comb += self.way_next.eq(i)
-                            with m.If(
-                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
-                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
-                            ):
+                            with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
                                 m.d.comb += self.use_read_addr.eq(self.set)
                     # Check if current request is a hit
                     for i in range(self.num_ways):
-                        with m.If(
-                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                        ):
+                        with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
                             m.d.comb += self.use_write_csb.eq(0)
                             m.d.comb += self.use_write_addr.eq(self.set)
                             # Each way in a set has its own use numbers. These numbers
@@ -616,18 +594,11 @@ class n_way_lru_cache(cache_base):
                             # use number is increased to the maximum value and other ways which
                             # have use numbers more than accessed way's use number are decremented
                             # by 1.
-                            with m.If(self.bypass):
-                                for j in range(self.num_ways):
-                                    m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
-                                        self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
-                                    )
-                                m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
-                            with m.Else():
-                                for j in range(self.num_ways):
-                                    m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
-                                        self.new_use.word_select(j, self.way_size) - (self.new_use.word_select(j, self.way_size) > self.new_use.word_select(i, self.way_size))
-                                    )
-                                m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
+                            for j in range(self.num_ways):
+                                m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
+                                    self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
+                                )
+                            m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
                             with m.If(~self.csb):
                                 m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
@@ -651,102 +622,8 @@ class n_way_lru_cache(cache_base):
                         m.d.comb += self.use_write_addr.eq(self.set)
                         for i in range(self.num_ways):
                             m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(
-                                self.new_use.word_select(i, self.way_size) - (self.new_use.word_select(i, self.way_size) > self.new_use.word_select(self.way, self.way_size))
+                                self.use_read_dout.word_select(i, self.way_size) - (self.use_read_dout.word_select(i, self.way_size) > self.use_read_dout.word_select(self.way, self.way_size))
                             )
                         m.d.comb += self.use_write_din.word_select(self.way, self.way_size).eq(self.num_ways - 1)
                         with m.If(~self.csb):
                             m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-
-
-    def add_bypass_block(self, m):
-        """ Add bypass register always block to cache design. """
-
-        # In this block, bypass registers are controlled. Bypass
-        # registers are used to prevent data hazard from SRAMs.
-        # Data hazard can occur when there are read and write
-        # requests to the same row at the same cycle.
-
-        m.d.comb += self.bypass_next.eq(0)
-        m.d.comb += self.new_tag_next.eq(0)
-        m.d.comb += self.new_data_next.eq(0)
-        m.d.comb += self.new_use_next.eq(0)
-
-        with m.Switch(self.state):
-
-            # In the COMPARE state, bypass registers can be used in the next
-            # cycle if the current request is hit.
-            # Otherwise, bypass registers won't probably be used; therefore,
-            # will be reset.
-            with m.Case(State.COMPARE):
-                # Check if:
-                #   CPU is sending a new request
-                #   Current request is hit
-                #   Next address is in the same set
-                with m.If(~self.csb & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
-                    for i in range(self.num_ways):
-                        with m.If(
-                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
-                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
-                        ):
-                            m.d.comb += self.bypass_next.eq(1)
-                            with m.If(self.bypass):
-                                m.d.comb += self.new_tag_next.eq(self.new_tag)
-                                m.d.comb += self.new_data_next.eq(self.new_data)
-                                for j in range(self.num_ways):
-                                    m.d.comb += self.new_use_next.word_select(j, self.way_size).eq(
-                                        self.new_use.word_select(j, self.way_size) - (self.new_use.word_select(j, self.way_size) > self.new_use.word_select(i, self.way_size))
-                                    )
-                                m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(self.num_ways - 1)
-                            with m.Else():
-                                m.d.comb += self.new_tag_next.eq(self.tag_read_dout)
-                                m.d.comb += self.new_data_next.eq(self.data_read_dout)
-                                for j in range(self.num_ways):
-                                    m.d.comb += self.new_use_next.word_select(j, self.way_size).eq(
-                                        self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
-                                    )
-                                m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(self.num_ways - 1)
-                            # Update dirty bit in the tag line
-                            m.d.comb += self.new_tag_next.word_select(i, self.tag_size + 2).eq(Cat(self.tag, Const(3, 2)))
-                            # Perform the write request
-                            with m.If(~self.web_reg):
-                                # Write the word over the write mask
-                                num_bytes_per_word = Const(self.num_bytes)
-                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                                for j in range(self.num_bytes):
-                                    with m.If(self.wmask_reg[j]):
-                                        m.d.comb += self.new_data_next.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
-
-            # In the WAIT_READ state, bypass registers will be used in the next
-            # cycle if the next request is in the same set.
-            # Otherwise, bypass registers won't probably be used; therefore,
-            # will be reset.
-            # NOTE: No need to use bypass registers here since data hazard is not
-            # possible.
-            with m.Case(State.WAIT_READ):
-                # Main memory is answering to the read request
-                with m.If(~self.main_stall & ~self.csb & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
-                    m.d.comb += self.bypass_next.eq(1)
-                    m.d.comb += self.new_tag_next.eq(self.tag_read_dout)
-                    # Check if:
-                    #   CPU is sending a new request
-                    #   Next address is in the same set
-                    with m.Switch(self.way):
-                        for i in range(self.num_ways):
-                            with m.Case(i):
-                                m.d.comb += self.new_tag_next.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, Const(1, 1)))
-                    m.d.comb += self.new_data_next.eq(self.data_read_dout)
-                    with m.Switch(self.way):
-                        for i in range(self.num_ways):
-                            with m.Case(i):
-                                m.d.comb += self.new_data_next.word_select(i, self.line_size).eq(self.main_dout)
-                    for i in range(self.num_ways):
-                        m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(
-                            self.use_read_dout.word_select(i, self.way_size) - (self.use_read_dout.word_select(i, self.way_size) > self.use_read_dout.word_select(self.way, self.way_size))
-                        )
-                    m.d.comb += self.new_use_next.word_select(self.way, self.way_size).eq(self.num_ways - 1)
-                    # Perform the write request
-                    with m.If(~self.web_reg):
-                        # Write the word over the write mask
-                        for i in range(self.num_bytes):
-                            with m.If(self.wmask_reg[i]):
-                                m.d.comb += self.new_data_next.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + i, 8).eq(self.din_reg.word_select(i, 8))

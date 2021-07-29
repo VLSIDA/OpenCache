@@ -60,8 +60,6 @@ class design(Elaboratable):
         self.add_output_block(m)
         if self.replacement_policy != RP.NONE:
             self.add_replacement_block(m)
-        if self.data_hazard:
-            self.add_bypass_block(m)
 
         return m
 
@@ -103,12 +101,6 @@ class design(Elaboratable):
 
         # State FF
         self.state, self.state_next = get_ff_signals("state", State)
-
-        # Bypass FFs
-        if self.data_hazard:
-            self.bypass, self.bypass_next     = get_ff_signals("bypass")
-            self.new_tag, self.new_tag_next   = get_ff_signals("new_tag", (self.tag_size + 2) * self.num_ways)
-            self.new_data, self.new_data_next = get_ff_signals("new_data", self.line_size * self.num_ways)
 
 
     def add_srams(self, m):

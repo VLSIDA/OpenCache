@@ -34,6 +34,11 @@ class sim_cache:
         self.tag_array   = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.data_array  = [[[None] * self.words_per_line for _ in range(self.num_ways)] for _ in range(self.num_rows)]
 
+        # Previous request is used to detect data hazard
+        self.prev_hit = False
+        self.prev_web = 1
+        self.prev_set = None
+
         if self.replacement_policy == RP.FIFO:
             self.fifo_array = [0] * self.num_rows
 
@@ -157,29 +162,40 @@ class sim_cache:
 
         tag_decimal, set_decimal, _ = self.parse_address(address)
         way = self.find_way(address)
+        way_evict = None
+
+        # Increment the random counter if cache enters WAIT_HAZARD
+        self.update_random(int(self.is_data_hazard(address)))
 
         if way is not None: # Hit
             self.update_lru(set_decimal, way)
             self.update_random(1)
         else: # Miss
-            way = self.way_to_evict(set_decimal)
+            way_evict = self.way_to_evict(set_decimal)
 
             # Write-back
-            if self.dirty_array[set_decimal][way]:
-                old_tag  = self.tag_array[set_decimal][way]
-                old_data = self.data_array[set_decimal][way].copy()
+            if self.dirty_array[set_decimal][way_evict]:
+                old_tag  = self.tag_array[set_decimal][way_evict]
+                old_data = self.data_array[set_decimal][way_evict].copy()
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
                 self.update_random(DRAM_DELAY + 1)
 
             # Bring data line from DRAM
-            self.valid_array[set_decimal][way] = 1
-            self.dirty_array[set_decimal][way] = 0
-            self.tag_array[set_decimal][way]   = tag_decimal
-            self.data_array[set_decimal][way]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
+            self.valid_array[set_decimal][way_evict] = 1
+            self.dirty_array[set_decimal][way_evict] = 0
+            self.tag_array[set_decimal][way_evict]   = tag_decimal
+            self.data_array[set_decimal][way_evict]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
 
             self.update_fifo(set_decimal)
-            self.update_lru(set_decimal, way)
+            self.update_lru(set_decimal, way_evict)
             self.update_random(1 + DRAM_DELAY + 1)
+
+        # Update previous request variables
+        self.prev_hit = way is not None
+        self.prev_web = 1
+        self.prev_set = set_decimal
+
+        way = way if way_evict is None else way_evict
 
         # Return the valid way
         return way
@@ -201,11 +217,22 @@ class sim_cache:
         self.dirty_array[set_decimal][way] = 1
         self.data_array[set_decimal][way][offset_decimal] = data_input
 
+        # Update previous write enable
+        self.prev_web = 0
+
 
     def stall_cycles(self, address):
         """ Return the number of stall cycles for a request of address. """
 
-        stall_cycles = 0
+        stall_cycles = int(self.is_data_hazard(address))
+
+        # In order to calculate the stall cycles correctly, random counter
+        # needs to be updated temporarily here.
+        # If there is a data hazard, cache stalls in WAIT_HAZARD state,
+        # which results in incrementing the random counter. Therefore,
+        # we will increment it here.
+        if self.is_data_hazard(address):
+            self.update_random(1)
 
         if self.find_way(address) is None:
             # Stalls 1 cycle in the COMPARE state since
@@ -224,7 +251,35 @@ class sim_cache:
             # - n while reading
             stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
 
+        # After the calculation is done, the random counter should be
+        # decremented.
+        if self.is_data_hazard(address):
+            self.update_random(-1)
+
         return stall_cycles
+
+
+    def is_data_hazard(self, address):
+        """ Return whether a data hazard is detected. """
+
+        _, set_decimal, _ = self.parse_address(address)
+
+        # No data hazard if this is the first request or current
+        # request is not in the same set with the previous request
+        if self.prev_set is None or set_decimal != self.prev_set:
+            return False
+
+        if self.replacement_policy == RP.LRU:
+            # In LRU cache, use bits are updated in each access.
+            # Therefore, when there are two requests to the same
+            # set, data hazard on LRU SRAM might occur.
+            return True
+        else:
+            # If previous request was hit and write
+            # If previous request was miss
+            return (self.prev_hit and not self.prev_web) or (not self.prev_hit)
+
+        return False
 
 
     def update_fifo(self, set_decimal):
