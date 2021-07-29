@@ -68,29 +68,12 @@ class test_data:
 
         # Update stall values
         for i in range(len(self.web)):
-            stall_cycles = 0
-
-            if self.sc.find_way(self.addr[i]) is None:
-                # Stalls 1 cycle in the COMPARE state since
-                # the request is a miss
-                stall_cycles += 1
-
-                # Find the evicted address
-                _, set_decimal, _ = self.sc.parse_address(self.addr[i])
-                evicted_way = self.sc.way_to_evict(set_decimal)
-                is_dirty    = self.sc.dirty_array[set_decimal][evicted_way]
-
-                # If a way is written back before being replaced,
-                # cache stalls for 2n+1 cycles in total:
-                # - n while writing
-                # - 1 for sending the read request to DRAM
-                # - n while reading
-                stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
-
-            self.stall[i] = stall_cycles
-
+            # Get the numbr of stall cycles
+            self.stall[i] = self.sc.stall_cycles(self.addr[i])
             if self.web[i]:
                 # Overwrite data for read to prevent bugs
+                # NOTE: If the same address is written twice,
+                # this data could be old.
                 self.data[i] = self.sc.read(self.addr[i])
             else:
                 self.sc.write(self.addr[i], self.data[i])

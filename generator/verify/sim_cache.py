@@ -202,6 +202,31 @@ class sim_cache:
         self.data_array[set_decimal][way][offset_decimal] = data_input
 
 
+    def stall_cycles(self, address):
+        """ Return the number of stall cycles for a request of address. """
+
+        stall_cycles = 0
+
+        if self.find_way(address) is None:
+            # Stalls 1 cycle in the COMPARE state since
+            # the request is a miss
+            stall_cycles += 1
+
+            # Find the evicted address
+            _, set_decimal, _ = self.parse_address(address)
+            evicted_way = self.way_to_evict(set_decimal)
+            is_dirty    = self.dirty_array[set_decimal][evicted_way]
+
+            # If a way is written back before being replaced,
+            # cache stalls for 2n+1 cycles in total:
+            # - n while writing
+            # - 1 for sending the read request to DRAM
+            # - n while reading
+            stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
+
+        return stall_cycles
+
+
     def update_fifo(self, set_decimal):
         """ Update the FIFO number of the latest replaced set. """
 
