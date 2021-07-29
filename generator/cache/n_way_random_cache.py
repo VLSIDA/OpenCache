@@ -289,8 +289,8 @@ class n_way_random_cache(cache_base):
 
                 # In the RESET state, state switches to IDLE if reset is completed.
                 with m.Case(State.RESET):
-                    # When set reaches the limit, the last write request to the\n")
-                    # tag_array is sent.\n")
+                    # When set reaches the limit, the last write request to the
+                    # tag_array is sent.
                     with m.If(self.set == self.num_rows - 1):
                         m.d.comb += self.state_next.eq(State.IDLE)
 
