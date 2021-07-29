@@ -8,14 +8,15 @@ OpenCache is an open-source Python generator to create a cache design using Open
 [This](CACHE.md) serves as the documentation of OpenCache that explains how generated caches work.
 
 # Dependencies
-The OpenCache has only one dependency:
-+ Python 3.5 or higher
+The OpenCache has the following dependencies:
++ Python 3.6 or higher
++ [nMigen] 0.2 or higher
++ [yosys] 0.9+4081 or higher
 
-If you are going to verify the design via simulation and/or synthesis, you will need:
+If want to verify the design via simulation and/or synthesis, you will need:
 + [OpenRAM]
-+ [FuseSoC]
-+ [Icarus] (for simulation)
-+ [yosys] (for synthesis)
++ [FuseSoC] 1.12 or higher
++ [Icarus] 10.3 or higher
 
 # Usage
 ## Basic Usage
@@ -79,3 +80,4 @@ OpenCache is licensed under the [BSD 3-clause License](LICENSE).
 [FuseSoC]: https://github.com/olofk/fusesoc
 [Icarus]:  https://github.com/steveicarus/iverilog
 [yosys]:   https://github.com/YosysHQ/yosys
+[nMigen]:  https://github.com/nmigen/nmigen

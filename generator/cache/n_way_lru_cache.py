@@ -6,6 +6,9 @@
 # All rights reserved.
 #
 from cache_base import cache_base
+from nmigen import *
+from nmigen.utils import log2_int
+from rtl import get_ff_signals, State
 from globals import OPTS
 
 
@@ -19,1064 +22,731 @@ class n_way_lru_cache(cache_base):
 
         super().__init__(cache_config, name)
 
-        self.bypass_regs = {
-            "lru_read_dout":  "new_lru",
-            "tag_read_dout":  "new_tag",
-            "data_read_dout": "new_data"
-        }
 
+    def add_internal_signals(self):
+        """ Add internal registers and wires to cache design. """
 
-    def write_parameters(self):
-        """ Write the parameters of the cache. """
+        super().add_internal_signals()
 
-        super().write_parameters()
+        # Keep way chosen to be evicted in an FF
+        self.way, self.way_next = get_ff_signals("way", self.way_size)
 
-        # This parameter is used to update LRU bits
-        self.vf.write("  // Maximum value of a way.\n")
-        self.vf.write("  localparam WAY_LIMIT = {};\n".format(self.num_ways - 1))
-        self.vf.write("\n")
-
-
-    def write_registers(self):
-        """ Write the registers of the cache. """
-
-        self.vf.write("  reg web_reg, web_reg_next;\n")
-        self.vf.write("  reg [BYTE_COUNT-1:0]   wmask_reg, wmask_reg_next;\n")
-        self.vf.write("  reg stall;\n")
-        self.vf.write("  reg [TAG_WIDTH-1:0]    tag, tag_next;\n")
-        self.vf.write("  reg [SET_WIDTH-1:0]    set, set_next;\n")
-        self.vf.write("  reg [OFFSET_WIDTH-1:0] offset, offset_next;\n")
-        self.vf.write("  reg [WORD_WIDTH-1:0]   din_reg, din_reg_next;\n")
-        self.vf.write("  reg [WORD_WIDTH-1:0]   dout;\n")
-        self.vf.write("  reg [2:0]              state, state_next;\n")
-        self.vf.write("  reg [WAY_WIDTH-1:0]    way, way_next;                          // way that is chosen to evict\n")
-
-        # No need for bypass registers if SRAMs are
-        # guaranteed to be data hazard proof
+        # Bypass FF for use array
         if self.data_hazard:
-            self.vf.write("  // When the next fetch is in the same set, tag_array and data_array might be old (data hazard).\n")
-            self.vf.write("  reg bypass, bypass_next;                                       // high if write and read from arrays must be done at the same cycle\n")
-            self.vf.write("  reg [WAY_WIDTH * WAY_DEPTH-1:0]       new_lru, new_lru_next;   // new replacement bits from the previous cycle\n")
-            self.vf.write("  reg [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] new_tag, new_tag_next;   // new tag line from the previous cycle\n")
-            self.vf.write("  reg [LINE_WIDTH * WAY_DEPTH-1:0]      new_data, new_data_next; // new data line from the previous cycle\n\n")
-
-        self.vf.write("  // Main memory ports\n")
-        self.vf.write("  reg main_csb;\n")
-        self.vf.write("  reg main_web;\n")
-        self.vf.write("  reg [ADDR_WIDTH - OFFSET_WIDTH-1:0] main_addr;\n")
-        self.vf.write("  reg [LINE_WIDTH-1:0] main_din;\n\n")
-
-        self.vf.write("  // LRU array read port\n")
-        self.vf.write("  reg  lru_read_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] lru_read_addr;\n")
-        self.vf.write("  wire [WAY_WIDTH * WAY_DEPTH-1:0] lru_read_dout;\n")
-        self.vf.write("  // LRU array write port\n")
-        self.vf.write("  reg  lru_write_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] lru_write_addr;\n")
-        self.vf.write("  reg  [WAY_WIDTH * WAY_DEPTH-1:0] lru_write_din;\n\n")
-
-        self.vf.write("  // Tag array read port\n")
-        self.vf.write("  reg  tag_read_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] tag_read_addr;\n")
-        self.vf.write("  wire [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_read_dout;\n")
-        self.vf.write("  // Tag array write port\n")
-        self.vf.write("  reg  tag_write_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] tag_write_addr;\n")
-        self.vf.write("  reg  [(2 + TAG_WIDTH) * WAY_DEPTH-1:0] tag_write_din;\n\n")
-
-        self.vf.write("  // Data array read port\n")
-        self.vf.write("  reg  data_read_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] data_read_addr;\n")
-        self.vf.write("  wire [LINE_WIDTH * WAY_DEPTH-1:0] data_read_dout;\n")
-        self.vf.write("  // Data array write port\n")
-        self.vf.write("  reg  data_write_csb;\n")
-        self.vf.write("  reg  [SET_WIDTH-1:0] data_write_addr;\n")
-        self.vf.write("  reg  [LINE_WIDTH * WAY_DEPTH-1:0] data_write_din;\n\n")
-
-
-    def write_temp_variables(self):
-        """ Write the temporary variables of the cache. """
-
-        # For loop variables
-        self.vf.write("  // Almost all of these integers are used since left-hand side indexed\n")
-        self.vf.write("  // part select is illegal.\n")
-        self.vf.write("  // These should be unrolled during synthesis.\n")
-        self.vf.write("  // Each always block has its own variable to prevent combinational\n")
-        self.vf.write("  // loop in simulation.\n")
-        self.vf.write("  integer var_0;\n")
-        self.vf.write("  integer var_1;\n")
-        self.vf.write("  integer var_3;\n")
-        self.vf.write("  integer var_4;\n")
-        self.vf.write("  integer var_5;\n")
-        self.vf.write("  integer var_6;\n")
-        self.vf.write("  integer var_7;\n")
-        self.vf.write("  integer var_8;\n")
-        self.vf.write("  integer var_9;\n")
-        self.vf.write("  integer var_10;\n")
-        self.vf.write("  integer var_11;\n\n")
-
-
-    def write_logic_blocks(self):
-        """ Write the always blocks. """
-
-        self.write_flop_block()
-        self.write_memory_controller_block()
-        self.write_state_block()
-        self.write_request_block()
-        self.write_output_block()
-        self.write_replacement_block()
-        if self.data_hazard:
-            self.write_bypass_block()
-
-
-    def write_flop_block(self):
-        """ Write the flip-flops of the cache. """
-
-        title = "Flip-Flop Block"
-        descr = "In this block, flip-flop registers are updated at " + \
-                "every positive edge of the clock."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @(posedge clk) begin\n")
-        self.vf.write("    state     <= #(DELAY) state_next;\n")
-        self.vf.write("    way       <= #(DELAY) way_next;\n")
-        self.vf.write("    tag       <= #(DELAY) tag_next;\n")
-        self.vf.write("    set       <= #(DELAY) set_next;\n")
-        self.vf.write("    offset    <= #(DELAY) offset_next;\n")
-        self.vf.write("    web_reg   <= #(DELAY) web_reg_next;\n")
-        self.vf.write("    wmask_reg <= #(DELAY) wmask_reg_next;\n")
-        self.vf.write("    din_reg   <= #(DELAY) din_reg_next;\n")
-
-        if self.data_hazard:
-            self.vf.write("    bypass    <= #(DELAY) bypass_next;\n")
-            self.vf.write("    new_lru   <= #(DELAY) new_lru_next;\n")
-            self.vf.write("    new_tag   <= #(DELAY) new_tag_next;\n")
-            self.vf.write("    new_data  <= #(DELAY) new_data_next;\n")
-
-        self.vf.write("  end\n\n\n")
-
-
-    def write_memory_controller_block(self):
-        """ Write the logic always block of the cache. """
-
-        title = "Memory Controller Block"
-        descr = "In this block, cache communicates with memory components " + \
-                "which are LRU array, tag array, data array, and main memory."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    main_csb        = 1;\n")
-        self.vf.write("    main_web        = 1;\n")
-        self.vf.write("    main_addr       = 0;\n")
-        self.vf.write("    main_din        = 0;\n")
-        self.vf.write("    tag_read_csb    = 0;\n")
-        self.vf.write("    tag_read_addr   = 0;\n")
-        self.vf.write("    tag_write_csb   = 1;\n")
-        self.vf.write("    tag_write_addr  = 0;\n")
-        self.vf.write("    tag_write_din   = 0;\n")
-        self.vf.write("    data_read_csb   = 0;\n")
-        self.vf.write("    data_read_addr  = 0;\n")
-        self.vf.write("    data_write_csb  = 1;\n")
-        self.vf.write("    data_write_addr = 0;\n")
-        self.vf.write("    data_write_din  = 0;\n\n")
-
-        self.vf.write("    // If rst is high, state switches to RESET.\n")
-        self.vf.write("    // Registers, which are reset only once, are reset here.\n")
-        self.vf.write("    // In the RESET state, cache will set all LRU and tag\n")
-        self.vf.write("    // array lines to 0.\n")
-        self.vf.write("    if (rst) begin\n")
-        self.vf.write("      tag_write_csb  = 0;\n")
-        self.vf.write("      tag_write_addr = 0;\n")
-        self.vf.write("      tag_write_din  = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    // If flush is high, state switches to FLUSH.\n")
-        self.vf.write("    // In the FLUSH state, cache will write all data lines back\n")
-        self.vf.write("    // to main memory.\n")
-        self.vf.write("    // TODO: Cache should write only dirty lines back.\n")
-        self.vf.write("    else if (flush) begin\n")
-        self.vf.write("      tag_read_csb   = 0;\n")
-        self.vf.write("      tag_read_addr  = 0;\n")
-        self.vf.write("      data_read_csb  = 0;\n")
-        self.vf.write("      data_read_addr = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    else begin\n")
-        self.vf.write("      case (state)\n\n")
-
-        # RESET state
-        self.vf.write("        // In the RESET state, cache sends write request to LRU\n")
-        self.vf.write("        // and tag arrays to reset the current set.\n")
-        self.vf.write("        //\n")
-        self.vf.write("        // set register is incremented by the Request Decode Block.\n")
-        self.vf.write("        //\n")
-        self.vf.write("        // When set register reaches the end, state switches to IDLE.\n")
-        self.vf.write("        RESET: begin\n")
-        self.vf.write("          tag_write_csb  = 0;\n")
-        self.vf.write("          tag_write_addr = set;\n")
-        self.vf.write("          tag_write_din  = 0;\n")
-        self.vf.write("        end\n\n")
-
-        # FLUSH state
-        self.vf.write("        // In the FLUSH state, cache sends write request to main\n")
-        self.vf.write("        // memory.\n")
-        self.vf.write("        //\n")
-        self.vf.write("        // set register is incremented by the Request Decode Block.\n")
-        self.vf.write("        // way register is incremented by the Replacement Block.\n")
-        self.vf.write("        //\n")
-        self.vf.write("        // When set and way registers reach the end, state switches\n")
-        self.vf.write("        // to IDLE.\n")
-        self.vf.write("        // TODO: Cache should write only dirty lines back.\n")
-        self.vf.write("        FLUSH: begin\n")
-        self.vf.write("          tag_read_csb   = 0;\n")
-        self.vf.write("          tag_read_addr  = set;\n")
-        self.vf.write("          data_read_csb  = 0;\n")
-        self.vf.write("          data_read_addr = set;\n")
-        self.vf.write("          main_csb       = 0;\n")
-        self.vf.write("          main_web       = 0;\n")
-        self.vf.write("          main_addr      = {tag_read_dout[way * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-        self.vf.write("          main_din       = data_read_dout[way * LINE_WIDTH +: LINE_WIDTH];\n")
-        self.vf.write("          if (!main_stall && way == WAY_DEPTH - 1) begin\n")
-        self.vf.write("            tag_read_addr  = set + 1;\n")
-        self.vf.write("            data_read_addr = set + 1;\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # IDLE state
-        self.vf.write("        // In the IDLE state, cache waits for CPU to send a new request.\n")
-        self.vf.write("        // Until there is a new request from the cache, stall is low.\n")
-        self.vf.write("        //\n")
-        self.vf.write("        // When there is a new request from the cache stall is asserted,\n")
-        self.vf.write("        // request is decoded and corresponding LRU, tag, and data\n")
-        self.vf.write("        // lines are read from internal SRAM arrays.\n")
-        self.vf.write("        IDLE: begin\n")
-        self.vf.write("          if (!csb) begin\n")
-        self.vf.write("            tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("            data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("            // FIXME: This might cause a problem, need to recheck.\n")
-        self.vf.write("            // Data input to data_array is made unknown in order to\n")
-        self.vf.write("            // prevent writing other lines' data to the data array.\n")
-        self.vf.write("            data_write_din = 'bx;\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # COMPARE state
-        self.vf.write("        // In the COMPARE state, cache compares tags.\n")
-        self.vf.write("        // Stall and output are driven by the Output Block.\n")
-        self.vf.write("        COMPARE: begin\n")
-        self.vf.write("          for (var_0 = 0; var_0 < WAY_DEPTH; var_0 = var_0 + 1) begin\n")
-        self.vf.write("            // Find the least recently used way (the way having 0 LRU number)\n")
-
-        lines = "!lru_read_dout[var_0 * WAY_WIDTH +: WAY_WIDTH]"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("              // Assuming that current request is miss, check if it is a dirty miss\n")
-
-        lines = "tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("              if ({}) begin\n".format(lines))
-        self.vf.write("                // If main memory is busy, switch to WRITE and wait for\n")
-        self.vf.write("                // main memory to be available.\n")
-        self.vf.write("                if (main_stall) begin\n")
-        self.vf.write("                  tag_read_addr  = set;\n")
-        self.vf.write("                  data_read_addr = set;\n")
-        self.vf.write("                end\n")
-        self.vf.write("                // If main memory is available, switch to WAIT_WRITE and\n")
-        self.vf.write("                // wait for main memory to complete writing.\n")
-        self.vf.write("                else begin\n")
-        self.vf.write("                  main_csb = 0;\n")
-        self.vf.write("                  main_web = 0;\n")
-
-        lines = [
-            "main_addr = {tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH], set};",
-            "main_din  = data_read_dout[var_0 * LINE_WIDTH +: LINE_WIDTH];"
-        ]
-        lines = self.wrap_data_hazard(lines, indent=9)
-
-        self.vf.writelines(lines)
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("              // Else, assume that current request is a clean miss\n")
-        self.vf.write("              else begin\n")
-        self.vf.write("                if (!main_stall) begin\n")
-        self.vf.write("                  tag_read_addr  = set;\n")
-        self.vf.write("                  data_read_addr = set;\n")
-        self.vf.write("                  main_csb       = 0;\n")
-        self.vf.write("                  main_addr      = {tag, set};\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("          // Check if current request is hit\n")
-        self.vf.write("          // Compare all ways' tags to find a hit. Since each way has a different\n")
-        self.vf.write("          // tag, only one of them can match at most.\n")
-        self.vf.write("          for (var_0 = 0; var_0 < WAY_DEPTH; var_0 = var_0 + 1)\n")
-
-        lines = "tag_read_dout[var_0 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_0 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("              // Set main memory's csb to 1 again since it could be set 0 above\n")
-        self.vf.write("              main_csb = 1;\n")
-        self.vf.write("              // Perform the write request\n")
-        self.vf.write("              if (!web_reg) begin\n")
-        self.vf.write("                tag_write_csb   = 0;\n")
-        self.vf.write("                tag_write_addr  = set;\n")
-        self.vf.write("                data_write_csb  = 0;\n")
-        self.vf.write("                data_write_addr = set;\n")
-
-        lines = [
-            "tag_write_din  = tag_read_dout;",
-            "data_write_din = data_read_dout;"
-        ]
-        lines = self.wrap_data_hazard(lines, indent=8)
-
-        self.vf.writelines(lines)
-        self.vf.write("                // Update dirty bit in the tag line\n")
-        self.vf.write("                tag_write_din[var_0 * (2 + TAG_WIDTH) + TAG_WIDTH] = 1;\n")
-        self.vf.write("                // Write the word over the write mask\n")
-        self.vf.write("                for (var_1 = 0; var_1 < BYTE_COUNT; var_1 = var_1 + 1) begin\n")
-        self.vf.write("                  for (var_11 = 0; var_11 < 8; var_11 = var_11 + 1) begin\n")
-        self.vf.write("                    if (wmask_reg[var_1])\n")
-        self.vf.write("                      data_write_din[var_0 * LINE_WIDTH + offset * WORD_WIDTH + var_1 * 8 + var_11] = din_reg[var_1 * 8 + var_11];\n")
-        self.vf.write("                  end\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("              // If CPU is sending a new request, read next lines from SRAMs.\n")
-        self.vf.write("              // Even if bypass registers are going to be used, read requests\n")
-        self.vf.write("              // are sent to SRAMs since read is non-destructive (hopefully?).\n")
-        self.vf.write("              if (!csb) begin\n")
-        self.vf.write("                tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("                data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("        end\n")
-
-        # WRITE state
-        self.vf.write("        // In the WRITE state, cache waits for main memory to be\n")
-        self.vf.write("        // available.\n")
-        self.vf.write("        // When main memory is available, write request is sent.\n")
-        self.vf.write("        WRITE: begin\n")
-        self.vf.write("          // If main memory is busy, wait in this state.\n")
-        self.vf.write("          //\n")
-        self.vf.write("          // If main memory is available, switch to WAIT_WRITE and\n")
-        self.vf.write("          // wait for main memory to complete writing.\n")
-        self.vf.write("          tag_read_addr  = set;\n")
-        self.vf.write("          data_read_addr = set;\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            main_csb  = 0;\n")
-        self.vf.write("            main_web  = 0;\n")
-        self.vf.write("            main_addr = {tag_read_dout[way * (TAG_WIDTH + 2) +: TAG_WIDTH], set};\n")
-        self.vf.write("            main_din  = data_read_dout[way * LINE_WIDTH +: LINE_WIDTH];\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_WRITE state
-        self.vf.write("        // In the WAIT_WRITE state, cache waits for main memory to\n")
-        self.vf.write("        // complete writing.\n")
-        self.vf.write("        // When main memory completes writing, read request is sent.\n")
-        self.vf.write("        WAIT_WRITE: begin\n")
-        self.vf.write("          // If main memory is busy, wait in this state.\n")
-        self.vf.write("          //\n")
-        self.vf.write("          // If main memory completes writing, switch to WAIT_READ\n")
-        self.vf.write("          // and wait for main memory to complete reading.\n")
-        self.vf.write("          tag_read_addr  = set;\n")
-        self.vf.write("          data_read_addr = set;\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            main_csb  = 0;\n")
-        self.vf.write("            main_addr = {tag, set};\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # READ state
-        # TODO: Is this state really necessary? WAIT_WRITE state may be used instead.
-        self.vf.write("        // In the READ state, cache waits for main memory to be\n")
-        self.vf.write("        // available.\n")
-        self.vf.write("        // When main memory is available, read request is sent.\n")
-        self.vf.write("        READ: begin\n")
-        self.vf.write("          // If main memory is busy, wait in this state.\n")
-        self.vf.write("          //\n")
-        self.vf.write("          // If main memory completes writing, switch to WAIT_READ\n")
-        self.vf.write("          // and wait for main memory to complete reading.\n")
-        self.vf.write("          tag_read_addr  = set;\n")
-        self.vf.write("          data_read_addr = set;\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            main_csb  = 0;\n")
-        self.vf.write("            main_addr = {tag, set};\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_READ state
-        self.vf.write("        // In the WAIT_READ state, cache waits for main memory to\n")
-        self.vf.write("        // complete reading.\n")
-        self.vf.write("        // When main memory completes reading, request is completed.\n")
-        self.vf.write("        WAIT_READ: begin\n")
-        self.vf.write("          tag_read_addr  = set;\n")
-        self.vf.write("          data_read_addr = set;\n")
-        self.vf.write("          // If main memory is busy, wait in this state.\n")
-        self.vf.write("          //\n")
-        self.vf.write("          // If main memory completes reading, cache switches to:\n")
-        self.vf.write("          //   IDLE    if CPU isn't sending a new request\n")
-        self.vf.write("          //   COMPARE if CPU is sending a new request\n")
-        self.vf.write("          if (!main_stall) begin\n")
-        self.vf.write("            // TODO: Use wmask feature of OpenRAM\n")
-        self.vf.write("            tag_write_csb  = 0;\n")
-        self.vf.write("            tag_write_addr = set;\n")
-        self.vf.write("            tag_write_din  = tag_read_dout;\n")
-        self.vf.write("            tag_write_din[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = 1;\n")
-        self.vf.write("            tag_write_din[way * (2 + TAG_WIDTH) + TAG_WIDTH]     = ~web_reg;\n")
-        self.vf.write("            for (var_0 = 0; var_0 < TAG_WIDTH; var_0 = var_0 + 1)\n")
-        self.vf.write("              tag_write_din[way * (2 + TAG_WIDTH) + var_0] = tag[var_0];\n")
-        self.vf.write("            data_write_csb  = 0;\n")
-        self.vf.write("            data_write_addr = set;\n")
-        self.vf.write("            data_write_din  = data_read_dout;\n")
-        self.vf.write("            for (var_0 = 0; var_0 < LINE_WIDTH; var_0 = var_0 + 1)\n")
-        self.vf.write("              data_write_din[way * LINE_WIDTH + var_0] = main_dout[var_0];\n")
-        self.vf.write("            // Perform the write request\n")
-        self.vf.write("            if (!web_reg) begin\n")
-        self.vf.write("              // Write the word over the write mask\n")
-        self.vf.write("              for (var_0 = 0; var_0 < BYTE_COUNT; var_0 = var_0 + 1) begin\n")
-        self.vf.write("                for (var_1 = 0; var_1 < 8; var_1 = var_1 + 1) begin\n")
-        self.vf.write("                  if (wmask_reg[var_0])\n")
-        self.vf.write("                    data_write_din[way * LINE_WIDTH + offset * WORD_WIDTH + var_0 * 8 + var_1] = din_reg[var_0 * 8 + var_1];\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("            // If CPU is sending a new request, read next lines from SRAMs\n")
-        self.vf.write("            // Even if bypass registers are going to be used, read requests\n")
-        self.vf.write("            // are sent to SRAMs since read is non-destructive (hopefully?).\n")
-        self.vf.write("            if (!csb) begin\n")
-        self.vf.write("              tag_read_addr  = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("              data_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("        default: begin\n")
-        self.vf.write("          main_csb        = 1;\n")
-        self.vf.write("          main_web        = 1;\n")
-        self.vf.write("          main_addr       = 0;\n")
-        self.vf.write("          main_din        = 0;\n")
-        self.vf.write("          tag_read_csb    = 0;\n")
-        self.vf.write("          tag_read_addr   = 0;\n")
-        self.vf.write("          tag_write_csb   = 1;\n")
-        self.vf.write("          tag_write_addr  = 0;\n")
-        self.vf.write("          tag_write_din   = 0;\n")
-        self.vf.write("          data_read_csb   = 0;\n")
-        self.vf.write("          data_read_addr  = 0;\n")
-        self.vf.write("          data_write_csb  = 1;\n")
-        self.vf.write("          data_write_addr = 0;\n")
-        self.vf.write("          data_write_din  = 0;\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("      endcase\n")
-        self.vf.write("    end\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_state_block(self):
-        """ Write the state controller always block. """
-
-        title = "State Controller Block"
-        descr = "In this block, cache's state is controlled. state flip-flop " + \
-                "register is changed in order to switch between states."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    state_next = state;\n\n")
-
-        self.vf.write("    // If rst is high, state switches to RESET.\n")
-        self.vf.write("    if (rst) begin\n")
-        self.vf.write("      state_next = RESET;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    // If flush is high, state switches to FLUSH.\n")
-        self.vf.write("    else if (flush) begin\n")
-        self.vf.write("      state_next = FLUSH;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    else begin\n")
-        self.vf.write("      case (state)\n\n")
-
-        # RESET state
-        self.vf.write("        // In the RESET state, state switches to IDLE if reset is completed.\n")
-        self.vf.write("        RESET: begin\n")
-        self.vf.write("          // When set reaches the limit, the last write request to the\n")
-        self.vf.write("          // tag array is sent.\n")
-        self.vf.write("          if (set == CACHE_DEPTH - 1)\n")
-        self.vf.write("            state_next = IDLE;\n")
-        self.vf.write("        end\n\n")
-
-        # FLUSH state
-        self.vf.write("        // In the FLUSH state, state switches to IDLE if flush is completed.\n")
-        self.vf.write("        FLUSH: begin\n")
-        self.vf.write("          // If main memory completes the last write request, flush is\n")
-        self.vf.write("          // completed.\n")
-        self.vf.write("          if (!main_stall && way == WAY_DEPTH - 1 && set == CACHE_DEPTH - 1)\n")
-        self.vf.write("            state_next = IDLE;\n")
-        self.vf.write("        end\n\n")
-
-        # IDLE state
-        self.vf.write("        // In the IDLE state, state switches to COMPARE if CPU is sending\n")
-        self.vf.write("        // a new request.\n")
-        self.vf.write("        IDLE: begin\n")
-        self.vf.write("          if (!csb)\n")
-        self.vf.write("            state_next = COMPARE;\n")
-        self.vf.write("        end\n\n")
-
-        # COMPARE state
-        self.vf.write("        // In the COMPARE state, state switches to:\n")
-        self.vf.write("        //   IDLE       if current request is hit and CPU isn't sending a new request\n")
-        self.vf.write("        //   COMPARE    if current request is hit and CPU is sending a new request\n")
-        self.vf.write("        //   WRITE      if current request is dirty miss and main memory is busy\n")
-        self.vf.write("        //   WAIT_WRITE if current request is dirty miss and main memory is available\n")
-        self.vf.write("        //   READ       if current request is clean miss and main memory is busy\n")
-        self.vf.write("        //   WAIT_READ  if current request is clean miss and main memory is available\n")
-        self.vf.write("        COMPARE: begin\n")
-        self.vf.write("          // Find the least recently used way (the way having 0 LRU number)\n")
-        self.vf.write("          for (var_3 = 0; var_3 < WAY_DEPTH; var_3 = var_3 + 1) begin\n")
-
-        lines = "!lru_read_dout[var_3 * WAY_WIDTH +: WAY_WIDTH]"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("            // Assuming that current request is miss, check if it is a dirty miss\n")
-
-        lines = "tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("              if ({})\n".format(lines))
-        self.vf.write("                state_next = main_stall ? WRITE : WAIT_WRITE;\n")
-        self.vf.write("              // Else (Assuming that current request is miss, it is a clean miss)\n")
-        self.vf.write("              else\n")
-        self.vf.write("                state_next = main_stall ? READ : WAIT_READ;\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("          // Find the least recently used way (the way having 0 LRU number)\n")
-        self.vf.write("          // Hit is checked here in order to prevent bugs where hit way's var_3\n")
-        self.vf.write("          // value is smaller than least recently used way's var_3 value.\n")
-        self.vf.write("          // TODO: This should be optimized.\n")
-        self.vf.write("          for (var_3 = 0; var_3 < WAY_DEPTH; var_3 = var_3 + 1) begin\n")
-
-        lines = "tag_read_dout[var_3 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_3 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({})\n".format(lines))
-        self.vf.write("              state_next = csb ? IDLE : COMPARE;\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # WRITE state
-        self.vf.write("        // In the WRITE state, state switches to:\n")
-        self.vf.write("        //   WRITE      if main memory didn't respond yet\n")
-        self.vf.write("        //   WAIT_WRITE if main memory responded\n")
-        self.vf.write("        WRITE: begin\n")
-        self.vf.write("          if (!main_stall)\n")
-        self.vf.write("            state_next = WAIT_WRITE;\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_WRITE state
-        self.vf.write("        // In the WAIT_WRITE state, state switches to:\n")
-        self.vf.write("        //   WAIT_WRITE if main memory didn't respond yet\n")
-        self.vf.write("        //   WAIT_READ  if main memory responded\n")
-        self.vf.write("        WAIT_WRITE: begin\n")
-        self.vf.write("          if (!main_stall)\n")
-        self.vf.write("            state_next = WAIT_READ;\n")
-        self.vf.write("        end\n\n")
-
-        # READ state
-        self.vf.write("        // In the READ state, state switches to:\n")
-        self.vf.write("        //   READ      if main memory didn't respond yet\n")
-        self.vf.write("        //   WAIT_READ if main memory responded\n")
-        self.vf.write("        READ: begin\n")
-        self.vf.write("          if (!main_stall)\n")
-        self.vf.write("            state_next = WAIT_READ;\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_READ state
-        self.vf.write("        // In the WAIT_READ state, state switches to:\n")
-        self.vf.write("        //   IDLE    if CPU isn't sending a request\n")
-        self.vf.write("        //   COMPARE if CPU is sending a request\n")
-        self.vf.write("        WAIT_READ: begin\n")
-        self.vf.write("          if (!main_stall)\n")
-        self.vf.write("            state_next = csb ? IDLE : COMPARE;\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("        default: state_next = state;\n\n")
-
-        self.vf.write("      endcase\n")
-        self.vf.write("    end\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_request_block(self):
-        """ Write the request decode always block. """
-
-        title = "Request Decode Block"
-        descr = "In this block, CPU's request is decoded. Address is parsed into " + \
-                "tag, set and offset values, and write enable and data input are " + \
-                "saved in registers."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    tag_next       = tag;\n")
-        self.vf.write("    set_next       = set;\n")
-        self.vf.write("    offset_next    = offset;\n")
-        self.vf.write("    web_reg_next   = web_reg;\n")
-        self.vf.write("    wmask_reg_next = wmask_reg;\n")
-        self.vf.write("    din_reg_next   = din_reg;\n\n")
-
-        self.vf.write("    // If rst is high, input registers are reset.\n")
-        self.vf.write("    // set register becomes 1 since it is going to be used to reset all\n")
-        self.vf.write("    // lines in the tag_array.\n")
-        self.vf.write("    // way register becomes 0 since it is going to be used to reset all\n")
-        self.vf.write("    // ways in a tag line.\n")
-        self.vf.write("    if (rst) begin \n")
-        self.vf.write("      tag_next       = 0;\n")
-        self.vf.write("      set_next       = 1;\n")
-        self.vf.write("      offset_next    = 0;\n")
-        self.vf.write("      web_reg_next   = 1;\n")
-        self.vf.write("      wmask_reg_next = 0;\n")
-        self.vf.write("      din_reg_next   = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    // If flush is high, input registers are not reset.\n")
-        self.vf.write("    // However, way and set registers becomes 0 since it is going\n")
-        self.vf.write("    // to be used to write dirty lines back to main memory.\n")
-        self.vf.write("    else if (flush) begin\n")
-        self.vf.write("      set_next = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    else begin\n")
-        self.vf.write("      case (state)\n\n")
-
-        # RESET state
-        self.vf.write("        // In the RESET state, set register is used to reset all lines in\n")
-        self.vf.write("        // the tag_array.\n")
-        self.vf.write("        RESET: begin\n")
-        self.vf.write("          set_next = set + 1;\n")
-        self.vf.write("        end\n\n")
-
-        # FLUSH state
-        self.vf.write("        // In the FLUSH state, set register is used to write all dirty lines\n")
-        self.vf.write("        // back to main memory.\n")
-        self.vf.write("        FLUSH: begin\n")
-        self.vf.write("          if (!main_stall && way == WAY_DEPTH - 1)\n")
-        self.vf.write("            set_next = set + 1;\n")
-        self.vf.write("        end\n\n")
-
-        # IDLE, COMPARE, and WAIT_READ states
-        self.vf.write("        // The request is decoded when needed. Check if:\n")
-        self.vf.write("        //   CPU is sending a request and either:\n")
-        self.vf.write("        //     state is IDLE\n")
-        self.vf.write("        //     state is COMPARE and current request is hit\n")
-        self.vf.write("        //     state is WAIT_READ and main memory answered the read request\n")
-        self.vf.write("        default: begin\n")
-        self.vf.write("          if (!csb) begin\n")
-        self.vf.write("            for (var_4 = 0; var_4 < WAY_DEPTH; var_4 = var_4 + 1) begin\n")
-        self.vf.write("              if ((state == IDLE)\n")
-
-        lines = "tag_read_dout[var_4 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_4 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("              || (state == COMPARE && ({}))\n".format(lines))
-        self.vf.write("              || (state == WAIT_READ && !main_stall))\n")
-        self.vf.write("              begin\n")
-        self.vf.write("                tag_next       = addr[ADDR_WIDTH-1 -: TAG_WIDTH];\n")
-        self.vf.write("                set_next       = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("                offset_next    = addr[OFFSET_WIDTH-1:0];\n")
-        self.vf.write("                web_reg_next   = web;\n")
-        self.vf.write("                wmask_reg_next = wmask;\n")
-        self.vf.write("                din_reg_next   = din;\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("      endcase\n")
-        self.vf.write("    end\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_output_block(self):
-        """ Write the stall always block. """
-
-        title = "Output Block"
-        descr = "In this block, cache's output signals, which are stall and dout, " + \
-                "are controlled."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    stall = 1;\n")
-        self.vf.write("    dout  = 'bx;\n\n")
-
-        self.vf.write("    case (state)\n\n")
-
-        # IDLE state
-        self.vf.write("      // In the IDLE state, stall is low while there is no request from\n")
-        self.vf.write("      // the CPU.\n")
-        self.vf.write("      IDLE: begin\n")
-        self.vf.write("        stall = 0;\n")
-        self.vf.write("      end\n\n")
-
-        # COMPARE state
-        self.vf.write("      // In the COMPARE state, stall is low if the current request is hit.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Data output is valid if the request is hit and even if the current\n")
-        self.vf.write("      // request is write since read is non-destructive.\n")
-        self.vf.write("      COMPARE: begin\n")
-        self.vf.write("        // Check if current request is hit\n")
-        self.vf.write("        for (var_5 = 0; var_5 < WAY_DEPTH; var_5 = var_5 + 1) begin\n")
-
-        lines = "tag_read_dout[var_5 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_5 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("          if ({}) begin\n".format(lines))
-        self.vf.write("            stall = 0;\n")
-
-        lines = ["dout = data_read_dout[var_5 * LINE_WIDTH + offset * WORD_WIDTH +: WORD_WIDTH];"]
-        lines = self.wrap_data_hazard(lines, indent=6)
-
-        self.vf.writelines(lines)
-        self.vf.write("          end\n")
-        self.vf.write("        end\n")
-        self.vf.write("      end\n\n")
-
-        # WAIT_READ state
-        self.vf.write("      // In the WAIT_READ state, stall is low and data output is valid main\n")
-        self.vf.write("      // memory answers the read request.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Data output is valid even if the current request is write since read\n")
-        self.vf.write("      // is non-destructive.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Note:\n")
-        self.vf.write("      // No need to use bypass registers here since data hazard is not\n")
-        self.vf.write("      // possible.\n")
-        self.vf.write("      WAIT_READ: begin\n")
-        self.vf.write("        // Check if main memory answers to the read request.\n")
-        self.vf.write("        if (!main_stall) begin\n")
-        self.vf.write("          stall = 0;\n")
-        self.vf.write("          dout  = main_dout[offset * WORD_WIDTH +: WORD_WIDTH];\n")
-        self.vf.write("        end\n")
-        self.vf.write("      end\n\n")
-
-        self.vf.write("      default: begin\n")
-        self.vf.write("        stall = 1;\n")
-        self.vf.write("        dout  = 'bx;\n")
-        self.vf.write("      end\n\n")
-
-        self.vf.write("    endcase\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_replacement_block(self):
-        """ Write the replacement always block. """
-
-        title = "Replacement Block"
-        descr = "In this block, LRU numbers are updated and evicted way is " + \
-                "selected according to LRU replacement policy."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    way_next       = way;\n")
-        self.vf.write("    lru_read_csb   = 0;\n")
-        self.vf.write("    lru_read_addr  = 0;\n")
-        self.vf.write("    lru_write_csb  = 1;\n")
-        self.vf.write("    lru_write_addr = 0;\n")
-        self.vf.write("    lru_write_din  = 0;\n\n")
-
-        self.vf.write("    // If rst is high, way is reset and LRU numbers are reset.\n")
-        self.vf.write("    // way register becomes 0 since it is going to be used to reset all\n")
-        self.vf.write("    // ways in LRU and tag lines.\n")
-        self.vf.write("    if (rst) begin\n")
-        self.vf.write("      way_next       = 0;\n")
-        self.vf.write("      lru_write_csb  = 0;\n")
-        self.vf.write("      lru_write_addr = 0;\n")
-        self.vf.write("      lru_write_din  = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    // If flush is high, way is reset.\n")
-        self.vf.write("    // way register becomes 0 since it is going to be used to write all\n")
-        self.vf.write("    // data lines back to main memory.\n")
-        self.vf.write("    else if (flush) begin \n")
-        self.vf.write("      way_next = 0;\n")
-        self.vf.write("    end\n\n")
-
-        self.vf.write("    else begin\n")
-        self.vf.write("      case (state)\n\n")
-
-        # RESET state
-        self.vf.write("        // In the RESET state, way register is used to reset all ways in LRU\n")
-        self.vf.write("        // and tag lines.\n")
-        self.vf.write("        RESET: begin\n")
-        self.vf.write("          lru_write_csb  = 0;\n")
-        self.vf.write("          lru_write_addr = set;\n")
-        self.vf.write("          lru_write_din  = 0;\n")
-        self.vf.write("        end\n\n")
-
-        # FLUSH state
-        self.vf.write("        // In the FLUSH state, way register is used to write all data lines\n")
-        self.vf.write("        // back to main memory.\n")
-        self.vf.write("        // TODO: Flush should only write dirty lines back.\n")
-        self.vf.write("        FLUSH: begin\n")
-        self.vf.write("          if (!main_stall)\n")
-        self.vf.write("            way_next = way + 1;\n")
-        self.vf.write("        end\n\n")
-
-        # IDLE state
-        self.vf.write("        // In the IDLE state, way is reset and the corresponding line from the\n")
-        self.vf.write("        // LRU array is requested.\n")
-        self.vf.write("        IDLE: begin\n")
-        self.vf.write("          if (!csb) begin\n")
-        self.vf.write("            way_next      = 0;\n")
-        self.vf.write("            lru_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # COMPARE state
-        self.vf.write("        // In the COMPARE state, way is selected according to the replacement\n")
-        self.vf.write("        // policy of the cache.\n")
-        self.vf.write("        // Also LRU numbers are updated if current request is hit.\n")
-        self.vf.write("        COMPARE: begin\n")
-        self.vf.write("          for (var_9 = 0; var_9 < WAY_DEPTH; var_9 = var_9 + 1) begin\n")
-        self.vf.write("            // Find the least recently used way (the way having 0 LRU number)\n")
-
-        lines = "!lru_read_dout[var_9 * WAY_WIDTH +: WAY_WIDTH]"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("              way_next = var_9;\n")
-        self.vf.write("              // Check if current request is a clean miss\n")
-
-        lines = "tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH +: 2] == 2'b11"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("              if (!({})) begin\n".format(lines))
-        self.vf.write("                if (!main_stall) begin\n")
-        self.vf.write("                  lru_read_addr = set;\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("          // Check if current request is a hit\n")
-        self.vf.write("          for (var_9 = 0; var_9 < WAY_DEPTH; var_9 = var_9 + 1) begin\n")
-
-        lines = "tag_read_dout[var_9 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_9 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag"
-        lines = self.wrap_data_hazard(lines)
-
-        self.vf.write("            if ({}) begin\n".format(lines))
-        self.vf.write("              lru_write_csb  = 0;\n")
-        self.vf.write("              lru_write_addr = set;\n")
-        self.vf.write("              // Each way in a set has its own LRU numbers. These numbers\n")
-        self.vf.write("              // start from 0. Every time a way is needed to be evicted,\n")
-        self.vf.write("              // the way having 0 LRU number is chosen.\n")
-        self.vf.write("              //\n")
-        self.vf.write("              // Every time a way is accessed (read or write), its corresponding\n")
-        self.vf.write("              // LRU number is increased to the maximum value and other ways which\n")
-        self.vf.write("              // have LRU numbers more than accessed way's LRU number are decremented\n")
-        self.vf.write("              // by 1.\n")
-
-        if self.data_hazard:
-            self.vf.write("              if (bypass) begin\n")
-            self.write_lru_update(8, True, False, "var_9", for_var="var_10")
-            self.vf.write("                  end else begin\n")
-            self.write_lru_update(8, False, False, "var_9", for_var="var_10")
-            self.vf.write("                  end\n")
-        else:
-            self.write_lru_update(7, False, False, "var_9", for_var="var_10")
-
-        self.vf.write("              if (!csb) begin\n")
-        self.vf.write("                lru_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_WRITE and READ states
-        self.vf.write("        // In the WAIT_WRITE and READ states, LRU line is read to update it\n")
-        self.vf.write("        // in the WAIT_READ state.\n")
-        self.vf.write("        WAIT_WRITE, READ: begin\n")
-        self.vf.write("          lru_read_addr = set;\n")
-        self.vf.write("        end\n\n")
-
-        # WAIT_READ state
-        self.vf.write("        // In the WAIT_READ state, LRU numbers are updated.\n")
-        self.vf.write("        WAIT_READ: begin\n")
-        self.vf.write("          lru_read_addr = set;\n")
-        self.vf.write("          if (!main_stall) begin // Switch to COMPARE\n")
-        self.vf.write("            // Each way in a set has its own LRU numbers. These numbers\n")
-        self.vf.write("            // start from 0. Every time a way is needed to be evicted,\n")
-        self.vf.write("            // the way having 0 LRU number is chosen.\n")
-        self.vf.write("            //\n")
-        self.vf.write("            // Every time a way is accessed (read or write), its corresponding\n")
-        self.vf.write("            // LRU number is increased to the maximum value and other ways which\n")
-        self.vf.write("            // have LRU numbers more than accessed way's LRU number are decremented\n")
-        self.vf.write("            // by 1.\n")
-        self.vf.write("            lru_write_csb  = 0;\n")
-        self.vf.write("            lru_write_addr = set;\n")
-        self.write_lru_update(6, False, False, for_var="var_10")
-        self.vf.write("            if (!csb)\n")
-        self.vf.write("              lru_read_addr = addr[OFFSET_WIDTH +: SET_WIDTH];\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("        default: begin\n")
-        self.vf.write("          way_next       = way;\n")
-        self.vf.write("          lru_read_csb   = 0;\n")
-        self.vf.write("          lru_read_addr  = 0;\n")
-        self.vf.write("          lru_write_csb  = 1;\n")
-        self.vf.write("          lru_write_addr = 0;\n")
-        self.vf.write("          lru_write_din  = 0;\n")
-        self.vf.write("        end\n\n")
-
-        self.vf.write("      endcase\n")
-        self.vf.write("    end\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_bypass_block(self):
-        """ Write the bypass register always block. """
-
-        title = "Bypass Register Block"
-        descr = "In this block, bypass registers are controlled. Bypass registers are " + \
-                "used to prevent data hazard from SRAMs. Data hazard can occur when " + \
-                "there are read and write requests to the same row at the same cycle."
-
-        self.write_title_banner(title, descr, indent=1)
-        self.vf.write("  always @* begin\n")
-        self.vf.write("    bypass_next   = 0;\n")
-        self.vf.write("    new_lru_next  = 0;\n")
-        self.vf.write("    new_tag_next  = 0;\n")
-        self.vf.write("    new_data_next = 0;\n\n")
-
-        self.vf.write("    case (state)\n\n")
-
-        # COMPARE state
-        self.vf.write("      // In the COMPARE state, bypass registers can be used in the next\n")
-        self.vf.write("      // cycle if the current request is hit.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Otherwise, bypass registers won't probably be used; therefore,\n")
-        self.vf.write("      // will be reset.\n")
-        self.vf.write("      COMPARE: begin\n")
-        self.vf.write("        new_lru_next  = 0;\n")
-        self.vf.write("        new_tag_next  = 0;\n")
-        self.vf.write("        new_data_next = 0;\n")
-        self.vf.write("        // Check if:\n")
-        self.vf.write("        //   CPU is sending a new request\n")
-        self.vf.write("        //   Current request is hit\n")
-        self.vf.write("        //   Next address is in the same set\n")
-        self.vf.write("        if (!csb) begin\n")
-        self.vf.write("          for (var_6 = 0; var_6 < WAY_DEPTH; var_6 = var_6 + 1) begin\n")
-        self.vf.write("            if (((bypass && new_tag[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && new_tag[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag) || (!bypass && tag_read_dout[var_6 * (TAG_WIDTH + 2) + TAG_WIDTH + 1] && tag_read_dout[var_6 * (TAG_WIDTH + 2) +: TAG_WIDTH] == tag))\n")
-        self.vf.write("            && addr[OFFSET_WIDTH +: SET_WIDTH] == set)\n")
-        self.vf.write("            begin\n")
-        self.vf.write("              bypass_next = 1;\n")
-        self.vf.write("              if (bypass) begin\n")
-        self.write_lru_update(8, True, True, "var_6", "var_8")
-        self.vf.write("                new_tag_next  = new_tag;\n")
-        self.vf.write("                new_data_next = new_data;\n")
-        self.vf.write("              end else begin\n")
-        self.write_lru_update(8, False, True, "var_6", "var_8")
-        self.vf.write("                new_tag_next  = tag_read_dout;\n")
-        self.vf.write("                new_data_next = data_read_dout;\n")
-        self.vf.write("              end\n")
-        self.vf.write("              // Update dirty bit in the tag line\n")
-        self.vf.write("              new_tag_next[var_6 * (2 + TAG_WIDTH) + TAG_WIDTH] = 1;\n")
-        self.vf.write("              // Perform the write request\n")
-        self.vf.write("              if (!web_reg) begin\n")
-        self.vf.write("                // Write the word over the write mask\n")
-        self.vf.write("                for (var_7 = 0; var_7 < BYTE_COUNT; var_7 = var_7 + 1) begin\n")
-        self.vf.write("                  for (var_8 = 0; var_8 < 8; var_8 = var_8 + 1) begin\n")
-        self.vf.write("                    if (wmask_reg[var_7])\n")
-        self.vf.write("                      new_data_next[var_6 * LINE_WIDTH + offset * WORD_WIDTH + var_7 * 8 + var_8] = din_reg[var_7 * 8 + var_8];\n")
-        self.vf.write("                  end\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n")
-        self.vf.write("      end\n\n")
-
-        # WAIT_READ state
-        self.vf.write("      // In the WAIT_READ state, bypass registers will be used in the next\n")
-        self.vf.write("      // cycle if the next request is in the same set.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Otherwise, bypass registers won't probably be used; therefore,\n")
-        self.vf.write("      // will be reset.\n")
-        self.vf.write("      //\n")
-        self.vf.write("      // Note:\n")
-        self.vf.write("      // No need to use bypass registers here since data hazard is not\n")
-        self.vf.write("      // possible.\n")
-        self.vf.write("      WAIT_READ: begin\n")
-        self.vf.write("        // Main memory is answering to the read request\n")
-        self.vf.write("        if (!main_stall) begin\n")
-        self.vf.write("          new_lru_next  = 0;\n")
-        self.vf.write("          new_tag_next  = 0;\n")
-        self.vf.write("          new_data_next = 0;\n")
-        self.vf.write("          // Check if:\n")
-        self.vf.write("          //   CPU is sending a new request\n")
-        self.vf.write("          //   Next address is in the same set\n")
-        self.vf.write("          if (!csb && addr[OFFSET_WIDTH +: SET_WIDTH] == set) begin\n")
-        self.vf.write("            bypass_next = 1;\n")
-        self.write_lru_update(6, False, True, for_var="var_6")
-        self.vf.write("            new_tag_next     = tag_read_dout;\n")
-        self.vf.write("            new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH + 1] = 1;\n")
-        self.vf.write("            new_tag_next[way * (2 + TAG_WIDTH) + TAG_WIDTH]     = ~web_reg;\n")
-        self.vf.write("            for (var_6 = 0; var_6 < TAG_WIDTH; var_6 = var_6 + 1)\n")
-        self.vf.write("              new_tag_next[way * (2 + TAG_WIDTH) + var_6] = tag[var_6];\n")
-        self.vf.write("            new_data_next = data_read_dout;\n")
-        self.vf.write("            for (var_6 = 0; var_6 < LINE_WIDTH; var_6 = var_6 + 1)\n")
-        self.vf.write("              new_data_next[way * LINE_WIDTH + var_6] = main_dout[var_6];\n")
-        self.vf.write("            // Perform the write request\n")
-        self.vf.write("            if (!web_reg) begin\n")
-        self.vf.write("              // Write the word over the write mask\n")
-        self.vf.write("              for (var_6 = 0; var_6 < BYTE_COUNT; var_6 = var_6 + 1) begin\n")
-        self.vf.write("                for (var_7 = 0; var_7 < 8; var_7 = var_7 + 1) begin\n")
-        self.vf.write("                  if (wmask_reg[var_6])\n")
-        self.vf.write("                    new_data_next[way * LINE_WIDTH + offset * WORD_WIDTH + var_6 * 8 + var_7] = din_reg[var_6 * 8 + var_7];\n")
-        self.vf.write("                end\n")
-        self.vf.write("              end\n")
-        self.vf.write("            end\n")
-        self.vf.write("          end\n")
-        self.vf.write("        end\n")
-        self.vf.write("      end\n\n")
-
-        self.vf.write("      default: begin\n")
-        self.vf.write("        bypass_next   = 0;\n")
-        self.vf.write("        new_lru_next  = 0;\n")
-        self.vf.write("        new_tag_next  = 0;\n")
-        self.vf.write("        new_data_next = 0;\n")
-        self.vf.write("      end\n\n")
-
-        self.vf.write("    endcase\n\n")
-        self.vf.write("  end\n\n\n")
-
-
-    def write_lru_update(self, base_indent, data_hazard, update_bypass_regs, way_var="way", for_var="?"):
-        """ Write a multiplexer to update LRU bits of the cache. """
-
-        if type(base_indent) == int:
-            base_indent *= "  "
-
-        if data_hazard:
-            rhs = "new_lru"
-        else:
-            rhs = "lru_read_dout"
-
-        if update_bypass_regs:
-            lhs = "new_lru_next"
-        else:
-            lhs = "lru_write_din"
-
-        for i in range(self.num_ways):
-            lsb = i * self.way_size
-            self.vf.write(base_indent + "{0}[{1}:{2}] = {3}[{1}:{2}] - ({3}[{1}:{2}] > {3}[{4} * WAY_WIDTH +: WAY_WIDTH]);\n".format(lhs,
-                                                                                                                                     lsb + self.way_size - 1,
-                                                                                                                                     lsb,
-                                                                                                                                     rhs,
-                                                                                                                                     way_var))
-
-        self.vf.write(base_indent + "for ({0} = 0; {0} < WAY_WIDTH; {0} = {0} + 1)\n".format(for_var))
-        self.vf.write(base_indent + "  {0}[{1} * WAY_WIDTH + {2}] = WAY_LIMIT[{2}];\n".format(lhs, way_var, for_var))
+            self.new_use, self.new_use_next = get_ff_signals("new_use", self.way_size * self.num_ways)
+
+
+    def add_srams(self, m):
+        """ Add internal SRAM array instances to cache design. """
+
+        super().add_srams(m)
+
+        # Use array
+        word_size = self.way_size * self.num_ways
+        self.use_write_csb  = Signal(reset_less=True, reset=1)
+        self.use_write_addr = Signal(self.set_size, reset_less=True)
+        self.use_write_din  = Signal(word_size, reset_less=True)
+        self.use_read_csb   = Signal(reset_less=True)
+        self.use_read_addr  = Signal(self.set_size, reset_less=True)
+        self.use_read_dout  = Signal(word_size)
+        m.submodules += Instance(OPTS.use_array_name,
+            ("i", "clk0",  self.clk),
+            ("i", "csb0",  self.use_write_csb),
+            ("i", "addr0", self.use_write_addr),
+            ("i", "din0",  self.use_write_din),
+            ("i", "clk1",  self.clk),
+            ("i", "csb1",  self.use_read_csb),
+            ("i", "addr1", self.use_read_addr),
+            ("o", "dout1", self.use_read_dout),
+        )
+
+
+    def add_memory_controller_block(self, m):
+        """ Add memory controller always block to cache design. """
+
+        # In this block, cache communicates with memory components which
+        # are tag array, data array, use array, and main memory.
+
+        # If rst is high, state switches to RESET.
+        # Registers, which are reset only once, are reset here.
+        # In the RESET state, cache will set all tag and use array lines
+        # to 0.
+        with m.If(self.rst):
+            m.d.comb += self.tag_write_csb.eq(0)
+            m.d.comb += self.tag_write_addr.eq(0)
+            m.d.comb += self.tag_write_din.eq(0)
+
+        # If flush is high, state switches to FLUSH.
+        # In the FLUSH state, cache will write all data lines back to
+        # main memory.
+        # TODO: Cache should write only dirty lines back.
+        with m.Elif(self.flush):
+            m.d.comb += self.tag_read_csb.eq(0)
+            m.d.comb += self.tag_read_addr.eq(0)
+            m.d.comb += self.data_read_csb.eq(0)
+            m.d.comb += self.data_read_addr.eq(0)
+
+        with m.Else():
+            with m.Switch(self.state):
+
+                # In the RESET state, cache sends write request to tag and use
+                # arrays to reset the current set.
+                # set register is incremented by the Request Decode Block.
+                # When set register reaches the end, state switches to IDLE.
+                with m.Case(State.RESET):
+                    m.d.comb += self.tag_write_csb.eq(0)
+                    m.d.comb += self.tag_write_addr.eq(self.set)
+                    m.d.comb += self.tag_write_din.eq(0)
+
+                # In the FLUSH state, cache sends write request to main memory.
+                # set register is incremented by the Request Decode Block.
+                # way register is incremented by the Replacement Block.
+                # When set and way registers reach the end, state switches
+                # to IDLE.
+                # TODO: Cache should write only dirty lines back.
+                with m.Case(State.FLUSH):
+                    m.d.comb += self.tag_read_csb.eq(0)
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_csb.eq(0)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+                    m.d.comb += self.main_csb.eq(0)
+                    m.d.comb += self.main_web.eq(0)
+                    m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(self.way * (self.tag_size + 2), self.tag_size)))
+                    m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.way, self.line_size))
+                    with m.If(~self.main_stall & (self.way == self.num_ways - 1)):
+                        m.d.comb += self.tag_read_addr.eq(self.set + 1)
+                        m.d.comb += self.data_read_addr.eq(self.set + 1)
+
+                # In the IDLE state, cache waits for CPU to send a new request.
+                # Until there is a new request from the cache, stall is low.
+                # When there is a new request from the cache stall is asserted,
+                # request is decoded and corresponding tag, data, and use lines
+                # are read from internal SRAM arrays.
+                with m.Case(State.IDLE):
+                    with m.If(~self.csb):
+                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # FIXME: Don't write 0 in testbench (might result in missed errors).
+                        m.d.comb += self.data_write_din.eq(0)
+
+                # In the COMPARE state, cache compares tags.
+                # Stall and dout are driven by the Output Block.
+                with m.Case(State.COMPARE):
+                    for i in range(self.num_ways):
+                        # Find the least recently used way (the way having 0 use number)
+                        with m.If(
+                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
+                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
+                        ):
+                            # Assuming that current request is miss, check if it is a dirty miss
+                            with m.If(
+                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
+                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
+                            ):
+                                # If main memory is busy, switch to WRITE and wait for
+                                # main memory to be available.
+                                with m.If(self.main_stall):
+                                    m.d.comb += self.tag_read_addr.eq(self.set)
+                                    m.d.comb += self.data_read_addr.eq(self.set)
+                                # If main memory is available, switch to WAIT_WRITE and
+                                # wait for main memory to complete writing.
+                                with m.Else():
+                                    m.d.comb += self.main_csb.eq(0)
+                                    m.d.comb += self.main_web.eq(0)
+                                    with m.If(self.bypass):
+                                        m.d.comb += self.main_addr.eq(Cat(self.set, self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size)))
+                                        m.d.comb += self.main_din.eq(self.new_data.word_select(i, self.line_size))
+                                    with m.Else():
+                                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size)))
+                                        m.d.comb += self.main_din.eq(self.data_read_dout.word_select(i, self.line_size))
+                            # Else, assume that current request is a clean miss
+                            with m.Else():
+                                with m.If(~self.main_stall):
+                                    m.d.comb += self.tag_read_addr.eq(self.set)
+                                    m.d.comb += self.data_read_addr.eq(self.set)
+                                    m.d.comb += self.main_csb.eq(0)
+                                    m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
+                    # Check if current request is hit
+                    # Compare all ways' tags to find a hit. Since each way has a different
+                    # tag, only one of them can match at most.
+                    # NOTE: This for loop should not be merged with the one above since hit
+                    # should be checked after all miss assumptions are done.
+                    for i in range(self.num_ways):
+                        with m.If(
+                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                        ):
+                            # Set main memory's csb to 1 again since it could be set 0 above
+                            m.d.comb += self.main_csb.eq(1)
+                            # Perform the write request
+                            with m.If(~self.web_reg):
+                                m.d.comb += self.tag_write_csb.eq(0)
+                                m.d.comb += self.tag_write_addr.eq(self.set)
+                                m.d.comb += self.data_write_csb.eq(0)
+                                m.d.comb += self.data_write_addr.eq(self.set)
+                                with m.If(self.bypass):
+                                    m.d.comb += self.tag_write_din.eq(self.new_tag)
+                                    m.d.comb += self.data_write_din.eq(self.new_data)
+                                with m.Else():
+                                    m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
+                                    m.d.comb += self.data_write_din.eq(self.data_read_dout)
+                                # Update dirty bit in the tag line
+                                m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
+                                # Write the word over the write mask
+                                num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
+                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
+                                for j in range(self.num_bytes):
+                                    with m.If(self.wmask_reg[j]):
+                                        m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+                            # If CPU is sending a new request, read next lines from SRAMs.
+                            # Even if bypass registers are going to be used, read requests
+                            # are sent to SRAMs since read is non-destructive (hopefully?).
+                            with m.If(~self.csb):
+                                m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                                m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+
+                # In the WRITE state, cache waits for main memory to be
+                # available.
+                # When main memory is available, write request is sent.
+                with m.Case(State.WRITE):
+                    # If main memory is busy, wait in this state.
+                    # If main memory is available, switch to WAIT_WRITE and
+                    # wait for main memory to complete writing.
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.main_csb.eq(0)
+                        m.d.comb += self.main_web.eq(0)
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(self.way * (self.tag_size + 2), self.tag_size)))
+                        m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.way, self.line_size))
+
+                # In the WAIT_WRITE state, cache waits for main memory to
+                # complete writing.
+                # When main memory completes writing, read request is sent.
+                with m.Case(State.WAIT_WRITE):
+                    # If main memory is busy, wait in this state.
+                    # If main memory completes writing, switch to WAIT_READ
+                    # and wait for main memory to complete reading.
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.main_csb.eq(0)
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
+
+                # In the READ state, cache waits for main memory to be
+                # available.
+                # When main memory is available, read request is sent.
+                # TODO: Is this state really necessary? WAIT_WRITE state may be used instead.
+                with m.Case(State.READ):
+                    # If main memory is busy, wait in this state.
+                    # If main memory completes writing, switch to WAIT_READ
+                    # and wait for main memory to complete reading.
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.main_csb.eq(0)
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
+
+                # In the WAIT_READ state, cache waits for main memory to
+                # complete reading.
+                # When main memory completes reading, request is completed.
+                with m.Case(State.WAIT_READ):
+                    m.d.comb += self.tag_read_addr.eq(self.set)
+                    m.d.comb += self.data_read_addr.eq(self.set)
+                    # If main memory is busy, wait in this state.
+                    # If main memory completes reading, cache switches to:
+                    #   IDLE    if CPU isn't sending a new request
+                    #   COMPARE if CPU is sending a new request
+                    with m.If(~self.main_stall):
+                        # TODO: Use wmask feature of OpenRAM.
+                        m.d.comb += self.tag_write_csb.eq(0)
+                        m.d.comb += self.tag_write_addr.eq(self.set)
+                        m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
+                        # TODO: Optimize the below case statement.
+                        with m.Switch(self.way):
+                            for i in range(self.num_ways):
+                                with m.Case(i):
+                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, Const(1, 1)))
+                        m.d.comb += self.data_write_csb.eq(0)
+                        m.d.comb += self.data_write_addr.eq(self.set)
+                        m.d.comb += self.data_write_din.eq(self.data_read_dout)
+                        # TODO: Optimize the below case statement.
+                        with m.Switch(self.way):
+                            for i in range(self.num_ways):
+                                with m.Case(i):
+                                    m.d.comb += self.data_write_din.word_select(i, self.line_size).eq(self.main_dout)
+                        # Perform the write request
+                        with m.If(~self.web_reg):
+                            # Write the word over the write mask
+                            num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
+                            num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
+                            for j in range(self.num_bytes):
+                                with m.If(self.wmask_reg[j]):
+                                    m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+                        # If CPU is sending a new request, read next lines from SRAMs
+                        # Even if bypass registers are going to be used, read requests
+                        # are sent to SRAMs since read is non-destructive (hopefully?).
+                        with m.If(~self.csb):
+                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+
+
+    def add_state_block(self, m):
+        """ Add state controller always block to cache design. """
+
+        # In this block, cache's state is controlled. state flip-flop
+        # register is changed in order to switch between states.
+
+        m.d.comb += self.state_next.eq(self.state)
+
+        # If rst is high, state switches to RESET.
+        with m.If(self.rst):
+            m.d.comb += self.state_next.eq(State.RESET)
+
+        # If flush is high, state switches to FLUSH.
+        with m.Elif(self.flush):
+            m.d.comb += self.state_next.eq(State.FLUSH)
+
+        with m.Else():
+            with m.Switch(self.state):
+
+                # In the RESET state, state switches to IDLE if reset is completed.
+                with m.Case(State.RESET):
+                    # When set reaches the limit, the last write request to the
+                    # tag array is sent.
+                    with m.If(self.set == self.num_rows - 1):
+                        m.d.comb += self.state_next.eq(State.IDLE)
+
+                # In the FLUSH state, state switches to IDLE if flush is completed.
+                with m.Case(State.FLUSH):
+                    # If main memory completes the last write request, flush is
+                    # completed.
+                    with m.If(~self.main_stall & (self.way == self.num_ways - 1) & (self.set == self.num_rows - 1)):
+                        m.d.comb += self.state_next.eq(State.IDLE)
+
+                # In the IDLE state, state switches to COMPARE if CPU is sending
+                # a new request.
+                with m.Case(State.IDLE):
+                    with m.If(~self.csb):
+                        m.d.comb += self.state_next.eq(State.COMPARE)
+
+                # In the COMPARE state, state switches to:
+                #   IDLE       if current request is hit and CPU isn't sending a new request
+                #   COMPARE    if current request is hit and CPU is sending a new request
+                #   WRITE      if current request is dirty miss and main memory is busy
+                #   WAIT_WRITE if current request is dirty miss and main memory is available
+                #   READ       if current request is clean miss and main memory is busy
+                #   WAIT_READ  if current request is clean miss and main memory is available
+                with m.Case(State.COMPARE):
+                    for i in range(self.num_ways):
+                        # Find the least recently used way (the way having 0 use number)
+                        with m.If(
+                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
+                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
+                        ):
+                            # Assuming that current request is miss, check if it is a dirty miss
+                            with m.If(
+                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
+                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
+                            ):
+                                with m.If(self.main_stall):
+                                    m.d.comb += self.state_next.eq(State.WRITE)
+                                with m.Else():
+                                    m.d.comb += self.state_next.eq(State.WAIT_WRITE)
+                            # Else, current request is a clean miss
+                            with m.Else():
+                                with m.If(self.main_stall):
+                                    m.d.comb += self.state_next.eq(State.READ)
+                                with m.Else():
+                                    m.d.comb += self.state_next.eq(State.WAIT_READ)
+                    # Find the least recently used way (the way having 0 use number)
+                    # Compare all ways' tags to find a hit. Since each way has a different
+                    # tag, only one of them can match at most.
+                    # NOTE: This for loop should not be merged with the one above since hit
+                    # should be checked after all miss assumptions are done.
+                    # TODO: This should be optimized.
+                    for i in range(self.num_ways):
+                        with m.If(
+                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                        ):
+                            with m.If(self.csb):
+                                m.d.comb += self.state_next.eq(State.IDLE)
+                            with m.Else():
+                                m.d.comb += self.state_next.eq(State.COMPARE)
+
+                # In the WRITE state, state switches to:
+                #   WRITE      if main memory didn't respond yet
+                #   WAIT_WRITE if main memory responded
+                with m.Case(State.WRITE):
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.state_next.eq(State.WAIT_WRITE)
+
+                # In the WAIT_WRITE state, state switches to:
+                #   WAIT_WRITE if main memory didn't respond yet
+                #   WAIT_READ  if main memory responded
+                with m.Case(State.WAIT_WRITE):
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.state_next.eq(State.WAIT_READ)
+
+                # In the READ state, state switches to:
+                #   READ      if main memory didn't respond yet
+                #   WAIT_READ if main memory responded
+                with m.Case(State.READ):
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.state_next.eq(State.WAIT_READ)
+
+                # In the WAIT_READ state, state switches to:
+                #   IDLE    if CPU isn't sending a request
+                #   COMPARE if CPU is sending a request
+                with m.Case(State.WAIT_READ):
+                    with m.If(~self.main_stall):
+                        with m.If(self.csb):
+                            m.d.comb += self.state_next.eq(State.IDLE)
+                        with m.Else():
+                            m.d.comb += self.state_next.eq(State.COMPARE)
+
+
+    def add_request_block(self, m):
+        """ Add request decode always block to cache design. """
+
+        # In this block, CPU's request is decoded. Address is parsed
+        # into tag, set and offset values, and write enable and data
+        # input are saved in registers.
+
+        m.d.comb += self.tag_next.eq(self.tag)
+        m.d.comb += self.set_next.eq(self.set)
+        m.d.comb += self.offset_next.eq(self.offset)
+        m.d.comb += self.web_reg_next.eq(self.web_reg)
+        m.d.comb += self.wmask_reg_next.eq(self.wmask_reg)
+        m.d.comb += self.din_reg_next.eq(self.din_reg)
+
+        # If rst is high, input registers are reset.
+        # set register becomes 1 since it is going to be used to reset all
+        # lines in the tag and use arrays.
+        # way register becomes 0 since it is going to be used to reset all
+        # ways in a tag line.
+        with m.If(self.rst):
+            m.d.comb += self.tag_next.eq(0)
+            m.d.comb += self.set_next.eq(1)
+            m.d.comb += self.offset_next.eq(0)
+            m.d.comb += self.web_reg_next.eq(1)
+            m.d.comb += self.wmask_reg_next.eq(0)
+            m.d.comb += self.din_reg_next.eq(0)
+
+        # If flush is high, input registers are not reset.
+        # However, way and set registers becomes 0 since it is going
+        # to be used to write dirty lines back to main memory.
+        with m.Elif(self.flush):
+            m.d.comb += self.set_next.eq(0)
+
+        with m.Else():
+            with m.Switch(self.state):
+
+                # In the RESET state, set register is used to reset all lines in
+                # the tag and use arrays.
+                with m.Case(State.RESET):
+                    m.d.comb += self.set_next.eq(self.set + 1)
+
+                # In the FLUSH state, set register is used to write all dirty lines
+                # back to main memory.
+                with m.Case(State.FLUSH):
+                    with m.If(~self.main_stall & (self.way == self.num_ways - 1)):
+                        m.d.comb += self.set_next.eq(self.set + 1)
+
+                # In the IDLE state, the request is decoded.
+                with m.Case(State.IDLE):
+                    m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
+                    m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
+                    m.d.comb += self.web_reg_next.eq(self.web)
+                    m.d.comb += self.wmask_reg_next.eq(self.wmask)
+                    m.d.comb += self.din_reg_next.eq(self.din)
+
+                # In the COMPARE state, the request is decoded if current request
+                # is hit.
+                with m.Case(State.COMPARE):
+                    for i in range(self.num_ways):
+                        with m.If(
+                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                        ):
+                            m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
+                            m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
+                            m.d.comb += self.web_reg_next.eq(self.web)
+                            m.d.comb += self.wmask_reg_next.eq(self.wmask)
+                            m.d.comb += self.din_reg_next.eq(self.din)
+
+                # In the COMPARE state, the request is decoded if main memory
+                # completed read request.
+                with m.Case(State.WAIT_READ):
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
+                        m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
+                        m.d.comb += self.web_reg_next.eq(self.web)
+                        m.d.comb += self.wmask_reg_next.eq(self.wmask)
+                        m.d.comb += self.din_reg_next.eq(self.din)
+
+
+    def add_output_block(self, m):
+        """ Add output always block to cache design. """
+
+        # In this block, cache's output signals, which are
+        # stall and dout, are controlled.
+
+        m.d.comb += self.stall.eq(1)
+        # FIXME: Don't write 0 in testbench (might result in missed errors).
+        m.d.comb += self.dout.eq(0)
+
+        with m.Switch(self.state):
+
+            # In the IDLE state, stall is low while there is no request from
+            # the CPU.
+            with m.Case(State.IDLE):
+                m.d.comb += self.stall.eq(0)
+
+            # In the COMPARE state, stall is low if the current request is hit.
+            # Data output is valid if the request is hit and even if the current
+            # request is write since read is non-destructive.
+            with m.Case(State.COMPARE):
+                # Check if current request is hit
+                for i in range(self.num_ways):
+                    with m.If(
+                        (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                        (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                    ):
+                        m.d.comb += self.stall.eq(0)
+                        words_per_line = Const(self.words_per_line)
+                        with m.If(self.bypass):
+                            m.d.comb += self.dout.eq(self.new_data.word_select(i * words_per_line + self.offset, self.word_size))
+                        with m.Else():
+                            m.d.comb += self.dout.eq(self.data_read_dout.word_select(i * words_per_line + self.offset, self.word_size))
+
+            # In the WAIT_READ state, stall is low and data output is valid main
+            # memory answers the read request.
+            # Data output is valid even if the current request is write since read
+            # is non-destructive.
+            # NOTE: No need to use bypass registers here since data hazard is not
+            # possible.
+            with m.Case(State.WAIT_READ):
+                # Check if main memory answers to the read request
+                with m.If(~self.main_stall):
+                    m.d.comb += self.stall.eq(0)
+                    m.d.comb += self.dout.eq(self.main_dout.word_select(self.offset, self.word_size))
+
+
+    def add_replacement_block(self, m):
+        """ Add replacement always block to cache design. """
+
+        # In this block, use numbers are updated and evicted way
+        # is selected according to LRU replacement policy.
+
+        m.d.comb += self.way_next.eq(self.way)
+
+        # If rst is high, way is reset and use numbers are reset.
+        # way register becomes 0 since it is going to be used to reset all
+        # ways in tag and use lines.
+        with m.If(self.rst):
+            m.d.comb += self.way_next.eq(0)
+            m.d.comb += self.use_write_csb.eq(0)
+            m.d.comb += self.use_write_addr.eq(0)
+            m.d.comb += self.use_write_din.eq(0)
+
+        # If flush is high, way is reset.
+        # way register becomes 0 since it is going to be used to write all
+        # data lines back to main memory.
+        with m.Elif(self.flush):
+            m.d.comb += self.way_next.eq(0)
+
+        with m.Else():
+            with m.Switch(self.state):
+
+                # In the RESET state, way register is used to reset all ways in tag
+                # and use lines.
+                with m.Case(State.RESET):
+                    m.d.comb += self.use_write_csb.eq(0)
+                    m.d.comb += self.use_write_addr.eq(self.set)
+                    m.d.comb += self.use_write_din.eq(0)
+
+                # In the FLUSH state, way register is used to write all data lines
+                # back to main memory.
+                # TODO: Flush should only write dirty lines back.
+                with m.Case(State.FLUSH):
+                    with m.If(~self.main_stall):
+                        m.d.comb += self.way_next.eq(self.way + 1)
+
+                # In the IDLE state, way is reset and the corresponding line from the
+                # use array is requested.
+                with m.Case(State.IDLE):
+                    with m.If(~self.csb):
+                        m.d.comb += self.way_next.eq(0)
+                        m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+
+                # In the COMPARE state, way is selected according to the replacement
+                # policy of the cache.
+                # Also use numbers are updated if current request is hit.
+                with m.Case(State.COMPARE):
+                    for i in range(self.num_ways):
+                        # Find the least recently used way (the way having 0 use number)
+                        with m.If(
+                            (self.bypass & (self.new_use.word_select(i, self.way_size) == 0)) |
+                            (~self.bypass & (self.use_read_dout.word_select(i, self.way_size) == 0))
+                        ):
+                            # Check if current request is a clean miss
+                            m.d.comb += self.way_next.eq(i)
+                            with m.If(
+                                (self.bypass & (self.new_tag.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2))) |
+                                (~self.bypass & (self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)))
+                            ):
+                                m.d.comb += self.use_read_addr.eq(self.set)
+                    # Check if current request is a hit
+                    for i in range(self.num_ways):
+                        with m.If(
+                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                        ):
+                            m.d.comb += self.use_write_csb.eq(0)
+                            m.d.comb += self.use_write_addr.eq(self.set)
+                            # Each way in a set has its own use numbers. These numbers
+                            # start from 0. Every time a way is needed to be evicted,
+                            # the way having 0 use number is chosen.
+                            # Every time a way is accessed (read or write), its corresponding
+                            # use number is increased to the maximum value and other ways which
+                            # have use numbers more than accessed way's use number are decremented
+                            # by 1.
+                            with m.If(self.bypass):
+                                for j in range(self.num_ways):
+                                    m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
+                                        self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
+                                    )
+                                m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
+                            with m.Else():
+                                for j in range(self.num_ways):
+                                    m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
+                                        self.new_use.word_select(j, self.way_size) - (self.new_use.word_select(j, self.way_size) > self.new_use.word_select(i, self.way_size))
+                                    )
+                                m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
+                            with m.If(~self.csb):
+                                m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+
+                # In the WAIT_WRITE and READ states, use line is read to update it
+                # in the WAIT_READ state.
+                with m.Case(State.WAIT_WRITE, State.READ):
+                    m.d.comb += self.use_read_addr.eq(self.set)
+
+                # In the WAIT_READ state, use numbers are updated.
+                with m.Case(State.WAIT_READ):
+                    m.d.comb += self.use_read_addr.eq(self.set)
+                    with m.If(~self.main_stall):
+                        # Each way in a set has its own use numbers. These numbers
+                        # start from 0. Every time a way is needed to be evicted,
+                        # the way having 0 use number is chosen.
+                        # Every time a way is accessed (read or write), its corresponding
+                        # use number is increased to the maximum value and other ways which
+                        # have use numbers more than accessed way's use number are decremented
+                        # by 1.
+                        m.d.comb += self.use_write_csb.eq(0)
+                        m.d.comb += self.use_write_addr.eq(self.set)
+                        for i in range(self.num_ways):
+                            m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(
+                                self.new_use.word_select(i, self.way_size) - (self.new_use.word_select(i, self.way_size) > self.new_use.word_select(self.way, self.way_size))
+                            )
+                        m.d.comb += self.use_write_din.word_select(self.way, self.way_size).eq(self.num_ways - 1)
+                        with m.If(~self.csb):
+                            m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+
+
+    def add_bypass_block(self, m):
+        """ Add bypass register always block to cache design. """
+
+        # In this block, bypass registers are controlled. Bypass
+        # registers are used to prevent data hazard from SRAMs.
+        # Data hazard can occur when there are read and write
+        # requests to the same row at the same cycle.
+
+        m.d.comb += self.bypass_next.eq(0)
+        m.d.comb += self.new_tag_next.eq(0)
+        m.d.comb += self.new_data_next.eq(0)
+        m.d.comb += self.new_use_next.eq(0)
+
+        with m.Switch(self.state):
+
+            # In the COMPARE state, bypass registers can be used in the next
+            # cycle if the current request is hit.
+            # Otherwise, bypass registers won't probably be used; therefore,
+            # will be reset.
+            with m.Case(State.COMPARE):
+                # Check if:
+                #   CPU is sending a new request
+                #   Current request is hit
+                #   Next address is in the same set
+                with m.If(~self.csb & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
+                    for i in range(self.num_ways):
+                        with m.If(
+                            (self.bypass & self.new_tag[i * (self.tag_size + 2) + self.tag_size + 1] & (self.new_tag.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)) |
+                            (~self.bypass & self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag))
+                        ):
+                            m.d.comb += self.bypass_next.eq(1)
+                            with m.If(self.bypass):
+                                m.d.comb += self.new_tag_next.eq(self.new_tag)
+                                m.d.comb += self.new_data_next.eq(self.new_data)
+                                for j in range(self.num_ways):
+                                    m.d.comb += self.new_use_next.word_select(j, self.way_size).eq(
+                                        self.new_use.word_select(j, self.way_size) - (self.new_use.word_select(j, self.way_size) > self.new_use.word_select(i, self.way_size))
+                                    )
+                                m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(self.num_ways - 1)
+                            with m.Else():
+                                m.d.comb += self.new_tag_next.eq(self.tag_read_dout)
+                                m.d.comb += self.new_data_next.eq(self.data_read_dout)
+                                for j in range(self.num_ways):
+                                    m.d.comb += self.new_use_next.word_select(j, self.way_size).eq(
+                                        self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
+                                    )
+                                m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(self.num_ways - 1)
+                            # Update dirty bit in the tag line
+                            m.d.comb += self.new_tag_next.word_select(i, self.tag_size + 2).eq(Cat(self.tag, Const(3, 2)))
+                            # Perform the write request
+                            with m.If(~self.web_reg):
+                                # Write the word over the write mask
+                                num_bytes_per_word = Const(self.num_bytes)
+                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
+                                for j in range(self.num_bytes):
+                                    with m.If(self.wmask_reg[j]):
+                                        m.d.comb += self.new_data_next.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+
+            # In the WAIT_READ state, bypass registers will be used in the next
+            # cycle if the next request is in the same set.
+            # Otherwise, bypass registers won't probably be used; therefore,
+            # will be reset.
+            # NOTE: No need to use bypass registers here since data hazard is not
+            # possible.
+            with m.Case(State.WAIT_READ):
+                # Main memory is answering to the read request
+                with m.If(~self.main_stall & ~self.csb & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
+                    m.d.comb += self.bypass_next.eq(1)
+                    m.d.comb += self.new_tag_next.eq(self.tag_read_dout)
+                    # Check if:
+                    #   CPU is sending a new request
+                    #   Next address is in the same set
+                    with m.Switch(self.way):
+                        for i in range(self.num_ways):
+                            with m.Case(i):
+                                m.d.comb += self.new_tag_next.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, Const(1, 1)))
+                    m.d.comb += self.new_data_next.eq(self.data_read_dout)
+                    with m.Switch(self.way):
+                        for i in range(self.num_ways):
+                            with m.Case(i):
+                                m.d.comb += self.new_data_next.word_select(i, self.line_size).eq(self.main_dout)
+                    for i in range(self.num_ways):
+                        m.d.comb += self.new_use_next.word_select(i, self.way_size).eq(
+                            self.use_read_dout.word_select(i, self.way_size) - (self.use_read_dout.word_select(i, self.way_size) > self.use_read_dout.word_select(self.way, self.way_size))
+                        )
+                    m.d.comb += self.new_use_next.word_select(self.way, self.way_size).eq(self.num_ways - 1)
+                    # Perform the write request
+                    with m.If(~self.web_reg):
+                        # Write the word over the write mask
+                        for i in range(self.num_bytes):
+                            with m.If(self.wmask_reg[i]):
+                                m.d.comb += self.new_data_next.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + i, 8).eq(self.din_reg.word_select(i, 8))
