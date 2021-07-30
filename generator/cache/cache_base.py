@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import OPTS
 from design import design
 from configuration import configuration
 

@@ -7,7 +7,6 @@
 #
 from random import randrange, choice
 from sim_cache import sim_cache
-from dram import DRAM_DELAY
 
 
 class test_data:

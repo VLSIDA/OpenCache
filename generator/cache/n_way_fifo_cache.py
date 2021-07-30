@@ -7,7 +7,6 @@
 #
 from cache_base import cache_base
 from nmigen import *
-from nmigen.utils import log2_int
 from rtl import get_ff_signals, State
 from globals import OPTS
 
