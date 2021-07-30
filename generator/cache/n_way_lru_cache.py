@@ -624,6 +624,9 @@ class n_way_lru_cache(cache_base):
                             m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(
                                 self.use_read_dout.word_select(i, self.way_size) - (self.use_read_dout.word_select(i, self.way_size) > self.use_read_dout.word_select(self.way, self.way_size))
                             )
-                        m.d.comb += self.use_write_din.word_select(self.way, self.way_size).eq(self.num_ways - 1)
+                        with m.Switch(self.way):
+                            for i in range(self.num_ways):
+                                with m.Case(i):
+                                    m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
                         with m.If(~self.csb):
                             m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
