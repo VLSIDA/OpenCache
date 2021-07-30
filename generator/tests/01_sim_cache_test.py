@@ -250,8 +250,8 @@ def check_random(sc):
     for i in range(5):
         sc.write(address[i], i + 1)
 
-    # address[1] must be evicted
-    if sc.find_way(address[1]) is not None:
+    # address[3] must be evicted
+    if sc.find_way(address[3]) is not None:
         return False
 
     # Read all addresses again
