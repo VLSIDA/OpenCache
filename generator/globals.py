@@ -333,6 +333,14 @@ def report_status():
     if OPTS.total_size % OPTS.word_size:
         debug.error("Total size is not divisible by word size.", -1)
 
+    from policy import ReplacementPolicy as RP
+    # Direct-mapped cache doesn't have a replacement policy
+    if OPTS.num_ways == 1 and OPTS.replacement_policy != RP.NONE:
+        debug.error("Direct-mapped cache cannot have a replacement policy.", -1)
+    # N-way or Fully Associative caches should have a replacement policy
+    if OPTS.num_ways > 1 and OPTS.replacement_policy == RP.NONE:
+        debug.error("N-way Set Associative and Fully Associative caches need replacement policy.", -1)
+
     # Options below are not implemented yet
     if not OPTS.is_data_cache:
         debug.error("Instruction cache is not yet supported.", -1)

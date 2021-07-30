@@ -7,7 +7,7 @@
 #
 import debug
 from math import log2, ceil
-from policy import Associativity as AS, ReplacementPolicy as RP
+from policy import Associativity as AS
 
 
 class cache_config:
@@ -74,7 +74,3 @@ class cache_config:
             self.associativity = AS.N_WAY
         else:
             self.associativity = AS.FULLY
-
-        # Direct-mapped cache doesn't have a replacement policy
-        if self.associativity == AS.DIRECT:
-            self.replacement_policy = RP.NONE
