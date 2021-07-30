@@ -7,7 +7,7 @@
 #
 from cache_base import cache_base
 from nmigen import *
-from rtl import get_ff_signals, State
+from rtl import get_flop_signals, State
 
 
 class n_way_random_cache(cache_base):
@@ -26,11 +26,11 @@ class n_way_random_cache(cache_base):
 
         super().add_internal_signals()
 
-        # Keep way chosen to be evicted in an FF
-        self.way, self.way_next = get_ff_signals("way", self.way_size)
+        # Keep way chosen to be evicted in a flop
+        self.way, self.way_next = get_flop_signals("way", self.way_size)
 
-        # Random counter FF for replacement
-        self.random, self.random_next = get_ff_signals("random", self.way_size)
+        # Random counter flop for replacement
+        self.random, self.random_next = get_flop_signals("random", self.way_size)
 
 
     def add_memory_controller_block(self, m):

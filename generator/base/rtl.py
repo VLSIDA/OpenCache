@@ -25,8 +25,8 @@ class State(IntEnum):
     WAIT_READ   = 8
 
 
-def get_ff_signals(name, shape=None, reset=0, reset_less=True):
-    """ Return two signals for an FF. """
+def get_flop_signals(name, shape=None, reset=0, reset_less=True):
+    """ Return two signals for a flip-flop. """
 
     sigs = [Signal(shape=shape, reset=reset, reset_less=reset_less) for _ in range(2)]
     sigs[0].name = name

@@ -53,7 +53,7 @@ class design(Elaboratable):
 
         self.add_internal_signals()
         self.add_srams(m)
-        self.add_ff_block(m)
+        self.add_flop_block(m)
         self.add_memory_controller_block(m)
         self.add_state_block(m)
         self.add_request_block(m)
@@ -91,16 +91,16 @@ class design(Elaboratable):
     def add_internal_signals(self):
         """ Add internal registers and wires to cache design. """
 
-        # Keep inputs in FFs
-        self.tag, self.tag_next             = get_ff_signals("tag", self.tag_size)
-        self.set, self.set_next             = get_ff_signals("set", self.set_size)
-        self.offset, self.offset_next       = get_ff_signals("offset", self.offset_size)
-        self.web_reg, self.web_reg_next     = get_ff_signals("web_reg")
-        self.wmask_reg, self.wmask_reg_next = get_ff_signals("wmask_reg", self.num_bytes)
-        self.din_reg, self.din_reg_next     = get_ff_signals("din_reg", self.word_size)
+        # Keep inputs in flops
+        self.tag, self.tag_next             = get_flop_signals("tag", self.tag_size)
+        self.set, self.set_next             = get_flop_signals("set", self.set_size)
+        self.offset, self.offset_next       = get_flop_signals("offset", self.offset_size)
+        self.web_reg, self.web_reg_next     = get_flop_signals("web_reg")
+        self.wmask_reg, self.wmask_reg_next = get_flop_signals("wmask_reg", self.num_bytes)
+        self.din_reg, self.din_reg_next     = get_flop_signals("din_reg", self.word_size)
 
-        # State FF
-        self.state, self.state_next = get_ff_signals("state", State)
+        # State flop
+        self.state, self.state_next = get_flop_signals("state", State)
 
 
     def add_srams(self, m):
@@ -145,7 +145,7 @@ class design(Elaboratable):
         )
 
 
-    def add_ff_block(self, m):
+    def add_flop_block(self, m):
         """ Add flip-flop block to cache design. """
 
         # In this block, flip-flop registers are updated at
