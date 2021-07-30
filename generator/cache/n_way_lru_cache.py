@@ -136,7 +136,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
                             # Assuming that current request is miss, check if it is a dirty miss
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
                                 # If main memory is busy, switch to WRITE and wait for
@@ -178,8 +178,8 @@ class n_way_lru_cache(cache_base):
                                 # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
                                 # Write the word over the write mask
-                                num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
-                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
+                                num_bytes_per_word = Const(self.num_bytes)
+                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
                                 for j in range(self.num_bytes):
                                     with m.If(self.wmask_reg[j]):
                                         m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
@@ -263,8 +263,8 @@ class n_way_lru_cache(cache_base):
                         # Perform the write request
                         with m.If(~self.web_reg):
                             # Write the word over the write mask
-                            num_bytes_per_word = Const(self.num_bytes, log2_int(self.words_per_line))
-                            num_bytes_per_line = Const(self.num_bytes * self.words_per_line, log2_int(self.num_ways * self.words_per_line))
+                            num_bytes_per_word = Const(self.num_bytes)
+                            num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
                             for j in range(self.num_bytes):
                                 with m.If(self.wmask_reg[j]):
                                     m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
@@ -335,7 +335,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
                             # Assuming that current request is miss, check if it is a dirty miss
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
                                 with m.If(self.main_stall):
@@ -577,7 +577,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == 0):
+                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
                             # Check if current request is a clean miss
                             m.d.comb += self.way_next.eq(i)
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
