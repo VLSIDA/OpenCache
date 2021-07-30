@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from enum import IntEnum
-
 """
 Enum classes to represent cache policies
 are defined here.
 """
+from enum import IntEnum
+
 
 class Associativity(IntEnum):
     """ Enum class to represent associativity. """
