@@ -48,10 +48,11 @@ class sim_cache:
         if self.replacement_policy == RP.RANDOM:
             # Random register is reset when rst is high.
             # During the RESET state, it keeps getting incremented.
-            # Therefore, random is num_rows + 2 when the first
-            # request is in the COMPARE state.
+            # It starts with unknown. Cache sets it 0 first, then
+            # increments. Therefore, random is equal to num_rows
+            # when the first request is in the COMPARE state.
             self.random = 0
-            self.update_random(self.num_rows + 2)
+            self.update_random(self.num_rows)
 
 
     def reset_dram(self):
