@@ -21,7 +21,7 @@ class simulate_test(opencache_test):
         config_file = "tests/configs/config.py"
         globals.init_opencache(config_file)
 
-        OPTS.num_ways = 2
+        OPTS.num_ways = 4
         OPTS.replacement_policy = RP.LRU
         OPTS.simulate = True
 

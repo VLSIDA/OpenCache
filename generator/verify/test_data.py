@@ -22,10 +22,9 @@ class test_data:
         self.sc = sim_cache(cache_config)
 
 
-    def generate_data(self):
+    def generate_data(self, test_size=16):
         """  Generate random test data and expected outputs. """
 
-        test_size  = 8
         self.web   = [] # Write enable
         # TODO: Write test data for write mask
         self.wmask = [] # Write mask

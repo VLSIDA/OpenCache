@@ -26,18 +26,18 @@ class sim_cache_test(opencache_test):
         OPTS.replacement_policy = RP.NONE
         self.run_all_tests()
 
-        # Run tests for 2-way FIFO
-        OPTS.num_ways = 2
+        # Run tests for 4-way FIFO
+        OPTS.num_ways = 4
         OPTS.replacement_policy = RP.FIFO
         self.run_all_tests()
 
-        # Run tests for 2-way LRU
-        OPTS.num_ways = 2
+        # Run tests for 4-way LRU
+        OPTS.num_ways = 4
         OPTS.replacement_policy = RP.LRU
         self.run_all_tests()
 
-        # Run tests for 2-way random
-        OPTS.num_ways = 2
+        # Run tests for 4-way random
+        OPTS.num_ways = 4
         OPTS.replacement_policy = RP.RANDOM
         self.run_all_tests()
 
@@ -191,29 +191,21 @@ def check_fifo(sc):
 
     reset(sc)
 
-    # Write 1 to address_0
-    address_0 = sc.merge_address(0, 0, 0)
-    sc.write(address_0, 1)
+    # Setup 5 addresses with different tags
+    # but in the same set
+    address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
-    # Write 2 to address_1
-    address_1 = sc.merge_address(1, 0, 0)
-    sc.write(address_1, 2)
+    # Write different data to each address
+    for i in range(5):
+        sc.write(address[i], i + 1)
 
-    # Write 3 to address_2
-    address_2 = sc.merge_address(2, 0, 0)
-    sc.write(address_2, 3)
-
-    # address_0 must be replaced
-    if sc.find_way(address_0) is not None:
-        return False
-
-    # Read 1 from address_0
-    if sc.read(address_0) != 1:
-        return False
-
-    # address_1 must be replaced
-    if sc.find_way(address_1) is not None:
-        return False
+    # Read from each address and check for
+    # replacement
+    for i in range(5):
+        if sc.find_way(address[i]) is not None:
+            return False
+        if sc.read(address[i]) != i + 1:
+            return False
 
     return True
 
@@ -223,30 +215,23 @@ def check_lru(sc):
 
     reset(sc)
 
-    # Write 1 to address_0
-    address_0 = sc.merge_address(0, 0, 0)
-    sc.write(address_0, 1)
+    # Setup 5 addresses with different tags
+    # but in the same set
+    address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
-    # Write 2 to address_1
-    address_1 = sc.merge_address(1, 0, 0)
-    sc.write(address_1, 2)
+    # Write different data to each address
+    for i in range(5):
+        sc.write(address[i], i + 1)
 
-    sc.read(address_0)
-
-    # Write 3 to address_2
-    address_2 = sc.merge_address(2, 0, 0)
-    sc.write(address_2, 3)
-
-    # address_1 must be replaced
-    if sc.find_way(address_1) is not None:
+    # address[0] must be evicted
+    if sc.find_way(address[0]) is not None:
         return False
 
-    # Read 2 from address_1
-    if sc.read(address_1) != 2:
-        return False
+    sc.read(address[1])
+    sc.read(address[0])
 
-    # address_0 must be replaced
-    if sc.find_way(address_0) is not None:
+    # address[2] must be evicted
+    if sc.find_way(address[2]) is not None:
         return False
 
     return True
@@ -257,32 +242,24 @@ def check_random(sc):
 
     reset(sc)
 
-    # Write 1 to address_0
-    address_0 = sc.merge_address(0, 0, 0)
-    sc.write(address_0, 1)
+    # Setup 5 addresses with different tags
+    # but in the same set
+    address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
-    # Write 2 to address_1
-    address_1 = sc.merge_address(1, 0, 0)
-    sc.write(address_1, 2)
+    # Write different data to each address
+    for i in range(5):
+        sc.write(address[i], i + 1)
 
-    # Read hit couple of times
-    sc.read(address_1)
-    sc.read(address_1)
-
-    # Write 3 to address_2
-    address_2 = sc.merge_address(2, 0, 0)
-    sc.write(address_2, 3)
-
-    # address_1 must be replaced
-    if sc.find_way(address_1) is not None:
+    # address[1] must be evicted
+    if sc.find_way(address[1]) is not None:
         return False
 
-    # Read 2 from address_1
-    if sc.read(address_1) != 2:
-        return False
+    # Read all addresses again
+    for i in range(5):
+        sc.read(address[i])
 
-    # address_2 must be replaced
-    if sc.find_way(address_2) is not None:
+    # address[0] must be evicted
+    if sc.find_way(address[0]) is not None:
         return False
 
     return True
