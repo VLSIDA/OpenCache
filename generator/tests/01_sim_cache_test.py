@@ -97,7 +97,7 @@ def check_reset(sc):
     sc.reset()
 
     # Request to address 0 must be miss
-    if sc.find_way(0):
+    if sc.find_way(0) is not None:
         return False
 
     # Read unknown data from address 0
@@ -132,7 +132,7 @@ def check_hit(sc):
     reset(sc)
 
     # Address 0 is miss
-    if sc.find_way(0):
+    if sc.find_way(0) is not None:
         return False
 
     # Read from address 0
