@@ -281,8 +281,8 @@ def check_random(sc):
     if sc.read(address_1) != 2:
         return False
 
-    # address_0 must be replaced
-    if sc.find_way(address_0) is not None:
+    # address_2 must be replaced
+    if sc.find_way(address_2) is not None:
         return False
 
     return True
