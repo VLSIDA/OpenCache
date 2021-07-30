@@ -46,7 +46,9 @@ class test_data:
             self.web.append(0)
             self.wmask.append("1" * self.num_bytes)
             self.addr.append(random_address)
-            self.data.append(randrange(2 ** self.word_size))
+            # Data written should not be 0 since cache output is
+            # 0 by default
+            self.data.append(randrange(1, 2 ** self.word_size))
             self.stall.append(0)
 
         indices = list(range(test_size))
