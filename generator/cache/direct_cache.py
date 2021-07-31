@@ -269,13 +269,13 @@ class direct_cache(cache_base):
                                 m.d.comb += self.state_next.eq(State.COMPARE)
                     # Check if current request is dirty miss
                     with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
-                        with m.If(self.csb):
+                        with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():
                             m.d.comb += self.state_next.eq(State.WAIT_WRITE)
                     # Else, current request is clean a miss
                     with m.Else():
-                        with m.If(self.csb):
+                        with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.READ)
                         with m.Else():
                             m.d.comb += self.state_next.eq(State.WAIT_READ)
