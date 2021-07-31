@@ -81,7 +81,7 @@ class test_bench:
         self.tbf.write("  reg cache_flush;\n")
         self.tbf.write("  reg cache_csb;\n")
         self.tbf.write("  reg cache_web;\n")
-        self.tbf.write("  reg cache_wmask;\n")
+        self.tbf.write("  reg [BYTE_COUNT-1:0] cache_wmask;\n")
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
         self.tbf.write("  reg [WORD_WIDTH-1:0] cache_din;\n\n")
 
