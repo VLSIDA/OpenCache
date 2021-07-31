@@ -116,9 +116,10 @@ class n_way_fifo_cache(cache_base):
                 # request is decoded and corresponding tag, data, and use array
                 # lines are read from internal SRAM arrays.
                 with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
                 # Read requests are sent to tag and data arrays.
@@ -173,12 +174,10 @@ class n_way_fifo_cache(cache_base):
                                 for j in range(self.num_bytes):
                                     with m.If(self.wmask_reg[j]):
                                         m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
-                            # If CPU is sending a new request, read next lines from SRAMs.
-                            # Even if cache is switching to WAIT_HAZARD, read requests are
-                            # sent to SRAMs since read is non-destructive (hopefully?).
-                            with m.If(~self.csb):
-                                m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                                m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            # Read next lines from SRAMs even though CPU is not
+                            # sending a new request since read is non-destructive.
+                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WRITE state, cache waits for main memory to be available.
                 # When main memory is available, write request is sent.
@@ -256,12 +255,10 @@ class n_way_fifo_cache(cache_base):
                             for j in range(self.num_bytes):
                                 with m.If(self.wmask_reg[j]):
                                     m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
-                        # If CPU is sending a new request, read next lines from SRAMs
-                        # Even if cache is switching to WAIT_HAZARD, read requests are
-                        # sent to SRAMs since read is non-destructive (hopefully?).
-                        with m.If(~self.csb):
-                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
 
     def add_state_block(self, m):
@@ -543,9 +540,9 @@ class n_way_fifo_cache(cache_base):
                 # In the IDLE state, way is reset and the corresponding line from the
                 # use array is requested.
                 with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.way_next.eq(0)
-                        m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_READ state, corresponding line from the use array is
                 # requested.
@@ -556,13 +553,13 @@ class n_way_fifo_cache(cache_base):
                 # policy of the cache.
                 with m.Case(State.COMPARE):
                     m.d.comb += self.way_next.eq(self.use_read_dout)
-                    # The corresponding use array line needs to be requested if:
-                    #   CPU is sending a new request
-                    #   Current request is hit
-                    with m.If(~self.csb):
-                        for i in range(self.num_ways):
-                            with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
-                                m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # The corresponding use array line needs to be requested if current
+                    # request is hit.
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    for i in range(self.num_ways):
+                        with m.If(self.tag_read_dout[i * (self.tag_size + 2) + self.tag_size + 1] & (self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size) == self.tag)):
+                            m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_READ state, FIFO number are updated.
                 with m.Case(State.WAIT_READ):
@@ -573,8 +570,6 @@ class n_way_fifo_cache(cache_base):
                         m.d.comb += self.use_write_csb.eq(0)
                         m.d.comb += self.use_write_addr.eq(self.set)
                         m.d.comb += self.use_write_din.eq(self.way + 1)
-                        # If CPU is sending a new request, read next lines from use array
-                        # Even if cache is switching to WAIT_HAZARD, read requests are
-                        # sent to SRAMs since read is non-destructive (hopefully?).
-                        with m.If(~self.csb):
-                            m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))

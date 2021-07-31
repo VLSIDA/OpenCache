@@ -118,9 +118,10 @@ class n_way_lru_cache(cache_base):
                 # request is decoded and corresponding tag, data, and use lines
                 # are read from internal SRAM arrays.
                 with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
                 # Read requests are sent to tag and data arrays.
@@ -180,12 +181,10 @@ class n_way_lru_cache(cache_base):
                                 for j in range(self.num_bytes):
                                     with m.If(self.wmask_reg[j]):
                                         m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
-                            # If CPU is sending a new request, read next lines from SRAMs.
-                            # Even if cache is switching to WAIT_HAZARD, read requests are
-                            # sent to SRAMs since read is non-destructive (hopefully?).
-                            with m.If(~self.csb):
-                                m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                                m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            # Read next lines from SRAMs even though CPU is not
+                            # sending a new request since read is non-destructive.
+                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WRITE state, cache waits for main memory to be
                 # available.
@@ -265,12 +264,10 @@ class n_way_lru_cache(cache_base):
                             for j in range(self.num_bytes):
                                 with m.If(self.wmask_reg[j]):
                                     m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
-                        # If CPU is sending a new request, read next lines from SRAMs
-                        # Even if cache is switching to WAIT_HAZARD, read requests are
-                        # sent to SRAMs since read is non-destructive (hopefully?).
-                        with m.If(~self.csb):
-                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
 
     def add_state_block(self, m):
@@ -558,9 +555,9 @@ class n_way_lru_cache(cache_base):
                 # In the IDLE state, way is reset and the corresponding line from the
                 # use array is requested.
                 with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.way_next.eq(0)
-                        m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_READ state, corresponding line from the use array is
                 # requested.
@@ -595,8 +592,9 @@ class n_way_lru_cache(cache_base):
                                     self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
                                 )
                             m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
-                            with m.If(~self.csb):
-                                m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                            # Read next lines from SRAMs even though CPU is not
+                            # sending a new request since read is non-destructive.
+                            m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_WRITE and READ states, use line is read to update it
                 # in the WAIT_READ state.
@@ -624,5 +622,6 @@ class n_way_lru_cache(cache_base):
                             for i in range(self.num_ways):
                                 with m.Case(i):
                                     m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
-                        with m.If(~self.csb):
-                            m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.use_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))

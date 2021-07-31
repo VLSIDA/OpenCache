@@ -80,9 +80,10 @@ class direct_cache(cache_base):
                 # request is decoded and corresponding tag and data lines are
                 # read from internal SRAM arrays.
                 with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    # Read next lines from SRAMs even though CPU is not
+                    # sending a new request since read is non-destructive.
+                    m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
                 # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
                 # Read requests are sent to tag and data arrays.
@@ -107,12 +108,10 @@ class direct_cache(cache_base):
                             for i in range(self.num_bytes):
                                 with m.If(self.wmask_reg[i]):
                                     m.d.comb += self.data_write_din.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
-                        # If CPU is sending a new request, read next lines from SRAMs.
-                        # Even if cache is switching to WAIT_HAZARD, read requests are
-                        # sent to SRAMs since read is non-destructive (hopefully?).
-                        with m.If(~self.csb):
-                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though the CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                     # Check if current request is dirty miss
                     with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
                         # If main memory is busy, switch to WRITE and wait for main
@@ -196,12 +195,10 @@ class direct_cache(cache_base):
                             for i in range(self.num_bytes):
                                 with m.If(self.wmask_reg[i]):
                                     m.d.comb += self.data_write_din.word_select(self.offset * num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
-                        # If CPU is sending a new request, read next lines from SRAMs
-                        # Even if cache is switching to WAIT_HAZARD, read requests are
-                        # sent to SRAMs since read is non-destructive (hopefully?).
-                        with m.If(~self.csb):
-                            m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                            m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        # Read next lines from SRAMs even though the CPU is not
+                        # sending a new request since read is non-destructive.
+                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
 
 
     def add_state_block(self, m):
