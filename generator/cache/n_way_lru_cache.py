@@ -121,8 +121,6 @@ class n_way_lru_cache(cache_base):
                     with m.If(~self.csb):
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                         m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        # FIXME: Don't write 0 in testbench (might result in missed errors).
-                        m.d.comb += self.data_write_din.eq(0)
 
                 # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
                 # Read requests are sent to tag and data arrays.
@@ -486,7 +484,6 @@ class n_way_lru_cache(cache_base):
         # stall and dout, are controlled.
 
         m.d.comb += self.stall.eq(1)
-        # FIXME: Don't write 0 in testbench (might result in missed errors).
         m.d.comb += self.dout.eq(0)
 
         with m.Switch(self.state):
