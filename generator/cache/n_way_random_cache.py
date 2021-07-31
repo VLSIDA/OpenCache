@@ -523,11 +523,6 @@ class n_way_random_cache(cache_base):
                     with m.If(~self.main_stall):
                         m.d.comb += self.way_next.eq(self.way + 1)
 
-                # In the IDLE state, way is reset.
-                with m.Case(State.IDLE):
-                    with m.If(~self.csb):
-                        m.d.comb += self.way_next.eq(0)
-
                 # In the COMPARE state, way is selected according to the replacement
                 # policy of the cache.
                 with m.Case(State.COMPARE):
