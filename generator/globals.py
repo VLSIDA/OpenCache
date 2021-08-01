@@ -54,7 +54,7 @@ def parse_args():
                              action="store_true",
                              dest="simulate",
                              help="Enable verification via simulation"),
-        optparse.make_option("--synth",
+        optparse.make_option("--syn",
                              action="store_true",
                              dest="synthesize",
                              help="Enable verification via synthesis")
