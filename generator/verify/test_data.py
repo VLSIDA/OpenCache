@@ -68,7 +68,7 @@ class test_data:
 
         # Update stall values
         for i in range(len(self.web)):
-            # Get the numbr of stall cycles
+            # Get the number of stall cycles
             self.stall[i] = self.sc.stall_cycles(self.addr[i])
             if self.web[i]:
                 # Overwrite data for read to prevent bugs

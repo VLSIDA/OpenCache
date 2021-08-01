@@ -11,7 +11,7 @@ from dram import DRAM_DELAY
 
 class sim_cache:
     """
-    This is a high level cache design used for simulation.
+    This is an high level cache design used for simulation.
     """
 
     def __init__(self, cache_config):
