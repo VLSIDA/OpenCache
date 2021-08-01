@@ -109,7 +109,7 @@ class n_way_random_cache(cache_base):
                 # Stall and dout are driven by the Output Block.
                 with m.Case(State.COMPARE):
                     # Assuming that current request is miss, check if it is a dirty miss
-                    with m.If(self.tag_read_dout.bit_select(self.random * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
+                    with m.If(self.tag_read_dout.bit_select(self.random * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                         # If main memory is busy, switch to WRITE and wait for
                         # main memory to be available.
                         with m.If(self.main_stall):
@@ -237,7 +237,7 @@ class n_way_random_cache(cache_base):
                         with m.Switch(self.way):
                             for i in range(self.num_ways):
                                 with m.Case(i):
-                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, Const(1, 1)))
+                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, 0b1))
                         m.d.comb += self.data_write_csb.eq(0)
                         m.d.comb += self.data_write_addr.eq(self.set)
                         m.d.comb += self.data_write_din.eq(self.data_read_dout)
@@ -327,7 +327,7 @@ class n_way_random_cache(cache_base):
                 #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
                     # Assuming that current request is miss, check if it is a dirty miss
-                    with m.If(self.tag_read_dout.bit_select(self.random * (self.tag_size + 2) + self.tag_size, 2) == Const(3, 2)):
+                    with m.If(self.tag_read_dout.bit_select(self.random * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                         with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():

@@ -98,7 +98,7 @@ class direct_cache(cache_base):
                         with m.If(~self.web_reg):
                             m.d.comb += self.tag_write_csb.eq(0)
                             m.d.comb += self.tag_write_addr.eq(self.set)
-                            m.d.comb += self.tag_write_din.eq(Cat(self.tag, Const(3, 2)))
+                            m.d.comb += self.tag_write_din.eq(Cat(self.tag, 0b11))
                             m.d.comb += self.data_write_csb.eq(0)
                             m.d.comb += self.data_write_addr.eq(self.set)
                             m.d.comb += self.data_write_din.eq(self.data_read_dout)
@@ -117,7 +117,7 @@ class direct_cache(cache_base):
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                         m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
+                    with m.Elif(self.tag_read_dout[-2:] == 0b11):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
                         with m.If(self.main_stall):
@@ -188,7 +188,7 @@ class direct_cache(cache_base):
                         # TODO: Use wmask feature of OpenRAM.
                         m.d.comb += self.tag_write_csb.eq(0)
                         m.d.comb += self.tag_write_addr.eq(self.set)
-                        m.d.comb += self.tag_write_din.eq(Cat(self.tag, ~self.web_reg, Const(1, 1)))
+                        m.d.comb += self.tag_write_din.eq(Cat(self.tag, ~self.web_reg, 0b1))
                         m.d.comb += self.data_write_csb.eq(0)
                         m.d.comb += self.data_write_addr.eq(self.set)
                         m.d.comb += self.data_write_din.eq(self.main_dout)
@@ -277,7 +277,7 @@ class direct_cache(cache_base):
                             with m.Else():
                                 m.d.comb += self.state_next.eq(State.COMPARE)
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == Const(3, 2)):
+                    with m.Elif(self.tag_read_dout[-2:] == 0b11):
                         with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():
