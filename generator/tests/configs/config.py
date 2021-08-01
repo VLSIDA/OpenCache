@@ -1,6 +1,6 @@
 # Common options for all tests
-total_size = 2048
-word_size = 8
+total_size = 8192
+word_size = 32
 words_per_line = 4
 address_size = 11
 
