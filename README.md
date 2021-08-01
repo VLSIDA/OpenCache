@@ -64,7 +64,7 @@ python3 opencache.py config_file
 ```
 
 ## Verification
-In order to run the verification, you need to add the following lines to your configurtion file.
+In order to run verification, you need to add the following lines to your configuration file.
 ```python
 # for simulation
 simulate = True
