@@ -166,11 +166,6 @@ class n_way_random_cache(cache_base):
                                             for k in range(self.num_bytes):
                                                 with m.If(self.wmask_reg[k]):
                                                     m.d.comb += self.data_write_din.word_select((i * self.words_per_line + j) * self.num_bytes + k, 8).eq(self.din_reg.word_select(k, 8))
-                                # num_bytes_per_word = Const(self.num_bytes)
-                                # num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                                # for j in range(self.num_bytes):
-                                #     with m.If(self.wmask_reg[j]):
-                                #         m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
                             # Read next lines from SRAMs even though CPU is not
                             # sending a new request since read is non-destructive.
                             m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -258,11 +253,6 @@ class n_way_random_cache(cache_base):
                                                     for k in range(self.num_bytes):
                                                         with m.If(self.wmask_reg[k]):
                                                             m.d.comb += self.data_write_din.word_select((i * self.words_per_line + j) * self.num_bytes + k, 8).eq(self.din_reg.word_select(k, 8))
-                            # num_bytes_per_word = Const(self.num_bytes)
-                            # num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                            # for j in range(self.num_bytes):
-                            #     with m.If(self.wmask_reg[j]):
-                            #         m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
                         # Read next lines from SRAMs even though CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
