@@ -58,6 +58,10 @@ class cache_config:
         self.set_size = ceil(log2(self.num_rows))
         self.tag_size = self.address_size - self.set_size - self.offset_size
 
+        debug.info(1, "Address tag size: {}".format(self.tag_size)
+                   + " Address set size: {}".format(self.set_size)
+                   + " Address offset size: {}".format(self.offset_size))
+
         if self.tag_size + self.set_size + self.offset_size != self.address_size:
             debug.error("Calculated address size does not match the given address size.", -1)
 
@@ -74,3 +78,5 @@ class cache_config:
             self.associativity = AS.N_WAY
         else:
             self.associativity = AS.FULLY
+
+        debug.info(1, "Associativity: {}".format(self.associativity))

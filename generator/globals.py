@@ -111,6 +111,8 @@ def init_opencache(config_file, is_unit_test=True):
 
     check_versions()
 
+    debug.info(1, "Initializing OpenCache...")
+
     setup_paths()
 
     read_config(config_file, is_unit_test)
@@ -271,6 +273,7 @@ def purge_temp():
 
 def setup_paths():
     """ Include script directories to the sys path. """
+    debug.info(2, "Setting up paths...")
 
     # TODO: Don't assume that OpenCache is run from generator/ dir
     home_path = os.getcwd()
@@ -293,6 +296,7 @@ def init_paths():
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
+        debug.info(1, "Creating output directory: {}".format(OPTS.output_path))
         os.makedirs(OPTS.output_path, 0o750)
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
@@ -303,6 +307,7 @@ def init_paths():
     # Make the temp folder if only needed
     if OPTS.simulate or OPTS.synthesize or OPTS.is_unit_test:
         try:
+            debug.info(1, "Creating temp directory: {}".format(OPTS.temp_path))
             os.makedirs(OPTS.temp_path, 0o750)
         except OSError as e:
             if e.errno == 17:  # errno.EEXIST
