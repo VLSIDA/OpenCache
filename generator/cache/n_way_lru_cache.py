@@ -176,11 +176,15 @@ class n_way_lru_cache(cache_base):
                                 # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
                                 # Write the word over the write mask
-                                num_bytes_per_word = Const(self.num_bytes)
-                                num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                                for j in range(self.num_bytes):
-                                    with m.If(self.wmask_reg[j]):
-                                        m.d.comb += self.data_write_din.word_select(i * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+                                # NOTE: This switch statement is written manually (not only with
+                                # word_select) because word_select fails to generate correct case
+                                # statements if offset calculation is a bit complex.
+                                with m.Switch(self.offset):
+                                    for j in range(self.words_per_line):
+                                        with m.Case(j):
+                                            for k in range(self.num_bytes):
+                                                with m.If(self.wmask_reg[k]):
+                                                    m.d.comb += self.data_write_din.word_select((i * self.words_per_line + j) * self.num_bytes + k, 8).eq(self.din_reg.word_select(k, 8))
                             # Read next lines from SRAMs even though CPU is not
                             # sending a new request since read is non-destructive.
                             m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -259,11 +263,18 @@ class n_way_lru_cache(cache_base):
                         # Perform the write request
                         with m.If(~self.web_reg):
                             # Write the word over the write mask
-                            num_bytes_per_word = Const(self.num_bytes)
-                            num_bytes_per_line = Const(self.num_bytes * self.words_per_line)
-                            for j in range(self.num_bytes):
-                                with m.If(self.wmask_reg[j]):
-                                    m.d.comb += self.data_write_din.word_select(self.way * num_bytes_per_line + self.offset * num_bytes_per_word + j, 8).eq(self.din_reg.word_select(j, 8))
+                            # NOTE: This switch statement is written manually (not only with
+                            # word_select) because word_select fails to generate correct case
+                            # statements if offset calculation is a bit complex.
+                            with m.Switch(self.way):
+                                for i in range(self.num_ways):
+                                    with m.Case(i):
+                                        with m.Switch(self.offset):
+                                            for j in range(self.words_per_line):
+                                                with m.Case(j):
+                                                    for k in range(self.num_bytes):
+                                                        with m.If(self.wmask_reg[k]):
+                                                            m.d.comb += self.data_write_din.word_select((i * self.words_per_line + j) * self.num_bytes + k, 8).eq(self.din_reg.word_select(k, 8))
                         # Read next lines from SRAMs even though CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
