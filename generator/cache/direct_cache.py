@@ -73,11 +73,11 @@ class direct_cache(cache_base):
                         # Update dirty bits in the tag line.
                         m.d.comb += self.tag_write_csb.eq(0)
                         m.d.comb += self.tag_write_addr.eq(self.set)
-                        m.d.comb += self.tag_write_din.eq(Cat(self.tag_read_dout[:self.tag_size+1], 0b10))
+                        m.d.comb += self.tag_write_din.eq(Cat(self.tag_read_dout[:self.tag_size], 0b10))
                         # Send the write request to main memory.
                         m.d.comb += self.main_csb.eq(0)
                         m.d.comb += self.main_web.eq(0)
-                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size+1]))
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
                         m.d.comb += self.main_din.eq(self.data_read_dout)
 
                 # In the IDLE state, cache waits for CPU to send a new request.
@@ -135,7 +135,7 @@ class direct_cache(cache_base):
                         with m.Else():
                             m.d.comb += self.main_csb.eq(0)
                             m.d.comb += self.main_web.eq(0)
-                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size+1]))
+                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
                             m.d.comb += self.main_din.eq(self.data_read_dout)
                     # Else, current request is clean a miss
                     with m.Else():
@@ -158,7 +158,7 @@ class direct_cache(cache_base):
                     with m.If(~self.main_stall):
                         m.d.comb += self.main_csb.eq(0)
                         m.d.comb += self.main_web.eq(0)
-                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size+1]))
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
                         m.d.comb += self.main_din.eq(self.data_read_dout)
 
                 # In the WAIT_WRITE state, cache waits for main memory to complete
