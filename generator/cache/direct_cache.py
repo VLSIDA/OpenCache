@@ -37,7 +37,6 @@ class direct_cache(cache_base):
         # If flush is high, state switches to FLUSH.
         # In the FLUSH state, cache will write all data lines back to main
         # memory.
-        # TODO: Cache should write only dirty lines back.
         with m.Elif(self.flush):
             m.d.comb += self.tag_read_csb.eq(0)
             m.d.comb += self.tag_read_addr.eq(0)
@@ -59,19 +58,27 @@ class direct_cache(cache_base):
                 # In the FLUSH state, cache sends write request to main memory.
                 # set register is incremented by the Request Decode Block.
                 # When set register reaches the end, state switches to IDLE.
-                # TODO: Cache should write only dirty lines back.
                 with m.Case(State.FLUSH):
                     m.d.comb += self.tag_read_csb.eq(0)
                     m.d.comb += self.tag_read_addr.eq(self.set)
                     m.d.comb += self.data_read_csb.eq(0)
                     m.d.comb += self.data_read_addr.eq(self.set)
-                    m.d.comb += self.main_csb.eq(0)
-                    m.d.comb += self.main_web.eq(0)
-                    m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size+1]))
-                    m.d.comb += self.main_din.eq(self.data_read_dout)
-                    with m.If(~self.main_stall):
+                    # Check if current set is clean or main memory is available
+                    with m.If(~self.tag_read_dout[-2] | ~self.main_stall):
+                        # Request the next tag and data lines from SRAMs.
                         m.d.comb += self.tag_read_addr.eq(self.set + 1)
                         m.d.comb += self.data_read_addr.eq(self.set + 1)
+                    # Check if current set is dirty and main memory is available
+                    with m.If(self.tag_read_dout[-2] & ~self.main_stall):
+                        # Update dirty bits in the tag line.
+                        m.d.comb += self.tag_write_csb.eq(0)
+                        m.d.comb += self.tag_write_addr.eq(self.set)
+                        m.d.comb += self.tag_write_din.eq(Cat(self.tag_read_dout[:self.tag_size+1], 0b10))
+                        # Send the write request to main memory.
+                        m.d.comb += self.main_csb.eq(0)
+                        m.d.comb += self.main_web.eq(0)
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size+1]))
+                        m.d.comb += self.main_din.eq(self.data_read_dout)
 
                 # In the IDLE state, cache waits for CPU to send a new request.
                 # Until there is a new request from the cache, stall is low.
@@ -238,9 +245,13 @@ class direct_cache(cache_base):
 
                 # In the FLUSH state, state switches to IDLE if flush is completed.
                 with m.Case(State.FLUSH):
-                    # If main memory completes the last write request, flush is
-                    # completed.
-                    with m.If(~self.main_stall & (self.set == self.num_rows - 1)):
+                    # If the last set is clean or main memory will receive the last
+                    # write request, flush is completed.
+                    # FIXME: Cache switches to IDLE while main memory is still writing
+                    # the last data line. This may cause a simulation mismatch.
+                    # This is the behavior that we probably want, so fix sim_cache
+                    # instead.
+                    with m.If((~self.tag_read_dout[-2] | ~self.main_stall) & (self.set == self.num_rows - 1)):
                         m.d.comb += self.state_next.eq(State.IDLE)
 
                 # In the IDLE state, state switches to COMPARE if CPU is sending
@@ -367,7 +378,9 @@ class direct_cache(cache_base):
                 # In the FLUSH state, set register is used to write all dirty lines
                 # back to main memory.
                 with m.Case(State.FLUSH):
-                    with m.If(~self.main_stall):
+                    # If current set is clean or main memory is available, increment
+                    # the set register.
+                    with m.If((~self.tag_read_dout[-2] | ~self.main_stall)):
                         m.d.comb += self.set_next.eq(self.set + 1)
 
                 # In the IDLE state, the request is decoded.
