@@ -68,9 +68,10 @@ class sim_cache:
         for row_i in range(self.num_rows):
             for way_i in range(self.num_ways):
                 if self.valid_array[row_i][way_i] and self.dirty_array[row_i][way_i]:
-                    old_tag  = self.tag_array[row_i][way_i]
-                    old_data = self.data_array[row_i][way_i].copy()
-                    self.dram[(old_tag << self.set_size) + row_i] = old_data
+                    tag  = self.tag_array[row_i][way_i]
+                    data = self.data_array[row_i][way_i].copy()
+                    self.dirty_array[row_i][way_i] = 0
+                    self.dram[(tag << self.set_size) + row_i] = data
 
         # TODO: Update random counter after flush.
 
