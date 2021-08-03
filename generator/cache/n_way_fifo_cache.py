@@ -142,7 +142,7 @@ class n_way_fifo_cache(cache_base):
                 # In the COMPARE state, cache compares tags.
                 # Stall and output are driven by the Output Block.
                 with m.Case(State.COMPARE):
-                    # Assuming that current request is miss, check if it is a dirty miss
+                    # Assuming that current request is miss, check if it is dirty miss
                     with m.If(self.tag_read_dout.bit_select(self.use_read_dout * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
@@ -156,7 +156,7 @@ class n_way_fifo_cache(cache_base):
                             m.d.comb += self.main_web.eq(0)
                             m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(self.use_read_dout * (self.tag_size + 2), self.tag_size)))
                             m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.use_read_dout, self.line_size))
-                    # Else, assume that current request is a clean miss
+                    # Else, assume that current request is clean miss
                     with m.Else():
                         with m.If(~self.main_stall):
                             m.d.comb += self.tag_read_addr.eq(self.set)
@@ -345,16 +345,16 @@ class n_way_fifo_cache(cache_base):
                 #   WAIT_HAZARD if current request is hit and data hazard is possible
                 #   WRITE       if current request is dirty miss and main memory is busy
                 #   WAIT_WRITE  if current request is dirty miss and main memory is available
-                #   READ        if current request is a clean miss and main memory is busy
-                #   WAIT_READ   if current request is a clean miss and main memory is available
+                #   READ        if current request is clean miss and main memory is busy
+                #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
-                    # Assuming that current request is miss, check if it is a dirty miss
+                    # Assuming that current request is miss, check if it is dirty miss
                     with m.If(self.tag_read_dout.bit_select(self.use_read_dout * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                         with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():
                             m.d.comb += self.state_next.eq(State.WAIT_WRITE)
-                    # Else, assume that current request is a clean miss
+                    # Else, assume that current request is clean miss
                     with m.Else():
                         with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.READ)

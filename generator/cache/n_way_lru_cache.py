@@ -147,7 +147,7 @@ class n_way_lru_cache(cache_base):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
                         with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
-                            # Assuming that current request is miss, check if it is a dirty miss
+                            # Assuming that current request is miss, check if it is dirty miss
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                                 # If main memory is busy, switch to WRITE and wait for
                                 # main memory to be available.
@@ -161,7 +161,7 @@ class n_way_lru_cache(cache_base):
                                     m.d.comb += self.main_web.eq(0)
                                     m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size)))
                                     m.d.comb += self.main_din.eq(self.data_read_dout.word_select(i, self.line_size))
-                            # Else, assume that current request is a clean miss
+                            # Else, assume that current request is clean miss
                             with m.Else():
                                 with m.If(~self.main_stall):
                                     m.d.comb += self.tag_read_addr.eq(self.set)
@@ -360,13 +360,13 @@ class n_way_lru_cache(cache_base):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
                         with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
-                            # Assuming that current request is miss, check if it is a dirty miss
+                            # Assuming that current request is miss, check if it is dirty miss
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                                 with m.If(self.main_stall):
                                     m.d.comb += self.state_next.eq(State.WRITE)
                                 with m.Else():
                                     m.d.comb += self.state_next.eq(State.WAIT_WRITE)
-                            # Else, current request is a clean miss
+                            # Else, current request is clean miss
                             with m.Else():
                                 with m.If(self.main_stall):
                                     m.d.comb += self.state_next.eq(State.READ)
@@ -610,7 +610,7 @@ class n_way_lru_cache(cache_base):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
                         with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
-                            # Check if current request is a clean miss
+                            # Check if current request is clean miss
                             m.d.comb += self.way_next.eq(i)
                             with m.If(self.tag_read_dout.bit_select(i * (self.tag_size + 2) + self.tag_size, 2) == 0b11):
                                 m.d.comb += self.use_read_addr.eq(self.set)

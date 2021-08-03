@@ -137,7 +137,7 @@ class direct_cache(cache_base):
                             m.d.comb += self.main_web.eq(0)
                             m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
                             m.d.comb += self.main_din.eq(self.data_read_dout)
-                    # Else, current request is clean a miss
+                    # Else, current request is clean miss
                     with m.Else():
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
@@ -275,8 +275,8 @@ class direct_cache(cache_base):
                 #   WAIT_HAZARD if current request is hit and data hazard is possible
                 #   WRITE       if current request is dirty miss and main memory is busy
                 #   WAIT_WRITE  if current request is dirty miss and main memory is available
-                #   READ        if current request is clean a miss and main memory is busy
-                #   WAIT_READ   if current request is clean a miss and main memory is available
+                #   READ        if current request is clean miss and main memory is busy
+                #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
                     # Check if current request is hit
                     with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
@@ -293,7 +293,7 @@ class direct_cache(cache_base):
                             m.d.comb += self.state_next.eq(State.WRITE)
                         with m.Else():
                             m.d.comb += self.state_next.eq(State.WAIT_WRITE)
-                    # Else, current request is clean a miss
+                    # Else, current request is clean miss
                     with m.Else():
                         with m.If(self.main_stall):
                             m.d.comb += self.state_next.eq(State.READ)
