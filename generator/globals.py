@@ -237,9 +237,10 @@ def fix_config():
     if OPTS.is_unit_test:
         OPTS.output_path += "opencache_{0}_{1}/".format(getpass.getuser(),
                                                              os.getpid())
+    # Create a new folder for this run if not unit test
+    else:
+        OPTS.output_path += OPTS.output_name + "/"
 
-    # Create a new folder for this run
-    OPTS.output_path += OPTS.output_name + "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
 
     # Make a temp folder if not given
