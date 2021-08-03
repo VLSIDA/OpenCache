@@ -74,9 +74,7 @@ class n_way_fifo_cache(cache_base):
         # In the FLUSH state, cache will write all data lines back to main
         # memory.
         with m.Elif(self.flush):
-            m.d.comb += self.tag_read_csb.eq(0)
             m.d.comb += self.tag_read_addr.eq(0)
-            m.d.comb += self.data_read_csb.eq(0)
             m.d.comb += self.data_read_addr.eq(0)
 
         with m.Else():
@@ -96,9 +94,7 @@ class n_way_fifo_cache(cache_base):
                 # way register is incremented by the Replacement Block.
                 # When set and way registers reach the end, state switches to IDLE.
                 with m.Case(State.FLUSH):
-                    m.d.comb += self.tag_read_csb.eq(0)
                     m.d.comb += self.tag_read_addr.eq(self.set)
-                    m.d.comb += self.data_read_csb.eq(0)
                     m.d.comb += self.data_read_addr.eq(self.set)
                     with m.Switch(self.way):
                         for i in range(self.num_ways):
