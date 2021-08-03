@@ -23,7 +23,7 @@ class sim_cache:
 
 
     def reset(self):
-        """ Reset the cache. """
+        """ Reset the cache and return the number of stall cycles. """
 
         # These arrays are multi-dimensional.
         # First dimension is for sets.
@@ -53,6 +53,9 @@ class sim_cache:
             # when the first request is in the COMPARE state.
             self.random = 0
             self.update_random(self.num_rows)
+
+        # Return the number of stalls
+        return self.num_rows
 
 
     def reset_dram(self):

@@ -24,12 +24,19 @@ class test_data:
     def generate_data(self, test_size=16):
         """  Generate random test data and expected outputs. """
 
-        self.web   = [] # Write enable
+        # Operation
+        self.op    = ["reset"]
+        # Write enable
+        self.web   = [1]
+        # Write mask
         # TODO: Write test data for write mask
-        self.wmask = [] # Write mask
-        self.addr  = [] # Address
-        self.data  = [] # Data input/output
-        self.stall = [] # Number of stall cycles after the request
+        self.wmask = ["0" * self.num_bytes]
+        # Address
+        self.addr  = [0]
+        # Data input/output
+        self.data  = [0]
+        # Number of stall cycles after the request
+        self.stall = [0]
 
         # TODO: How to create random data in a smart way?
         # Write random data to random addresses initially
@@ -41,6 +48,7 @@ class test_data:
             random_offset = randrange(2 ** self.offset_size)
             random_address = self.sc.merge_address(random_tag, random_set, random_offset)
 
+            self.op.append("write")
             self.web.append(0)
             self.wmask.append("1" * self.num_bytes)
             self.addr.append(random_address)
@@ -55,28 +63,34 @@ class test_data:
         while len(indices) > 0:
             index = choice(indices)
 
-            self.web.append(1)
-            self.wmask.append("0" * self.num_bytes)
-            self.addr.append(self.addr[index])
-            # If the same address is written twice, this data may be old.
-            # Therefore, data values for read operations are going to be
-            # overwritten in the next for loop.
-            self.data.append(self.data[index])
-            self.stall.append(0)
+            # Don't take reset and flush operations
+            if self.op[index] == "write":
+                self.op.append("read")
+                self.web.append(1)
+                self.wmask.append("0" * self.num_bytes)
+                self.addr.append(self.addr[index])
+                # If the same address is written twice, this data may be old.
+                # Therefore, data values for read operations are going to be
+                # overwritten in the next for loop.
+                self.data.append(self.data[index])
+                self.stall.append(0)
 
             indices.remove(index)
 
-        # Update stall values
-        for i in range(len(self.web)):
+        # Simulate the cache with sequence operations
+        for i in range(len(self.op)):
             # Get the number of stall cycles
-            self.stall[i] = self.sc.stall_cycles(self.addr[i])
-            if self.web[i]:
-                # Overwrite data for read to prevent bugs
-                # NOTE: If the same address is written twice,
-                # this data could be old.
-                self.data[i] = self.sc.read(self.addr[i])
+            if self.op[i] == "reset":
+                self.stall[i] = self.sc.reset()
             else:
-                self.sc.write(self.addr[i], self.data[i])
+                self.stall[i] = self.sc.stall_cycles(self.addr[i])
+                if self.web[i]:
+                    # Overwrite data for read to prevent bugs
+                    # NOTE: If the same address is written twice,
+                    # this data could be old.
+                    self.data[i] = self.sc.read(self.addr[i])
+                else:
+                    self.sc.write(self.addr[i], self.data[i])
 
 
     def write(self, data_path):
@@ -91,36 +105,29 @@ class test_data:
         self.tdf.write("// Therefore, cache's output will be valid after the negedge.\n")
         self.tdf.write("#(CLOCK_DELAY + DELAY + 1);\n\n")
 
-        # Check stall during reset
-        self.tdf.write("// No operation while reset (Test #{})\n".format(test_count))
-        # Check for num_rows-1 stall cycles since
-        # stall will be low at the last cycle
-        # (which is the cycle #num_rows)
-        self.tdf.write("check_stall({0}, {1});\n\n".format(self.num_rows, test_count))
-
-        test_count += 1
-
         # Check requests
-        for i in range(len(self.web)):
-            self.tdf.write("// {0} operation on address {1} (Test #{2})\n".format("Read" if self.web[i] else "Write",
-                                                                                  self.addr[i],
-                                                                                  test_count))
+        for i in range(len(self.op)):
+            self.tdf.write("// {0} operation (Test #{1})\n".format(self.op[i].capitalize(),
+                                                                   test_count))
 
-            self.tdf.write("cache_csb   = 0;\n")
-            self.tdf.write("cache_web   = {};\n".format(self.web[i]))
-            self.tdf.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
-            self.tdf.write("cache_addr  = {};\n".format(self.addr[i]))
+            if self.op[i] == "reset":
+                self.tdf.write("assert_reset();\n")
+            else:
+                self.tdf.write("cache_csb   = 0;\n")
+                self.tdf.write("cache_web   = {};\n".format(self.web[i]))
+                self.tdf.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
+                self.tdf.write("cache_addr  = {};\n".format(self.addr[i]))
+                if not self.web[i]:
+                    self.tdf.write("cache_din   = {};\n".format(self.data[i]))
 
-            if not self.web[i]:
-                self.tdf.write("cache_din   = {};\n".format(self.data[i]))
-
-            self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
+                # Wait for 1 cycle so that cache will receive the request
+                self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
 
             if self.stall[i]:
                 self.tdf.write("check_stall({0}, {1});\n\n".format(self.stall[i], test_count))
 
             # Check read request after stalls
-            if self.web[i]:
+            if self.op[i] == "read":
                 self.tdf.write("check_dout({0}, {1});\n\n".format(self.data[i], test_count))
 
             test_count += 1

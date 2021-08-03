@@ -116,15 +116,14 @@ class test_bench:
     def write_reset_block(self):
         """ Write the reset block of the test bench. """
 
-        self.tbf.write("  // Reset\n")
+        self.tbf.write("  // Reset registers\n")
         self.tbf.write("  initial begin\n")
+        self.tbf.write("    rst         = 0;\n")
         self.tbf.write("    cache_flush = 0;\n")
         self.tbf.write("    cache_csb   = 1;\n")
         self.tbf.write("    cache_web   = 1;\n")
         self.tbf.write("    cache_wmask = 0;\n")
         self.tbf.write("    error_count = 0;\n")
-        self.tbf.write("    rst         = 1;\n")
-        self.tbf.write("    #(RESET_DELAY) rst = 0;\n")
         self.tbf.write("  end\n\n")
 
 
@@ -164,6 +163,26 @@ class test_bench:
 
     def write_tasks(self):
         """ Write the tasks of the test bench. """
+
+        self.tbf.write("  // Assert the reset signal\n")
+        self.tbf.write("  task assert_reset;\n")
+        self.tbf.write("    begin\n")
+        self.tbf.write("    // Reset is asserted just before a posedge of the clock.\n")
+        self.tbf.write("    // Therefore, it is enough to assert it for DELAY.\n")
+        self.tbf.write("    rst <= 1;\n")
+        self.tbf.write("    rst <= #(DELAY) 0;\n")
+        self.tbf.write("    end\n")
+        self.tbf.write("  endtask\n\n")
+
+        self.tbf.write("  // Assert the flush signal\n")
+        self.tbf.write("  task assert_flush;\n")
+        self.tbf.write("    begin\n")
+        self.tbf.write("    // Flush is asserted just before a posedge of the clock.\n")
+        self.tbf.write("    // Therefore, it is enough to assert it for DELAY.\n")
+        self.tbf.write("    cache_flush <= 1;\n")
+        self.tbf.write("    cache_flush <= #(DELAY) 0;\n")
+        self.tbf.write("    end\n")
+        self.tbf.write("  endtask\n\n")
 
         self.tbf.write("  // Check for a number of stall cycles starting from the current cycle\n")
         self.tbf.write("  task check_stall;\n")
