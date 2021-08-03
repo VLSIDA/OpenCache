@@ -1,5 +1,5 @@
 # Cache States
-![State Diagram](./images/state_diagram.png)
+<img width="100%" src="./images/state_diagram.svg">
 
 ## RESET
 This is the initial state and a multi-cycle reset. It sets all rows of internal SRAMs

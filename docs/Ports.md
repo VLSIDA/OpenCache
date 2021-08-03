@@ -1,5 +1,5 @@
 # Cache Ports
-![Port Diagram](./images/port_diagram.png)
+<img width="100%" src="./images/port_diagram.svg">
 
 | CPU Port  |           |                           | DRAM Port    |           |                           |
 | --------- | :-------: | ------------------------- | ------------ | :-------: | ------------------------- |
