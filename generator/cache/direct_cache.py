@@ -109,12 +109,12 @@ class direct_cache(cache_base):
                             # NOTE: This switch statement is written manually (not only with
                             # word_select) because word_select fails to generate correct case
                             # statements if offset calculation is a bit complex.
-                            with m.Switch(self.offset):
-                                for i in range(self.words_per_line):
-                                    with m.Case(i):
-                                        for j in range(self.num_bytes):
-                                            with m.If(self.wmask_reg[j]):
-                                                m.d.comb += self.data_write_din.word_select(i * self.num_bytes + j, 8).eq(self.din_reg.word_select(j, 8))
+                            for i in range(self.num_bytes):
+                                with m.If(self.wmask_reg[i]):
+                                    with m.Switch(self.offset):
+                                        for j in range(self.words_per_line):
+                                            with m.Case(j):
+                                                m.d.comb += self.data_write_din.word_select(j * self.num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -201,12 +201,12 @@ class direct_cache(cache_base):
                             # NOTE: This switch statement is written manually (not only with
                             # word_select) because word_select fails to generate correct case
                             # statements if offset calculation is a bit complex.
-                            with m.Switch(self.offset):
-                                for i in range(self.words_per_line):
-                                    with m.Case(i):
-                                        for j in range(self.num_bytes):
-                                            with m.If(self.wmask_reg[j]):
-                                                m.d.comb += self.data_write_din.word_select(i * self.num_bytes + j, 8).eq(self.din_reg.word_select(j, 8))
+                            for i in range(self.num_bytes):
+                                with m.If(self.wmask_reg[i]):
+                                    with m.Switch(self.offset):
+                                        for j in range(self.words_per_line):
+                                            with m.Case(j):
+                                                m.d.comb += self.data_write_din.word_select(j * self.num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
