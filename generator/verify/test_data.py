@@ -57,6 +57,26 @@ class test_data:
             self.data.append(randrange(1, 2 ** self.word_size))
             self.stall.append(0)
 
+        # FIXME: This is a temporary hack to avoid a possible problem.
+        # If the previous write request needs to update SRAMs (will probably do),
+        # asserting flush will prevent cache from updating SRAMs. In order to
+        # overcome this issue, we will read the last write (it will be hit) so
+        # that no request will be sent to SRAMs before flush.
+        self.op.append("read")
+        self.web.append(1)
+        self.wmask.append("0" * self.num_bytes)
+        self.addr.append(self.addr[-1])
+        self.data.append(self.data[-1])
+        self.stall.append(0)
+
+        # Flush the cache after writing is done
+        self.op.append("flush")
+        self.web.append(1)
+        self.wmask.append("0" * self.num_bytes)
+        self.addr.append(0)
+        self.data.append(0)
+        self.stall.append(0)
+
         indices = list(range(test_size))
 
         # Read from random addresses which are written to in the first half
@@ -82,6 +102,8 @@ class test_data:
             # Get the number of stall cycles
             if self.op[i] == "reset":
                 self.stall[i] = self.sc.reset()
+            elif self.op[i] == "flush":
+                self.stall[i] = self.sc.flush()
             else:
                 self.stall[i] = self.sc.stall_cycles(self.addr[i])
                 if self.web[i]:
@@ -110,8 +132,8 @@ class test_data:
             self.tdf.write("// {0} operation (Test #{1})\n".format(self.op[i].capitalize(),
                                                                    test_count))
 
-            if self.op[i] == "reset":
-                self.tdf.write("assert_reset();\n")
+            if self.op[i] == "reset" or self.op[i] == "flush":
+                self.tdf.write("assert_{}();\n".format(self.op[i]))
             else:
                 self.tdf.write("cache_csb   = 0;\n")
                 self.tdf.write("cache_web   = {};\n".format(self.web[i]))
@@ -120,8 +142,8 @@ class test_data:
                 if not self.web[i]:
                     self.tdf.write("cache_din   = {};\n".format(self.data[i]))
 
-                # Wait for 1 cycle so that cache will receive the request
-                self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
+            # Wait for 1 cycle so that cache will receive the request
+            self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
 
             if self.stall[i]:
                 self.tdf.write("check_stall({0}, {1});\n\n".format(self.stall[i], test_count))

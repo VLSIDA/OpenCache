@@ -54,29 +54,58 @@ class sim_cache:
             self.random = 0
             self.update_random(self.num_rows)
 
-        # Return the number of stalls
-        return self.num_rows
+        # Return 1 less stall cycles since test_data.v waits for 1 cycle
+        # in order to submit the request.
+        return self.num_rows - 1
 
 
     def reset_dram(self):
         """ Reset the DRAM. """
 
-        # DRAM list has a line in each row.
+        # DRAM list has a line in each row
         self.dram = [[None] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
+
+        # Remaining DRAM stall cycles.
+        # This is used to calculate how many cycles are needed to calculate
+        # the stall after a flush is completed (maybe other cases as well?).
+        self.dram_stalls = 0
 
 
     def flush(self):
-        """ Write dirty data lines back to DRAM. """
+        """
+        Write dirty data lines back to DRAM and
+        return the number of stall cycles.
+        """
 
+        stalls = 0
         for row_i in range(self.num_rows):
             for way_i in range(self.num_ways):
+                stalls += 1
+                self.dram_stalls = max(self.dram_stalls - 1, 0)
                 if self.valid_array[row_i][way_i] and self.dirty_array[row_i][way_i]:
                     tag  = self.tag_array[row_i][way_i]
                     data = self.data_array[row_i][way_i].copy()
                     self.dirty_array[row_i][way_i] = 0
                     self.dram[(tag << self.set_size) + row_i] = data
 
-        # TODO: Update random counter after flush.
+                    # Cache will wait in the FLUSH state if DRAM hasn't completed
+                    # the last write request.
+                    stalls += self.dram_stalls
+                    self.dram_stalls = DRAM_DELAY + 1
+
+        # Add 1 more cycle for switching to IDLE
+        stalls += 1
+        self.dram_stalls = max(self.dram_stalls - 1, 0)
+        self.update_random(stalls)
+
+        # Reset previous request
+        self.prev_hit = False
+        self.prev_web = 1
+        self.prev_set = None
+
+        # Return 1 less stall cycles since test_data.v waits for 1 cycle
+        # in order to submit the request.
+        return stalls - 1
 
 
     def merge_address(self, tag_decimal, set_decimal, offset_decimal):
@@ -243,6 +272,11 @@ class sim_cache:
             # Stalls 1 cycle in the COMPARE state since
             # the request is a miss
             stall_cycles += 1
+
+            # If DRAM is not yet ready and the request is miss, cache needs to wait
+            # until DRAM is ready
+            stall_cycles += self.dram_stalls
+            self.dram_stalls = 0
 
             # Find the evicted address
             _, set_decimal, _ = self.parse_address(address)
