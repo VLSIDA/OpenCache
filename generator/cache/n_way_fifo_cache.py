@@ -111,7 +111,7 @@ class n_way_fifo_cache(cache_base):
                                     m.d.comb += self.tag_write_csb.eq(0)
                                     m.d.comb += self.tag_write_addr.eq(self.set)
                                     m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
-                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag, 0b10))
+                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag_read_dout.bit_select(i * (self.tag_size + 2), self.tag_size), 0b10))
                                     # Send the write request to main memory.
                                     m.d.comb += self.main_csb.eq(0)
                                     m.d.comb += self.main_web.eq(0)
