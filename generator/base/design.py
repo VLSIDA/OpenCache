@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import re
 from nmigen import *
 from nmigen.back import verilog
 from rtl import *
@@ -28,15 +27,15 @@ class design(Elaboratable):
         # Add IO signals before elaborating
         self.add_io_signals()
 
-        code = verilog.convert(self, name=self.name, strip_internal_attrs=True, ports=[
+        code = verilog.convert(self, name=self.name, strip_internal_attrs=OPTS.trim_verilog, ports=[
             # CPU interface signals
             self.clk, self.rst, self.flush, self.csb, self.web, self.wmask, self.addr, self.din, self.dout, self.stall,
             # Main memory interface signals
             self.main_csb, self.main_web, self.main_addr, self.main_din, self.main_dout, self.main_stall
         ])
 
-        # Remove yosys attributes
-        code = re.sub(r'\(\*.*\*\)', '', code)
+        if OPTS.trim_verilog:
+            code = trim_verilog(code)
 
         vf = open(verilog_path, "w")
         vf.write(code)

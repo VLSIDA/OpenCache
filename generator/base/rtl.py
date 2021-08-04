@@ -32,3 +32,20 @@ def get_flop_signals(name, shape=None, reset=0, reset_less=True):
     sigs[0].name = name
     sigs[1].name = name + "_next"
     return sigs
+
+
+def trim_verilog(code):
+    """ Trim unnecessary lines in a Verilog code. """
+
+    lines = code.splitlines(True)
+
+    for i in range(len(lines)):
+        # Delete \initial register
+        if "\\initial" in lines[i]:
+            lines[i] = ""
+        # Delete auto-generated flops
+        if "$next" in lines[i]:
+            lines[i] = ""
+
+    code = "".join(lines)
+    return code
