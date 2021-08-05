@@ -20,7 +20,7 @@ class direct_cache(cache_base):
         super().__init__(cache_config, name)
 
 
-    def add_memory_controller_block(self, m):
+    def add_memory_block(self, m):
         """ Add memory controller always block to cache design. """
 
         # In this block, cache communicates with memory components which are

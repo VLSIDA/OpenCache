@@ -56,7 +56,7 @@ class n_way_fifo_cache(cache_base):
         )
 
 
-    def add_memory_controller_block(self, m):
+    def add_memory_block(self, m):
         """ Add memory controller always block to cache design. """
 
         # In this block, cache communicates with memory components which are

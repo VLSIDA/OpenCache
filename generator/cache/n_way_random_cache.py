@@ -33,7 +33,7 @@ class n_way_random_cache(cache_base):
         self.random, self.random_next = get_flop_signals("random", self.way_size)
 
 
-    def add_memory_controller_block(self, m):
+    def add_memory_block(self, m):
         """ Add memory controller always block to cache design. """
 
         # In this block, cache communicates with memory components which
