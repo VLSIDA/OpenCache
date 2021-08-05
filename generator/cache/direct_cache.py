@@ -60,20 +60,20 @@ class direct_cache(cache_base):
                     m.d.comb += self.tag_read_addr.eq(self.set)
                     m.d.comb += self.data_read_addr.eq(self.set)
                     # Check if current set is clean or main memory is available
-                    with m.If(~self.tag_read_dout[-2] | ~self.main_stall):
+                    with m.If(~self.tag_read_dout.dirty() | ~self.main_stall):
                         # Request the next tag and data lines from SRAMs.
                         m.d.comb += self.tag_read_addr.eq(self.set + 1)
                         m.d.comb += self.data_read_addr.eq(self.set + 1)
                     # Check if current set is dirty and main memory is available
-                    with m.If(self.tag_read_dout[-2] & ~self.main_stall):
+                    with m.If(self.tag_read_dout.dirty() & ~self.main_stall):
                         # Update dirty bits in the tag line.
                         m.d.comb += self.tag_write_csb.eq(0)
                         m.d.comb += self.tag_write_addr.eq(self.set)
-                        m.d.comb += self.tag_write_din.eq(Cat(self.tag_read_dout[:self.tag_size], 0b10))
+                        m.d.comb += self.tag_write_din.eq(Cat(self.tag_read_dout.tag(), 0b10))
                         # Send the write request to main memory.
                         m.d.comb += self.main_csb.eq(0)
                         m.d.comb += self.main_web.eq(0)
-                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
                         m.d.comb += self.main_din.eq(self.data_read_dout)
 
                 # In the IDLE state, cache waits for CPU to send a new request.
@@ -96,7 +96,7 @@ class direct_cache(cache_base):
                 # In the COMPARE state, cache compares tags.
                 with m.Case(State.COMPARE):
                     # Check if current request is hit
-                    with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
+                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                         # Perform the write request
                         with m.If(~self.web_reg):
                             m.d.comb += self.tag_write_csb.eq(0)
@@ -120,7 +120,7 @@ class direct_cache(cache_base):
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                         m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == 0b11):
+                    with m.Elif(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
                         with m.If(self.main_stall):
@@ -131,7 +131,7 @@ class direct_cache(cache_base):
                         with m.Else():
                             m.d.comb += self.main_csb.eq(0)
                             m.d.comb += self.main_web.eq(0)
-                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
+                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
                             m.d.comb += self.main_din.eq(self.data_read_dout)
                     # Else, current request is clean miss
                     with m.Else():
@@ -154,7 +154,7 @@ class direct_cache(cache_base):
                     with m.If(~self.main_stall):
                         m.d.comb += self.main_csb.eq(0)
                         m.d.comb += self.main_web.eq(0)
-                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout[:self.tag_size]))
+                        m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
                         m.d.comb += self.main_din.eq(self.data_read_dout)
 
                 # In the WAIT_WRITE state, cache waits for main memory to complete
@@ -247,7 +247,7 @@ class direct_cache(cache_base):
                     # the last data line. This may cause a simulation mismatch.
                     # This is the behavior that we probably want, so fix sim_cache
                     # instead.
-                    with m.If((~self.tag_read_dout[-2] | ~self.main_stall) & (self.set == self.num_rows - 1)):
+                    with m.If((~self.tag_read_dout.dirty() | ~self.main_stall) & (self.set == self.num_rows - 1)):
                         m.d.comb += self.state.eq(State.IDLE)
 
                 # In the IDLE state, state switches to COMPARE if CPU is sending
@@ -275,7 +275,7 @@ class direct_cache(cache_base):
                 #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
                     # Check if current request is hit
-                    with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
+                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                         with m.If(self.csb):
                             m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
@@ -284,7 +284,7 @@ class direct_cache(cache_base):
                             with m.Else():
                                 m.d.comb += self.state.eq(State.COMPARE)
                     # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout[-2:] == 0b11):
+                    with m.Elif(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
                         with m.If(self.main_stall):
                             m.d.comb += self.state.eq(State.WRITE)
                         with m.Else():
@@ -376,7 +376,7 @@ class direct_cache(cache_base):
                 with m.Case(State.FLUSH):
                     # If current set is clean or main memory is available, increment
                     # the set register.
-                    with m.If((~self.tag_read_dout[-2] | ~self.main_stall)):
+                    with m.If((~self.tag_read_dout.dirty() | ~self.main_stall)):
                         m.d.comb += self.set.eq(self.set + 1)
 
                 # In the IDLE state, the request is decoded.
@@ -391,7 +391,7 @@ class direct_cache(cache_base):
                 # In the COMPARE state, the request is decoded if current request
                 # is hit.
                 with m.Case(State.COMPARE):
-                    with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
+                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                         m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
                         m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
                         m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
@@ -433,7 +433,7 @@ class direct_cache(cache_base):
             # request is write since read is non-destructive.
             with m.Case(State.COMPARE):
                 # Check if current request is hit
-                with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
+                with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                     m.d.comb += self.stall.eq(0)
                     m.d.comb += self.dout.eq(self.data_read_dout.word_select(self.offset, self.word_size))
 
