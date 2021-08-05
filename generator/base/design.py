@@ -7,6 +7,7 @@
 #
 from nmigen import *
 from nmigen.back import verilog
+from cache_signal import CacheSignal
 from rtl import *
 from policy import ReplacementPolicy as RP
 from globals import OPTS
@@ -69,37 +70,37 @@ class design(Elaboratable):
         # CPU interface
         self.clk   = ClockSignal()
         self.rst   = ResetSignal()
-        self.flush = Signal()
-        self.csb   = Signal()
-        self.web   = Signal()
-        self.wmask = Signal(self.num_bytes)
-        self.addr  = Signal(self.address_size)
-        self.din   = Signal(self.word_size)
-        self.dout  = Signal(self.word_size)
-        self.stall = Signal()
+        self.flush = CacheSignal()
+        self.csb   = CacheSignal()
+        self.web   = CacheSignal()
+        self.wmask = CacheSignal(self.num_bytes)
+        self.addr  = CacheSignal(self.address_size)
+        self.din   = CacheSignal(self.word_size)
+        self.dout  = CacheSignal(self.word_size)
+        self.stall = CacheSignal()
 
         # Main memory interface
-        self.main_csb   = Signal(reset_less=True, reset=1)
-        self.main_web   = Signal(reset_less=True, reset=1)
-        self.main_addr  = Signal(self.address_size - self.offset_size, reset_less=True)
-        self.main_din   = Signal(self.line_size, reset_less=True)
-        self.main_dout  = Signal(self.line_size)
-        self.main_stall = Signal()
+        self.main_csb   = CacheSignal(reset_less=True, reset=1)
+        self.main_web   = CacheSignal(reset_less=True, reset=1)
+        self.main_addr  = CacheSignal(self.address_size - self.offset_size, reset_less=True)
+        self.main_din   = CacheSignal(self.line_size, reset_less=True)
+        self.main_dout  = CacheSignal(self.line_size)
+        self.main_stall = CacheSignal()
 
 
     def add_internal_signals(self):
         """ Add internal registers and wires to cache design. """
 
         # Keep inputs in flops
-        self.tag, self.tag_next             = get_flop_signals("tag", self.tag_size)
-        self.set, self.set_next             = get_flop_signals("set", self.set_size)
-        self.offset, self.offset_next       = get_flop_signals("offset", self.offset_size)
-        self.web_reg, self.web_reg_next     = get_flop_signals("web_reg")
-        self.wmask_reg, self.wmask_reg_next = get_flop_signals("wmask_reg", self.num_bytes)
-        self.din_reg, self.din_reg_next     = get_flop_signals("din_reg", self.word_size)
+        self.tag       = CacheSignal(self.tag_size, is_flop=True)
+        self.set       = CacheSignal(self.set_size, is_flop=True)
+        self.offset    = CacheSignal(self.offset_size, is_flop=True)
+        self.web_reg   = CacheSignal(is_flop=True)
+        self.wmask_reg = CacheSignal(self.num_bytes, is_flop=True)
+        self.din_reg   = CacheSignal(self.word_size, is_flop=True)
 
         # State flop
-        self.state, self.state_next = get_flop_signals("state", State)
+        self.state = CacheSignal(State, is_flop=True)
 
 
     def add_srams(self, m):
@@ -107,12 +108,12 @@ class design(Elaboratable):
 
         # Tag array
         word_size = (self.tag_size + 2) * self.num_ways
-        self.tag_write_csb  = Signal(reset_less=True, reset=1)
-        self.tag_write_addr = Signal(self.set_size, reset_less=True)
-        self.tag_write_din  = Signal(word_size, reset_less=True)
-        self.tag_read_csb   = Signal(reset_less=True)
-        self.tag_read_addr  = Signal(self.set_size, reset_less=True)
-        self.tag_read_dout  = Signal(word_size)
+        self.tag_write_csb  = CacheSignal(reset_less=True, reset=1)
+        self.tag_write_addr = CacheSignal(self.set_size, reset_less=True)
+        self.tag_write_din  = CacheSignal(word_size, reset_less=True)
+        self.tag_read_csb   = CacheSignal(reset_less=True)
+        self.tag_read_addr  = CacheSignal(self.set_size, reset_less=True)
+        self.tag_read_dout  = CacheSignal(word_size)
         m.submodules += Instance(OPTS.tag_array_name,
             ("i", "clk0",  self.clk),
             ("i", "csb0",  self.tag_write_csb),
@@ -126,12 +127,12 @@ class design(Elaboratable):
 
         # Data array
         word_size = self.line_size * self.num_ways
-        self.data_write_csb  = Signal(reset_less=True, reset=1)
-        self.data_write_addr = Signal(self.set_size, reset_less=True)
-        self.data_write_din  = Signal(word_size, reset_less=True)
-        self.data_read_csb   = Signal(reset_less=True)
-        self.data_read_addr  = Signal(self.set_size, reset_less=True)
-        self.data_read_dout  = Signal(word_size)
+        self.data_write_csb  = CacheSignal(reset_less=True, reset=1)
+        self.data_write_addr = CacheSignal(self.set_size, reset_less=True)
+        self.data_write_din  = CacheSignal(word_size, reset_less=True)
+        self.data_read_csb   = CacheSignal(reset_less=True)
+        self.data_read_addr  = CacheSignal(self.set_size, reset_less=True)
+        self.data_read_dout  = CacheSignal(word_size)
         m.submodules += Instance(OPTS.data_array_name,
             ("i", "clk0",  self.clk),
             ("i", "csb0",  self.data_write_csb),
@@ -150,8 +151,6 @@ class design(Elaboratable):
         # In this block, flip-flop registers are updated at
         # every positive edge of the clock.
 
-        # NOTE: LHS register of a flip-flop must end with "_next"
-        for k, v in self.__dict__.items():
-            lhs_name = k + "_next"
-            if lhs_name in self.__dict__:
-                m.d.sync += v.eq(self.__dict__[lhs_name])
+        for _, v in self.__dict__.items():
+            if isinstance(v, CacheSignal) and v.is_flop:
+                m.d.sync += v.eq(v.next, sync=True)

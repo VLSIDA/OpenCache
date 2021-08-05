@@ -219,15 +219,15 @@ class direct_cache(cache_base):
         # In this block, cache's state is controlled. state flip-flop
         # register is changed in order to switch between states.
 
-        m.d.comb += self.state_next.eq(self.state)
+        m.d.comb += self.state.eq(self.state)
 
         # If rst is high, state switches to RESET.
         with m.If(self.rst):
-            m.d.comb += self.state_next.eq(State.RESET)
+            m.d.comb += self.state.eq(State.RESET)
 
         # If flush is high, state switches to FLUSH.
         with m.Elif(self.flush):
-            m.d.comb += self.state_next.eq(State.FLUSH)
+            m.d.comb += self.state.eq(State.FLUSH)
 
         with m.Else():
             with m.Switch(self.state):
@@ -237,7 +237,7 @@ class direct_cache(cache_base):
                     # When set reaches the limit, the last write request is sent
                     # to the tag array.
                     with m.If(self.set == self.num_rows - 1):
-                        m.d.comb += self.state_next.eq(State.IDLE)
+                        m.d.comb += self.state.eq(State.IDLE)
 
                 # In the FLUSH state, state switches to IDLE if flush is completed.
                 with m.Case(State.FLUSH):
@@ -248,13 +248,13 @@ class direct_cache(cache_base):
                     # This is the behavior that we probably want, so fix sim_cache
                     # instead.
                     with m.If((~self.tag_read_dout[-2] | ~self.main_stall) & (self.set == self.num_rows - 1)):
-                        m.d.comb += self.state_next.eq(State.IDLE)
+                        m.d.comb += self.state.eq(State.IDLE)
 
                 # In the IDLE state, state switches to COMPARE if CPU is sending
                 # a new request.
                 with m.Case(State.IDLE):
                     with m.If(~self.csb):
-                        m.d.comb += self.state_next.eq(State.COMPARE)
+                        m.d.comb += self.state.eq(State.COMPARE)
 
                 # In the WAIT_HAZARD state, state switches to COMPARE.
                 # This state is used to prevent data hazard.
@@ -263,7 +263,7 @@ class direct_cache(cache_base):
                 # This state delays the cache request 1 cycle so that read
                 # requests will be performed after write is completed.
                 with m.Case(State.WAIT_HAZARD):
-                    m.d.comb += self.state_next.eq(State.COMPARE)
+                    m.d.comb += self.state.eq(State.COMPARE)
 
                 # In the COMPARE state, state switches to:
                 #   IDLE        if current request is hit and CPU isn't sending a new request
@@ -277,45 +277,45 @@ class direct_cache(cache_base):
                     # Check if current request is hit
                     with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
                         with m.If(self.csb):
-                            m.d.comb += self.state_next.eq(State.IDLE)
+                            m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
                             with m.If(~self.web_reg & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
-                                m.d.comb += self.state_next.eq(State.WAIT_HAZARD)
+                                m.d.comb += self.state.eq(State.WAIT_HAZARD)
                             with m.Else():
-                                m.d.comb += self.state_next.eq(State.COMPARE)
+                                m.d.comb += self.state.eq(State.COMPARE)
                     # Check if current request is dirty miss
                     with m.Elif(self.tag_read_dout[-2:] == 0b11):
                         with m.If(self.main_stall):
-                            m.d.comb += self.state_next.eq(State.WRITE)
+                            m.d.comb += self.state.eq(State.WRITE)
                         with m.Else():
-                            m.d.comb += self.state_next.eq(State.WAIT_WRITE)
+                            m.d.comb += self.state.eq(State.WAIT_WRITE)
                     # Else, current request is clean miss
                     with m.Else():
                         with m.If(self.main_stall):
-                            m.d.comb += self.state_next.eq(State.READ)
+                            m.d.comb += self.state.eq(State.READ)
                         with m.Else():
-                            m.d.comb += self.state_next.eq(State.WAIT_READ)
+                            m.d.comb += self.state.eq(State.WAIT_READ)
 
                 # In the WRITE state, state switches to:
                 #   WRITE      if main memory didn't respond yet
                 #   WAIT_WRITE if main memory responded
                 with m.Case(State.WRITE):
                     with m.If(~self.main_stall):
-                        m.d.comb += self.state_next.eq(State.WAIT_WRITE)
+                        m.d.comb += self.state.eq(State.WAIT_WRITE)
 
                 # In the WAIT_WRITE state, state switches to:
                 #   WAIT_WRITE if main memory didn't respond yet
                 #   WAIT_READ  if main memory responded
                 with m.Case(State.WAIT_WRITE):
                     with m.If(~self.main_stall):
-                        m.d.comb += self.state_next.eq(State.WAIT_READ)
+                        m.d.comb += self.state.eq(State.WAIT_READ)
 
                 # In the READ state, state switches to:
                 #   READ      if main memory didn't respond yet
                 #   WAIT_READ if main memory responded
                 with m.Case(State.READ):
                     with m.If(~self.main_stall):
-                        m.d.comb += self.state_next.eq(State.WAIT_READ)
+                        m.d.comb += self.state.eq(State.WAIT_READ)
 
                 # In the WAIT_READ state, state switches to:
                 #   IDLE        if CPU isn't sending a new request
@@ -324,12 +324,12 @@ class direct_cache(cache_base):
                 with m.Case(State.WAIT_READ):
                     with m.If(~self.main_stall):
                         with m.If(self.csb):
-                            m.d.comb += self.state_next.eq(State.IDLE)
+                            m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
                             with m.If(self.set == self.addr.bit_select(self.offset_size, self.set_size)):
-                                m.d.comb += self.state_next.eq(State.WAIT_HAZARD)
+                                m.d.comb += self.state.eq(State.WAIT_HAZARD)
                             with m.Else():
-                                m.d.comb += self.state_next.eq(State.COMPARE)
+                                m.d.comb += self.state.eq(State.COMPARE)
 
 
     def add_request_block(self, m):
@@ -339,29 +339,29 @@ class direct_cache(cache_base):
         # into tag, set and offset values, and write enable and data
         # input are saved in registers.
 
-        m.d.comb += self.tag_next.eq(self.tag)
-        m.d.comb += self.set_next.eq(self.set)
-        m.d.comb += self.offset_next.eq(self.offset)
-        m.d.comb += self.web_reg_next.eq(self.web_reg)
-        m.d.comb += self.wmask_reg_next.eq(self.wmask_reg)
-        m.d.comb += self.din_reg_next.eq(self.din_reg)
+        m.d.comb += self.tag.eq(self.tag)
+        m.d.comb += self.set.eq(self.set)
+        m.d.comb += self.offset.eq(self.offset)
+        m.d.comb += self.web_reg.eq(self.web_reg)
+        m.d.comb += self.wmask_reg.eq(self.wmask_reg)
+        m.d.comb += self.din_reg.eq(self.din_reg)
 
         # If rst is high, input registers are reset.
         # set register becomes 1 since it is going to be used to reset
         # all lines in the tag array.
         with m.If(self.rst):
-            m.d.comb += self.tag_next.eq(0)
-            m.d.comb += self.set_next.eq(1)
-            m.d.comb += self.offset_next.eq(0)
-            m.d.comb += self.web_reg_next.eq(1)
-            m.d.comb += self.wmask_reg_next.eq(0)
-            m.d.comb += self.din_reg_next.eq(0)
+            m.d.comb += self.tag.eq(0)
+            m.d.comb += self.set.eq(1)
+            m.d.comb += self.offset.eq(0)
+            m.d.comb += self.web_reg.eq(1)
+            m.d.comb += self.wmask_reg.eq(0)
+            m.d.comb += self.din_reg.eq(0)
 
         # If flush is high, input registers are not reset.
         # However, set register becomes 0 since it is going to be used to
         # write dirty lines back to main memory.
         with m.Elif(self.flush):
-            m.d.comb += self.set_next.eq(0)
+            m.d.comb += self.set.eq(0)
 
         with m.Else():
             with m.Switch(self.state):
@@ -369,7 +369,7 @@ class direct_cache(cache_base):
                 # In the RESET state, set register is used to reset all lines in
                 # the tag array.
                 with m.Case(State.RESET):
-                    m.d.comb += self.set_next.eq(self.set + 1)
+                    m.d.comb += self.set.eq(self.set + 1)
 
                 # In the FLUSH state, set register is used to write all dirty lines
                 # back to main memory.
@@ -377,38 +377,38 @@ class direct_cache(cache_base):
                     # If current set is clean or main memory is available, increment
                     # the set register.
                     with m.If((~self.tag_read_dout[-2] | ~self.main_stall)):
-                        m.d.comb += self.set_next.eq(self.set + 1)
+                        m.d.comb += self.set.eq(self.set + 1)
 
                 # In the IDLE state, the request is decoded.
                 with m.Case(State.IDLE):
-                    m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
-                    m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                    m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
-                    m.d.comb += self.web_reg_next.eq(self.web)
-                    m.d.comb += self.wmask_reg_next.eq(self.wmask)
-                    m.d.comb += self.din_reg_next.eq(self.din)
+                    m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
+                    m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                    m.d.comb += self.web_reg.eq(self.web)
+                    m.d.comb += self.wmask_reg.eq(self.wmask)
+                    m.d.comb += self.din_reg.eq(self.din)
 
                 # In the COMPARE state, the request is decoded if current request
                 # is hit.
                 with m.Case(State.COMPARE):
                     with m.If(self.tag_read_dout[-1] & (self.tag_read_dout[:self.tag_size] == self.tag)):
-                        m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
-                        m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
-                        m.d.comb += self.web_reg_next.eq(self.web)
-                        m.d.comb += self.wmask_reg_next.eq(self.wmask)
-                        m.d.comb += self.din_reg_next.eq(self.din)
+                        m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
+                        m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                        m.d.comb += self.web_reg.eq(self.web)
+                        m.d.comb += self.wmask_reg.eq(self.wmask)
+                        m.d.comb += self.din_reg.eq(self.din)
 
                 # In the COMPARE state, the request is decoded if main memory
                 # completed read request.
                 with m.Case(State.WAIT_READ):
                     with m.If(~self.main_stall):
-                        m.d.comb += self.tag_next.eq(self.addr[-self.tag_size:])
-                        m.d.comb += self.set_next.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.offset_next.eq(self.addr[:self.offset_size+1])
-                        m.d.comb += self.web_reg_next.eq(self.web)
-                        m.d.comb += self.wmask_reg_next.eq(self.wmask)
-                        m.d.comb += self.din_reg_next.eq(self.din)
+                        m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
+                        m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                        m.d.comb += self.web_reg.eq(self.web)
+                        m.d.comb += self.wmask_reg.eq(self.wmask)
+                        m.d.comb += self.din_reg.eq(self.din)
 
 
     def add_output_block(self, m):

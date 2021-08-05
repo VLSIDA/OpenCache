@@ -7,6 +7,7 @@
 #
 from design import design
 from configuration import configuration
+from cache_signal import CacheSignal
 
 
 class cache_base(design, configuration):
@@ -22,5 +23,8 @@ class cache_base(design, configuration):
 
         cache_config.set_local_config(self)
         self.name = name
+
+        # Copy configs to CacheSignal class for calculations
+        cache_config.set_local_config(CacheSignal)
 
     # TODO: Implement common base design methods here.
