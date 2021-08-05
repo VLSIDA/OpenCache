@@ -24,6 +24,7 @@ class simulate_test(opencache_test):
         OPTS.num_ways = 4
         OPTS.replacement_policy = RP.LRU
         OPTS.simulate = True
+        OPTS.synthesize = True
 
         from cache_config import cache_config
         conf = cache_config(OPTS)
@@ -31,13 +32,11 @@ class simulate_test(opencache_test):
         from cache import cache
         c = cache(cache_config=conf,
                   name=OPTS.output_name)
-
         c.save()
 
         from verify import verify
         v = verify(cache_config=conf,
                    name=OPTS.output_name)
-
         self.check_verification(v)
 
         globals.end_opencache()
