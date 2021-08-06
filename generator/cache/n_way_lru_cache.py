@@ -104,10 +104,11 @@ class n_way_lru_cache(cache_base):
                             with m.Case(i):
                                 # Check if current set is clean or main memory is available, and
                                 # all ways of the set are checked.
-                                with m.If((~self.tag_read_dout.dirty(i) | ~self.main_stall) & (i == self.num_ways - 1)):
-                                    # Request the next tag and data lines from SRAMs.
-                                    m.d.comb += self.tag_read_addr.eq(self.set + 1)
-                                    m.d.comb += self.data_read_addr.eq(self.set + 1)
+                                if i == self.num_ways - 1:
+                                    with m.If(~self.tag_read_dout.dirty(i) | ~self.main_stall):
+                                        # Request the next tag and data lines from SRAMs.
+                                        m.d.comb += self.tag_read_addr.eq(self.set + 1)
+                                        m.d.comb += self.data_read_addr.eq(self.set + 1)
                                 # Check if current set is dirty and main memory is available
                                 with m.If(self.tag_read_dout.dirty(i) & ~self.main_stall):
                                     # Update dirty bits in the tag line.
@@ -324,11 +325,8 @@ class n_way_lru_cache(cache_base):
                     # the last data line. This may cause a simulation mismatch.
                     # This is the behavior that we probably want, so fix sim_cache
                     # instead.
-                    with m.Switch(self.way):
-                        for i in range(self.num_ways):
-                            with m.Case(i):
-                                with m.If((~self.tag_read_dout.dirty(i) | ~self.main_stall) & (i == self.num_ways - 1) & (self.set == self.num_rows - 1)):
-                                    m.d.comb += self.state.eq(State.IDLE)
+                    with m.If((~self.tag_read_dout.dirty(self.way) | ~self.main_stall) & (self.way == self.num_ways - 1) & (self.set == self.num_rows - 1)):
+                        m.d.comb += self.state.eq(State.IDLE)
 
                 # In the IDLE state, state switches to COMPARE if CPU is sending
                 # a new request.
@@ -467,11 +465,8 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.FLUSH):
                     # If current set is clean or main memory is available, increment
                     # the set register when all ways in the set are checked.
-                    with m.Switch(self.way):
-                        for i in range(self.num_ways):
-                            with m.Case(i):
-                                with m.If((~self.tag_read_dout.dirty(i) | ~self.main_stall) & (i == self.num_ways - 1)):
-                                    m.d.comb += self.set.eq(self.set + 1)
+                    with m.If((~self.tag_read_dout.dirty(self.way) | ~self.main_stall) & (self.way == self.num_ways - 1)):
+                        m.d.comb += self.set.eq(self.set + 1)
 
                 # In the IDLE state, the request is decoded.
                 with m.Case(State.IDLE):
@@ -581,11 +576,8 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.FLUSH):
                     # If current set is clean or main memory is available, increment
                     # the way register.
-                    with m.Switch(self.way):
-                        for i in range(self.num_ways):
-                            with m.Case(i):
-                                with m.If((~self.tag_read_dout.dirty(i) | ~self.main_stall)):
-                                    m.d.comb += self.way.eq(self.way + 1)
+                    with m.If((~self.tag_read_dout.dirty(self.way) | ~self.main_stall)):
+                        m.d.comb += self.way.eq(self.way + 1)
 
                 # In the IDLE state, way is reset and the corresponding line from the
                 # use array is requested.
