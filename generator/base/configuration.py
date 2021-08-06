@@ -45,7 +45,7 @@ class configuration:
         tag_opts = {}
         tag_opts["path"] = paths["tag"]
         tag_opts["opts"] = {}
-        tag_opts["opts"]["word_size"]    = (2 + self.tag_size) * self.num_ways
+        tag_opts["opts"]["word_size"]    = self.tag_word_size * self.num_ways
         tag_opts["opts"]["num_words"]    = self.num_rows
         tag_opts["opts"]["num_rw_ports"] = 0
         tag_opts["opts"]["num_r_ports"]  = 1

@@ -64,25 +64,25 @@ class CacheSignal(Signal):
     def valid(self, way=0):
         """ Return valid bit of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_size + 2) + (CacheSignal.tag_size + 1), 1)
+        return self.bit_select(way * (CacheSignal.tag_word_size) + (CacheSignal.tag_word_size - 1), 1)
 
 
     def dirty(self, way=0):
         """ Return dirty bit of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_size + 2) + (CacheSignal.tag_size), 1)
+        return self.bit_select(way * (CacheSignal.tag_word_size) + (CacheSignal.tag_word_size - 2), 1)
 
 
     def tag(self, way=0):
         """ Return tag bits of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_size + 2), CacheSignal.tag_size)
+        return self.bit_select(way * (CacheSignal.tag_word_size), CacheSignal.tag_size)
 
 
     def tag_word(self, way=0):
         """ Return whole tag word of a tag signal. """
 
-        return self.word_select(way, CacheSignal.tag_size + 2)
+        return self.word_select(way, CacheSignal.tag_word_size)
 
 
     def byte(self, byte_offset, word_offset=0, way=0):

@@ -126,7 +126,7 @@ class design(Elaboratable):
         """ Add internal SRAM array instances to cache design. """
 
         # Tag array
-        word_size = (self.tag_size + 2) * self.num_ways
+        word_size = self.tag_word_size* self.num_ways
         self.tag_write_csb  = CacheSignal(reset_less=True, reset=1)
         self.tag_write_addr = CacheSignal(self.set_size, reset_less=True)
         self.tag_write_din  = CacheSignal(word_size, reset_less=True)
