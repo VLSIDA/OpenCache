@@ -43,6 +43,24 @@ class CacheSignal(Signal):
         return super().eq(value)
 
 
+    def parse_tag(self):
+        """ Return tag bits of an address signal. """
+
+        return self[-CacheSignal.tag_size:]
+
+
+    def parse_set(self):
+        """ Return set bits of an address signal. """
+
+        return self.bit_select(self.offset_size, self.set_size)
+
+
+    def parse_offset(self):
+        """ Return offset bits of an address signal. """
+
+        return self[:CacheSignal.offset_size]
+
+
     def valid(self, way=0):
         """ Return valid bit of a tag signal. """
 

@@ -84,8 +84,8 @@ class direct_cache(cache_base):
                 with m.Case(State.IDLE):
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.
-                    m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                    m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                    m.d.comb += self.tag_read_addr.eq(self.addr.parse_set())
+                    m.d.comb += self.data_read_addr.eq(self.addr.parse_set())
 
                 # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
                 # Read requests are sent to tag and data arrays.
@@ -117,8 +117,8 @@ class direct_cache(cache_base):
                                                 m.d.comb += self.data_write_din.byte(i, j).eq(self.din_reg.byte(i))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
-                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.tag_read_addr.eq(self.addr.parse_set())
+                        m.d.comb += self.data_read_addr.eq(self.addr.parse_set())
                     # Check if current request is dirty miss
                     with m.Elif(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
                         # If main memory is busy, switch to WRITE and wait for main
@@ -209,8 +209,8 @@ class direct_cache(cache_base):
                                                 m.d.comb += self.data_write_din.byte(i, j).eq(self.din_reg.byte(i))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
-                        m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.data_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
+                        m.d.comb += self.tag_read_addr.eq(self.addr.parse_set())
+                        m.d.comb += self.data_read_addr.eq(self.addr.parse_set())
 
 
     def add_state_block(self, m):
@@ -279,7 +279,7 @@ class direct_cache(cache_base):
                         with m.If(self.csb):
                             m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
-                            with m.If(~self.web_reg & (self.set == self.addr.bit_select(self.offset_size, self.set_size))):
+                            with m.If(~self.web_reg & (self.set == self.addr.parse_set())):
                                 m.d.comb += self.state.eq(State.WAIT_HAZARD)
                             with m.Else():
                                 m.d.comb += self.state.eq(State.COMPARE)
@@ -326,7 +326,7 @@ class direct_cache(cache_base):
                         with m.If(self.csb):
                             m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
-                            with m.If(self.set == self.addr.bit_select(self.offset_size, self.set_size)):
+                            with m.If(self.set == self.addr.parse_set()):
                                 m.d.comb += self.state.eq(State.WAIT_HAZARD)
                             with m.Else():
                                 m.d.comb += self.state.eq(State.COMPARE)
@@ -381,9 +381,9 @@ class direct_cache(cache_base):
 
                 # In the IDLE state, the request is decoded.
                 with m.Case(State.IDLE):
-                    m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
-                    m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                    m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                    m.d.comb += self.tag.eq(self.addr.parse_tag())
+                    m.d.comb += self.set.eq(self.addr.parse_set())
+                    m.d.comb += self.offset.eq(self.addr.parse_offset())
                     m.d.comb += self.web_reg.eq(self.web)
                     m.d.comb += self.wmask_reg.eq(self.wmask)
                     m.d.comb += self.din_reg.eq(self.din)
@@ -392,9 +392,9 @@ class direct_cache(cache_base):
                 # is hit.
                 with m.Case(State.COMPARE):
                     with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
-                        m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
-                        m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                        m.d.comb += self.tag.eq(self.addr.parse_tag())
+                        m.d.comb += self.set.eq(self.addr.parse_set())
+                        m.d.comb += self.offset.eq(self.addr.parse_offset())
                         m.d.comb += self.web_reg.eq(self.web)
                         m.d.comb += self.wmask_reg.eq(self.wmask)
                         m.d.comb += self.din_reg.eq(self.din)
@@ -403,9 +403,9 @@ class direct_cache(cache_base):
                 # completed read request.
                 with m.Case(State.WAIT_READ):
                     with m.If(~self.main_stall):
-                        m.d.comb += self.tag.eq(self.addr[-self.tag_size:])
-                        m.d.comb += self.set.eq(self.addr.bit_select(self.offset_size, self.set_size))
-                        m.d.comb += self.offset.eq(self.addr[:self.offset_size+1])
+                        m.d.comb += self.tag.eq(self.addr.parse_tag())
+                        m.d.comb += self.set.eq(self.addr.parse_set())
+                        m.d.comb += self.offset.eq(self.addr.parse_offset())
                         m.d.comb += self.web_reg.eq(self.web)
                         m.d.comb += self.wmask_reg.eq(self.wmask)
                         m.d.comb += self.din_reg.eq(self.din)
