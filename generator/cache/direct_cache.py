@@ -435,7 +435,7 @@ class direct_cache(cache_base):
                 # Check if current request is hit
                 with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                     m.d.comb += self.stall.eq(0)
-                    m.d.comb += self.dout.eq(self.data_read_dout.word_select(self.offset, self.word_size))
+                    m.d.comb += self.dout.eq(self.data_read_dout.word(self.offset))
 
             # In the WAIT_READ state, stall is low and data output is valid when
             # main memory completes the read request.
@@ -445,4 +445,4 @@ class direct_cache(cache_base):
                 # Check if main memory answers to the read request
                 with m.If(~self.main_stall):
                     m.d.comb += self.stall.eq(0)
-                    m.d.comb += self.dout.eq(self.main_dout.word_select(self.offset, self.word_size))
+                    m.d.comb += self.dout.eq(self.main_dout.word(self.offset))

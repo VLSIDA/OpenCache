@@ -117,7 +117,7 @@ class n_way_fifo_cache(cache_base):
                                     m.d.comb += self.main_csb.eq(0)
                                     m.d.comb += self.main_web.eq(0)
                                     m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag(i)))
-                                    m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.way, self.line_size))
+                                    m.d.comb += self.main_din.eq(self.data_read_dout.line(i))
 
                 # In the IDLE state, cache waits for CPU to send a new request.
                 # Until there is a new request from the cache, stall is low.
@@ -152,7 +152,7 @@ class n_way_fifo_cache(cache_base):
                             m.d.comb += self.main_csb.eq(0)
                             m.d.comb += self.main_web.eq(0)
                             m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag(self.use_read_dout)))
-                            m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.use_read_dout, self.line_size))
+                            m.d.comb += self.main_din.eq(self.data_read_dout.line(self.use_read_dout))
                     # Else, assume that current request is clean miss
                     with m.Else():
                         with m.If(~self.main_stall):
@@ -204,7 +204,7 @@ class n_way_fifo_cache(cache_base):
                         m.d.comb += self.main_csb.eq(0)
                         m.d.comb += self.main_web.eq(0)
                         m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag(self.way)))
-                        m.d.comb += self.main_din.eq(self.data_read_dout.word_select(self.way, self.line_size))
+                        m.d.comb += self.main_din.eq(self.data_read_dout.line(self.way))
 
                 # In the WAIT_WRITE state, cache waits for main memory to complete
                 # writing.
@@ -515,8 +515,7 @@ class n_way_fifo_cache(cache_base):
                     # Check if current request is hit
                     with m.If(self.tag_read_dout.valid(i) & (self.tag_read_dout.tag(i) == self.tag)):
                         m.d.comb += self.stall.eq(0)
-                        words_per_line = Const(self.words_per_line)
-                        m.d.comb += self.dout.eq(self.data_read_dout.word_select(i * words_per_line + self.offset, self.word_size))
+                        m.d.comb += self.dout.eq(self.data_read_dout.word(self.offset, i))
 
             # In the WAIT_READ state, stall is low and data output is valid main
             # memory answers the read request.
@@ -526,7 +525,7 @@ class n_way_fifo_cache(cache_base):
                 # Check if main memory answers to the read request
                 with m.If(~self.main_stall):
                     m.d.comb += self.stall.eq(0)
-                    m.d.comb += self.dout.eq(self.main_dout.word_select(self.offset, self.word_size))
+                    m.d.comb += self.dout.eq(self.main_dout.word(self.offset))
 
 
     def add_replacement_block(self, m):

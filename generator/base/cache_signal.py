@@ -59,3 +59,15 @@ class CacheSignal(Signal):
         """ Return tag bits of a tag signal. """
 
         return self.bit_select(way * (CacheSignal.tag_size + 2), CacheSignal.tag_size)
+
+
+    def word(self, offset, way=0):
+        """ Return a data word of a data signal. """
+
+        return self.word_select(way * CacheSignal.words_per_line + offset, CacheSignal.word_size)
+
+
+    def line(self, way):
+        """ Return a data line of a data signal. """
+
+        return self.word_select(way, CacheSignal.line_size)
