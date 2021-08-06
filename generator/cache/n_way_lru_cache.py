@@ -114,7 +114,7 @@ class n_way_lru_cache(cache_base):
                                     m.d.comb += self.tag_write_csb.eq(0)
                                     m.d.comb += self.tag_write_addr.eq(self.set)
                                     m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
-                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag_read_dout.tag(i), 0b10))
+                                    m.d.comb += self.tag_write_din.tag_word(i).eq(Cat(self.tag_read_dout.tag(i), 0b10))
                                     # Send the write request to main memory.
                                     m.d.comb += self.main_csb.eq(0)
                                     m.d.comb += self.main_web.eq(0)
@@ -183,7 +183,7 @@ class n_way_lru_cache(cache_base):
                                 m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
                                 m.d.comb += self.data_write_din.eq(self.data_read_dout)
                                 # Update dirty bit in the tag line
-                                m.d.comb += self.tag_write_din[i * (self.tag_size + 2) + self.tag_size].eq(1)
+                                m.d.comb += self.tag_write_din.dirty(i).eq(1)
                                 # Write the word over the write mask
                                 # NOTE: This switch statement is written manually (not only with
                                 # word_select) because word_select fails to generate correct case
@@ -260,7 +260,7 @@ class n_way_lru_cache(cache_base):
                         with m.Switch(self.way):
                             for i in range(self.num_ways):
                                 with m.Case(i):
-                                    m.d.comb += self.tag_write_din.word_select(i, self.tag_size + 2).eq(Cat(self.tag, ~self.web_reg, 0b1))
+                                    m.d.comb += self.tag_write_din.tag_word(i).eq(Cat(self.tag, ~self.web_reg, 0b1))
                         m.d.comb += self.data_write_csb.eq(0)
                         m.d.comb += self.data_write_addr.eq(self.set)
                         m.d.comb += self.data_write_din.eq(self.data_read_dout)
@@ -268,7 +268,7 @@ class n_way_lru_cache(cache_base):
                         with m.Switch(self.way):
                             for i in range(self.num_ways):
                                 with m.Case(i):
-                                    m.d.comb += self.data_write_din.word_select(i, self.line_size).eq(self.main_dout)
+                                    m.d.comb += self.data_write_din.line(i).eq(self.main_dout)
                         # Perform the write request
                         with m.If(~self.web_reg):
                             # Write the word over the write mask
