@@ -8,7 +8,7 @@
 from cache_base import cache_base
 from nmigen import *
 from cache_signal import CacheSignal
-from rtl import State
+from state import State
 
 
 class n_way_random_cache(cache_base):

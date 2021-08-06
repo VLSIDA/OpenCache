@@ -7,7 +7,7 @@
 #
 from cache_base import cache_base
 from nmigen import *
-from rtl import State
+from state import State
 
 
 class direct_cache(cache_base):

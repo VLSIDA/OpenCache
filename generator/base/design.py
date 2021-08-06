@@ -8,7 +8,7 @@
 from nmigen import *
 from nmigen.back import verilog
 from cache_signal import CacheSignal
-from rtl import *
+from state import State
 from policy import ReplacementPolicy as RP
 from globals import OPTS
 
@@ -36,11 +36,28 @@ class design(Elaboratable):
         ])
 
         if OPTS.trim_verilog:
-            code = trim_verilog(code)
+            code = self.trim_verilog(code)
 
         vf = open(verilog_path, "w")
         vf.write(code)
         vf.close()
+
+
+    def trim_verilog(self, code):
+        """ Trim unnecessary lines in a Verilog code. """
+
+        lines = code.splitlines(True)
+
+        for i in range(len(lines)):
+            # Delete \initial register
+            if "\\initial" in lines[i]:
+                lines[i] = ""
+            # Delete auto-generated flops
+            if "$next" in lines[i]:
+                lines[i] = ""
+
+        code = "".join(lines)
+        return code
 
 
     def elaborate(self, platform):

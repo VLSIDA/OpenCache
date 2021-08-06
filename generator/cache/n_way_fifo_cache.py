@@ -8,7 +8,7 @@
 from cache_base import cache_base
 from nmigen import *
 from cache_signal import CacheSignal
-from rtl import State
+from state import State
 from globals import OPTS
 
 
