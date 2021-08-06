@@ -65,6 +65,7 @@ class cache_config:
         if self.tag_size + self.set_size + self.offset_size != self.address_size:
             debug.error("Calculated address size does not match the given address size.", -1)
 
+        # Tag word bit-width of a way
         self.tag_word_size = self.tag_size + 2
 
         # Way size is used in replacement policy

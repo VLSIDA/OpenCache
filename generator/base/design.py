@@ -169,7 +169,6 @@ class design(Elaboratable):
 
         # In this block, flip-flop registers are updated at
         # every positive edge of the clock.
-
         for _, v in self.__dict__.items():
             if isinstance(v, CacheSignal) and v.is_flop:
                 m.d.sync += v.eq(v.next, sync=True)

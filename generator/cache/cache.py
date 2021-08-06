@@ -20,6 +20,7 @@ class cache:
         cache_config.set_local_config(self)
         self.name = name
 
+        # Import the design module of the cache
         if self.associativity == AS.DIRECT:
             from direct_cache import direct_cache as cache
         elif self.associativity == AS.N_WAY:
