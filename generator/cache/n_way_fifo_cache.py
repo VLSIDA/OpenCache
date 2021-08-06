@@ -288,7 +288,7 @@ class n_way_fifo_cache(cache_base):
         # In this block, cache's state is controlled. state flip-flop
         # register is changed in order to switch between states.
 
-        m.d.comb += self.state.eq(self.state)
+        # m.d.comb += self.state.eq(self.state)
 
         # If rst is high, state switches to RESET.
         with m.If(self.rst):
@@ -411,13 +411,6 @@ class n_way_fifo_cache(cache_base):
         # into tag, set and offset values, and write enable and data
         # input are saved in registers.
 
-        m.d.comb += self.tag.eq(self.tag)
-        m.d.comb += self.set.eq(self.set)
-        m.d.comb += self.offset.eq(self.offset)
-        m.d.comb += self.web_reg.eq(self.web_reg)
-        m.d.comb += self.wmask_reg.eq(self.wmask_reg)
-        m.d.comb += self.din_reg.eq(self.din_reg)
-
         # If rst is high, input registers are reset.
         # set register becomes 1 since it is going to be used to reset all
         # lines in the tag array.
@@ -492,9 +485,6 @@ class n_way_fifo_cache(cache_base):
         # In this block, cache's output signals, which are
         # stall and dout, are controlled.
 
-        m.d.comb += self.stall.eq(1)
-        m.d.comb += self.dout.eq(0)
-
         with m.Switch(self.state):
 
             # In the IDLE state, stall is low while there is no request from
@@ -528,8 +518,6 @@ class n_way_fifo_cache(cache_base):
 
         # In this block, FIFO numbers are updated and evicted way
         # is selected according to FIFO replacement policy.
-
-        m.d.comb += self.way.eq(self.way)
 
         # If rst is high, way is reset and FIFO numbers are reset.
         # way register becomes 0 since it is going to be used to reset all

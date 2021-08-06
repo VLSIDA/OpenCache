@@ -22,6 +22,7 @@ class design(Elaboratable):
     def __init__(self):
         pass
 
+
     def verilog_write(self, verilog_path):
         """ Write the behavioral Verilog model. """
 
@@ -71,6 +72,7 @@ class design(Elaboratable):
         self.add_internal_signals()
         self.add_srams(m)
         self.add_flop_block(m)
+        self.add_default_statements(m)
         self.add_memory_block(m)
         self.add_state_block(m)
         self.add_request_block(m)
@@ -94,7 +96,7 @@ class design(Elaboratable):
         self.addr  = CacheSignal(self.address_size)
         self.din   = CacheSignal(self.word_size)
         self.dout  = CacheSignal(self.word_size)
-        self.stall = CacheSignal()
+        self.stall = CacheSignal(reset=1)
 
         # Main memory interface
         self.main_csb   = CacheSignal(reset_less=True, reset=1)
@@ -171,3 +173,14 @@ class design(Elaboratable):
         for _, v in self.__dict__.items():
             if isinstance(v, CacheSignal) and v.is_flop:
                 m.d.sync += v.eq(v.next, sync=True)
+
+
+    def add_default_statements(self, m):
+        """ Add default statements of all flip-flops. """
+
+        # Add default statements for flip-flops only.
+        # Default statements of other registers are automatically
+        # added by nMigen library.
+        for _, v in self.__dict__.items():
+            if isinstance(v, CacheSignal) and v.is_flop:
+                m.d.comb += v.eq(v)
