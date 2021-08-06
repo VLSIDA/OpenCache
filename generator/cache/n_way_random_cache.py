@@ -174,7 +174,7 @@ class n_way_random_cache(cache_base):
                                         with m.Switch(self.offset):
                                             for k in range(self.words_per_line):
                                                 with m.Case(k):
-                                                    m.d.comb += self.data_write_din.word_select((i * self.words_per_line + k) * self.num_bytes + j, 8).eq(self.din_reg.word_select(j, 8))
+                                                    m.d.comb += self.data_write_din.byte(j, k, i).eq(self.din_reg.byte(j))
                             # Read next lines from SRAMs even though CPU is not
                             # sending a new request since read is non-destructive.
                             m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -261,7 +261,7 @@ class n_way_random_cache(cache_base):
                                                 with m.Switch(self.offset):
                                                     for k in range(self.words_per_line):
                                                         with m.Case(k):
-                                                            m.d.comb += self.data_write_din.word_select((j * self.words_per_line + k) * self.num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
+                                                            m.d.comb += self.data_write_din.byte(i, k, j).eq(self.din_reg.byte(i))
                         # Read next lines from SRAMs even though CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))

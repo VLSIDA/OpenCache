@@ -61,6 +61,12 @@ class CacheSignal(Signal):
         return self.bit_select(way * (CacheSignal.tag_size + 2), CacheSignal.tag_size)
 
 
+    def byte(self, byte_offset, word_offset=0, way=0):
+        """ Return a data byte of a data signal. """
+
+        return self.word_select((way * CacheSignal.words_per_line + word_offset) * CacheSignal.num_bytes + byte_offset, 8)
+
+
     def word(self, offset, way=0):
         """ Return a data word of a data signal. """
 

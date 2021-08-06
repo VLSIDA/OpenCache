@@ -114,7 +114,7 @@ class direct_cache(cache_base):
                                     with m.Switch(self.offset):
                                         for j in range(self.words_per_line):
                                             with m.Case(j):
-                                                m.d.comb += self.data_write_din.word_select(j * self.num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
+                                                m.d.comb += self.data_write_din.byte(i, j).eq(self.din_reg.byte(i))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
@@ -206,7 +206,7 @@ class direct_cache(cache_base):
                                     with m.Switch(self.offset):
                                         for j in range(self.words_per_line):
                                             with m.Case(j):
-                                                m.d.comb += self.data_write_din.word_select(j * self.num_bytes + i, 8).eq(self.din_reg.word_select(i, 8))
+                                                m.d.comb += self.data_write_din.byte(i, j).eq(self.din_reg.byte(i))
                         # Read next lines from SRAMs even though the CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.bit_select(self.offset_size, self.set_size))
