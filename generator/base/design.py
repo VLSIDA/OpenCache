@@ -27,14 +27,12 @@ class design(Elaboratable):
         """ Write the behavioral Verilog model. """
 
         # Add IO signals before elaborating
-        self.add_io_signals()
+        ports = self.add_io_signals()
 
-        code = verilog.convert(self, name=self.name, strip_internal_attrs=OPTS.trim_verilog, ports=[
-            # CPU interface signals
-            self.clk, self.rst, self.flush, self.csb, self.web, self.wmask, self.addr, self.din, self.dout, self.stall,
-            # Main memory interface signals
-            self.main_csb, self.main_web, self.main_addr, self.main_din, self.main_dout, self.main_stall
-        ])
+        code = verilog.convert(self,
+                               name=self.name,
+                               strip_internal_attrs=OPTS.trim_verilog,
+                               ports=ports)
 
         if OPTS.trim_verilog:
             code = self.trim_verilog(code)
@@ -104,6 +102,13 @@ class design(Elaboratable):
         self.main_din   = CacheSignal(self.line_size, reset_less=True)
         self.main_dout  = CacheSignal(self.line_size)
         self.main_stall = CacheSignal()
+
+        # Return all port signals
+        ports = []
+        for _, v in self.__dict__.items():
+            if isinstance(v, Value):
+                ports.append(v)
+        return ports
 
 
     def add_internal_signals(self):
