@@ -177,18 +177,18 @@ class n_way_lru_cache(cache_base):
                             m.d.comb += self.main_csb.eq(1)
                             # Perform the write request
                             with m.If(~self.web_reg):
+                                # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_csb.eq(0)
                                 m.d.comb += self.tag_write_addr.eq(self.set)
-                                m.d.comb += self.data_write_csb.eq(0)
-                                m.d.comb += self.data_write_addr.eq(self.set)
                                 m.d.comb += self.tag_write_din.eq(self.tag_read_dout)
-                                m.d.comb += self.data_write_din.eq(self.data_read_dout)
-                                # Update dirty bit in the tag line
                                 m.d.comb += self.tag_write_din.dirty(i).eq(1)
                                 # Write the word over the write mask
                                 # NOTE: This switch statement is written manually (not only with
                                 # word_select) because word_select fails to generate correct case
                                 # statements if offset calculation is a bit complex.
+                                m.d.comb += self.data_write_csb.eq(0)
+                                m.d.comb += self.data_write_addr.eq(self.set)
+                                m.d.comb += self.data_write_din.eq(self.data_read_dout)
                                 for j in range(self.num_bytes):
                                     with m.If(self.wmask_reg[j]):
                                         with m.Switch(self.offset):
