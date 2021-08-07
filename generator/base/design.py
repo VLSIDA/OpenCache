@@ -39,9 +39,8 @@ class design(Elaboratable):
         if OPTS.trim_verilog:
             code = self.trim_verilog(code)
 
-        vf = open(verilog_path, "w")
-        vf.write(code)
-        vf.close()
+        with open(verilog_path, "w") as vf:
+            vf.write(code)
 
 
     def trim_verilog(self, code):
