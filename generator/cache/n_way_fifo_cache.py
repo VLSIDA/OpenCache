@@ -288,8 +288,6 @@ class n_way_fifo_cache(cache_base):
         # In this block, cache's state is controlled. state flip-flop
         # register is changed in order to switch between states.
 
-        # m.d.comb += self.state.eq(self.state)
-
         # If rst is high, state switches to RESET.
         with m.If(self.rst):
             m.d.comb += self.state.eq(State.RESET)
