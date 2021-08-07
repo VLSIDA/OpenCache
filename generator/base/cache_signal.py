@@ -27,7 +27,7 @@ class CacheSignal(Signal):
         # If the signal is a flop, add a "_next" signal to deal
         # with flop operations internally
         if is_flop:
-            self.next = CacheSignal(shape=shape, reset_less=reset_less)
+            self.next = CacheSignal(shape=shape, reset_less=True)
             # Update the name of "_next" signal
             self.next.name = self.name + "_next"
 
