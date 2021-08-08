@@ -95,8 +95,33 @@ class direct_cache(cache_base):
 
                 # In the COMPARE state, cache compares tags.
                 with m.Case(State.COMPARE):
+                    # Assuming that current request is miss, check if it is dirty miss
+                    with m.If(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
+                        # If main memory is busy, switch to WRITE and wait for main
+                        # memory to be available.
+                        with m.If(self.main_stall):
+                            m.d.comb += self.tag_read_addr.eq(self.set)
+                            m.d.comb += self.data_read_addr.eq(self.set)
+                        # If main memory is available, switch to WAIT_WRITE and wait
+                        # for main memory to complete writing.
+                        with m.Else():
+                            m.d.comb += self.main_csb.eq(0)
+                            m.d.comb += self.main_web.eq(0)
+                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
+                            m.d.comb += self.main_din.eq(self.data_read_dout)
+                    # Else, assume that current request is clean miss
+                    with m.Else():
+                        # If main memory is busy, switch to WRITE and wait for main
+                        # memory to be available.
+                        # If main memory is available, switch to WAIT_WRITE and wait
+                        # for main memory to complete writing.
+                        with m.If(~self.main_stall):
+                            m.d.comb += self.main_csb.eq(0)
+                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
                     # Check if current request is hit
                     with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
+                        # Set main memory's csb to 1 again since it could be set 0 above
+                        m.d.comb += self.main_csb.eq(1)
                         # Perform the write request
                         with m.If(~self.web_reg):
                             m.d.comb += self.tag_write_csb.eq(0)
@@ -119,29 +144,6 @@ class direct_cache(cache_base):
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.tag_read_addr.eq(self.addr.parse_set())
                         m.d.comb += self.data_read_addr.eq(self.addr.parse_set())
-                    # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
-                        # If main memory is busy, switch to WRITE and wait for main
-                        # memory to be available.
-                        with m.If(self.main_stall):
-                            m.d.comb += self.tag_read_addr.eq(self.set)
-                            m.d.comb += self.data_read_addr.eq(self.set)
-                        # If main memory is available, switch to WAIT_WRITE and wait
-                        # for main memory to complete writing.
-                        with m.Else():
-                            m.d.comb += self.main_csb.eq(0)
-                            m.d.comb += self.main_web.eq(0)
-                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
-                            m.d.comb += self.main_din.eq(self.data_read_dout)
-                    # Else, current request is clean miss
-                    with m.Else():
-                        # If main memory is busy, switch to WRITE and wait for main
-                        # memory to be available.
-                        # If main memory is available, switch to WAIT_WRITE and wait
-                        # for main memory to complete writing.
-                        with m.If(~self.main_stall):
-                            m.d.comb += self.main_csb.eq(0)
-                            m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
 
                 # In the WRITE state, cache waits for main memory to be available.
                 # When main memory is available, write request is sent.
@@ -272,6 +274,18 @@ class direct_cache(cache_base):
                 #   READ        if current request is clean miss and main memory is busy
                 #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
+                    # Assuming that current request is miss, check if it is dirty miss
+                    with m.If(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
+                        with m.If(self.main_stall):
+                            m.d.comb += self.state.eq(State.WRITE)
+                        with m.Else():
+                            m.d.comb += self.state.eq(State.WAIT_WRITE)
+                    # Else, assume that current request is clean miss
+                    with m.Else():
+                        with m.If(self.main_stall):
+                            m.d.comb += self.state.eq(State.READ)
+                        with m.Else():
+                            m.d.comb += self.state.eq(State.WAIT_READ)
                     # Check if current request is hit
                     with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
                         with m.If(self.csb):
@@ -281,18 +295,6 @@ class direct_cache(cache_base):
                                 m.d.comb += self.state.eq(State.WAIT_HAZARD)
                             with m.Else():
                                 m.d.comb += self.state.eq(State.COMPARE)
-                    # Check if current request is dirty miss
-                    with m.Elif(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
-                        with m.If(self.main_stall):
-                            m.d.comb += self.state.eq(State.WRITE)
-                        with m.Else():
-                            m.d.comb += self.state.eq(State.WAIT_WRITE)
-                    # Else, current request is clean miss
-                    with m.Else():
-                        with m.If(self.main_stall):
-                            m.d.comb += self.state.eq(State.READ)
-                        with m.Else():
-                            m.d.comb += self.state.eq(State.WAIT_READ)
 
                 # In the WRITE state, state switches to:
                 #   WRITE      if main memory didn't respond yet
