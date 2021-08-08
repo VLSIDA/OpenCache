@@ -96,7 +96,7 @@ class direct_cache(cache_base):
                 # In the COMPARE state, cache compares tags.
                 with m.Case(State.COMPARE):
                     # Assuming that current request is miss, check if it is dirty miss
-                    with m.If(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
+                    with self.check_dirty_miss(m):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
                         with m.If(self.main_stall):
@@ -110,7 +110,7 @@ class direct_cache(cache_base):
                             m.d.comb += self.main_addr.eq(Cat(self.set, self.tag_read_dout.tag()))
                             m.d.comb += self.main_din.eq(self.data_read_dout)
                     # Else, assume that current request is clean miss
-                    with m.Else():
+                    with self.check_clean_miss(m):
                         # If main memory is busy, switch to WRITE and wait for main
                         # memory to be available.
                         # If main memory is available, switch to WAIT_WRITE and wait
@@ -119,7 +119,7 @@ class direct_cache(cache_base):
                             m.d.comb += self.main_csb.eq(0)
                             m.d.comb += self.main_addr.eq(Cat(self.set, self.tag))
                     # Check if current request is hit
-                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
+                    with self.check_hit(m):
                         # Set main memory's csb to 1 again since it could be set 0 above
                         m.d.comb += self.main_csb.eq(1)
                         # Perform the write request
@@ -275,19 +275,19 @@ class direct_cache(cache_base):
                 #   WAIT_READ   if current request is clean miss and main memory is available
                 with m.Case(State.COMPARE):
                     # Assuming that current request is miss, check if it is dirty miss
-                    with m.If(self.tag_read_dout.valid() & self.tag_read_dout.dirty()):
+                    with self.check_dirty_miss(m):
                         with m.If(self.main_stall):
                             m.d.comb += self.state.eq(State.WRITE)
                         with m.Else():
                             m.d.comb += self.state.eq(State.WAIT_WRITE)
                     # Else, assume that current request is clean miss
-                    with m.Else():
+                    with self.check_clean_miss(m):
                         with m.If(self.main_stall):
                             m.d.comb += self.state.eq(State.READ)
                         with m.Else():
                             m.d.comb += self.state.eq(State.WAIT_READ)
                     # Check if current request is hit
-                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
+                    with self.check_hit(m):
                         with m.If(self.csb):
                             m.d.comb += self.state.eq(State.IDLE)
                         with m.Else():
@@ -384,7 +384,7 @@ class direct_cache(cache_base):
                 # In the COMPARE state, the request is decoded if current request
                 # is hit.
                 with m.Case(State.COMPARE):
-                    with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
+                    with self.check_hit(m):
                         m.d.comb += self.tag.eq(self.addr.parse_tag())
                         m.d.comb += self.set.eq(self.addr.parse_set())
                         m.d.comb += self.offset.eq(self.addr.parse_offset())
@@ -423,7 +423,7 @@ class direct_cache(cache_base):
             # request is write since read is non-destructive.
             with m.Case(State.COMPARE):
                 # Check if current request is hit
-                with m.If(self.tag_read_dout.valid() & (self.tag_read_dout.tag() == self.tag)):
+                with self.check_hit(m):
                     m.d.comb += self.stall.eq(0)
                     m.d.comb += self.dout.eq(self.data_read_dout.word(self.offset))
 
