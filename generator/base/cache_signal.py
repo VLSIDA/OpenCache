@@ -101,3 +101,9 @@ class CacheSignal(Signal):
         """ Return a data line of a data signal. """
 
         return self.word_select(way, CacheSignal.line_size)
+
+
+    def use(self, way=0):
+        """ Return use bits of a use signal. """
+
+        return self.word_select(way, CacheSignal.way_size)

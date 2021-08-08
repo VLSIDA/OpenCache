@@ -144,7 +144,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
+                        with m.If(self.use_read_dout.use(i) == Const(0, self.way_size)):
                             # Assuming that current request is miss, check if it is dirty miss
                             with self.check_dirty_miss(m, i):
                                 # If main memory is busy, switch to WRITE and wait for
@@ -352,7 +352,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
+                        with m.If(self.use_read_dout.use(i) == Const(0, self.way_size)):
                             # Assuming that current request is miss, check if it is dirty miss
                             with self.check_dirty_miss(m, i):
                                 with m.If(self.main_stall):
@@ -583,7 +583,7 @@ class n_way_lru_cache(cache_base):
                 with m.Case(State.COMPARE):
                     for i in range(self.num_ways):
                         # Find the least recently used way (the way having 0 use number)
-                        with m.If(self.use_read_dout.word_select(i, self.way_size) == Const(0, self.way_size)):
+                        with m.If(self.use_read_dout.use(i) == Const(0, self.way_size)):
                             # Check if current request is clean miss
                             m.d.comb += self.way.eq(i)
                             with self.check_dirty_miss(m, i):
@@ -601,10 +601,8 @@ class n_way_lru_cache(cache_base):
                             # have use numbers more than accessed way's use number are decremented
                             # by 1.
                             for j in range(self.num_ways):
-                                m.d.comb += self.use_write_din.word_select(j, self.way_size).eq(
-                                    self.use_read_dout.word_select(j, self.way_size) - (self.use_read_dout.word_select(j, self.way_size) > self.use_read_dout.word_select(i, self.way_size))
-                                )
-                            m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
+                                m.d.comb += self.use_write_din.use(j).eq(self.use_read_dout.use(j) - (self.use_read_dout.use(j) > self.use_read_dout.use(i))                                )
+                            m.d.comb += self.use_write_din.use(i).eq(self.num_ways - 1)
                             # Read next lines from SRAMs even though CPU is not
                             # sending a new request since read is non-destructive.
                             m.d.comb += self.use_read_addr.eq(self.addr.parse_set())
@@ -628,13 +626,11 @@ class n_way_lru_cache(cache_base):
                         m.d.comb += self.use_write_csb.eq(0)
                         m.d.comb += self.use_write_addr.eq(self.set)
                         for i in range(self.num_ways):
-                            m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(
-                                self.use_read_dout.word_select(i, self.way_size) - (self.use_read_dout.word_select(i, self.way_size) > self.use_read_dout.word_select(self.way, self.way_size))
-                            )
+                            m.d.comb += self.use_write_din.use(i).eq(self.use_read_dout.use(i) - (self.use_read_dout.use(i) > self.use_read_dout.use(self.way)))
                         with m.Switch(self.way):
                             for i in range(self.num_ways):
                                 with m.Case(i):
-                                    m.d.comb += self.use_write_din.word_select(i, self.way_size).eq(self.num_ways - 1)
+                                    m.d.comb += self.use_write_din.use(i).eq(self.num_ways - 1)
                         # Read next lines from SRAMs even though CPU is not
                         # sending a new request since read is non-destructive.
                         m.d.comb += self.use_read_addr.eq(self.addr.parse_set())
