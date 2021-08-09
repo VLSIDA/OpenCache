@@ -6,11 +6,12 @@
 # All rights reserved.
 #
 from design import design
+from logic import logic
 from configuration import configuration
 from cache_signal import CacheSignal
 
 
-class cache_base(design, configuration):
+class cache_base(design, logic, configuration):
     """
     This is the abstract parent class of cache modules.
     Some common methods among different cache modules
@@ -19,6 +20,7 @@ class cache_base(design, configuration):
 
     def __init__(self, cache_config, name):
         design.__init__(self)
+        logic.__init__(self)
         configuration.__init__(self)
 
         cache_config.set_local_config(self)

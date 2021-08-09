@@ -70,12 +70,13 @@ class design(Elaboratable):
         self.add_srams(m)
         self.add_flop_block(m)
         self.add_default_statements(m)
-        self.add_memory_block(m)
-        self.add_state_block(m)
-        self.add_request_block(m)
-        self.add_output_block(m)
-        if self.replacement_policy != RP.NONE:
-            self.add_replacement_block(m)
+        self.add_logic_blocks(m)
+        # self.add_memory_block(m)
+        # self.add_state_block(m)
+        # self.add_request_block(m)
+        # self.add_output_block(m)
+        # if self.replacement_policy != RP.NONE:
+        #     self.add_replacement_block(m)
 
         return m
 
