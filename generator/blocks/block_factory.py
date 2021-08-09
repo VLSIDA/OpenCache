@@ -27,10 +27,10 @@ class block_factory:
     def store_modules(self):
         """ Store modules in the blocks directory. """
 
-        self.modules = []
+        BLOCK_DIR = "{}/blocks".format(os.getenv("OPENCACHE_HOME"))
 
-        # FIXME: Assuming that OpenCache is run from the "generator" directory
-        for module in os.listdir(format(sys.path[0] + "/blocks")):
+        self.modules = []
+        for module in os.listdir(format(BLOCK_DIR)):
             self.modules.append(os.path.basename(module).split(".")[0])
 
 

@@ -16,13 +16,13 @@ import debug
 class code_format_test(opencache_test):
 
     def runTest(self):
-        # FIXME: Config file path may not be found
-        config_file = "tests/configs/config.py"
+
+        OPENCACHE_HOME = os.getenv("OPENCACHE_HOME")
+
+        config_file = "{}/tests/configs/config.py".format(OPENCACHE_HOME)
         globals.init_opencache(config_file)
 
-        # FIXME: Assuming that script is run from generator dir
-        source_code_dir = os.getcwd()
-        source_codes = setup_files(source_code_dir)
+        source_codes = setup_files(OPENCACHE_HOME)
         errors = 0
 
         # Check for tabs or carriage returns

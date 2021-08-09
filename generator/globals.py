@@ -281,13 +281,17 @@ def setup_paths():
     """ Include script directories to the sys path. """
     debug.info(2, "Setting up paths...")
 
-    # TODO: Don't assume that OpenCache is run from generator/ dir
-    home_path = os.getcwd()
+    try:
+        OPENCACHE_HOME = os.getenv("OPENCACHE_HOME")
+    except:
+        debug.error("$OPENCACHE_HOME is not properly defined.", 1)
+    debug.check(os.path.isdir(OPENCACHE_HOME),
+                "$OPENCACHE_HOME does not exist: {0}".format(OPENCACHE_HOME))
 
-    # # Add all of the subdirs to the python path
-    subdir_list = [item for item in os.listdir(home_path) if os.path.isdir(os.path.join(home_path, item))]
+    # Add all of the subdirs to the Python path
+    subdir_list = [item for item in os.listdir(OPENCACHE_HOME) if os.path.isdir(os.path.join(OPENCACHE_HOME, item))]
     for subdir in subdir_list:
-        full_path = "{0}/{1}".format(home_path, subdir)
+        full_path = "{0}/{1}".format(OPENCACHE_HOME, subdir)
         # Use sys.path.insert instead of sys.path.append
         # Python searches in sequential order and common
         # folders (such as verify) with OpenRAM can result

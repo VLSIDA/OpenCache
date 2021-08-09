@@ -7,7 +7,8 @@ OpenCache is an open-source Python generator to create a cache design using Open
 # Documentation
 [This](./docs/Overview.md) serves as the documentation of OpenCache that explains how generated caches work.
 
-# Dependencies
+# Basic Setup
+## Dependencies
 The OpenCache has the following dependencies:
 + Python 3.6 or higher
 + [nMigen] 0.2 or higher
@@ -21,6 +22,16 @@ If want to verify the design via simulation and/or synthesis, you will need:
 For regression testing, you will need some Python packages, which can be installed with the following command:
 ```
 pip3 install -r requirements.txt
+```
+
+## Environment
+You must set an environment variable: 
++ **OPENCACHE\_HOME** should point to the generator source directory. 
+
+For example, add this to your .bashrc file:
+
+```bash
+export OPENCACHE_HOME="$HOME/opencache/generator"
 ```
 
 # Usage
