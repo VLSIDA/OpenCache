@@ -21,7 +21,26 @@ class block_factory:
 
     def __init__(self):
 
+        self.setup_paths()
         self.store_modules()
+
+
+    def setup_paths(self):
+        """ Include subdirectories for block modules. """
+        debug.info(2, "Setting up block paths...")
+
+        BLOCK_DIR = "{}/blocks".format(os.getenv("OPENCACHE_HOME"))
+
+        # Add all of the subdirs to the Python path
+        subdir_list = [item for item in os.listdir(BLOCK_DIR) if os.path.isdir(os.path.join(BLOCK_DIR, item))]
+        for subdir in subdir_list:
+            full_path = "{0}/{1}".format(BLOCK_DIR, subdir)
+            # Use sys.path.insert instead of sys.path.append
+            # Python searches in sequential order and common
+            # folders (such as verify) with OpenRAM can result
+            # in importing wrong source codes.
+            if "__pycache__" not in full_path:
+                sys.path.insert(1, "{}".format(full_path))
 
 
     def store_modules(self):
@@ -30,8 +49,10 @@ class block_factory:
         BLOCK_DIR = "{}/blocks".format(os.getenv("OPENCACHE_HOME"))
 
         self.modules = []
-        for module in os.listdir(format(BLOCK_DIR)):
-            self.modules.append(os.path.basename(module).split(".")[0])
+        for _, _, modules in os.walk(BLOCK_DIR):
+            for module in modules:
+                if module.endswith(".py"):
+                    self.modules.append(module.split(".")[0])
 
 
     def get_module_name(self, module_name):
