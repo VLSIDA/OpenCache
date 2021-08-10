@@ -191,16 +191,14 @@ def check_fifo(sc):
 
     reset(sc)
 
-    # Setup 5 addresses with different tags
-    # but in the same set
+    # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
     # Write different data to each address
     for i in range(5):
         sc.write(address[i], i + 1)
 
-    # Read from each address and check for
-    # replacement
+    # Read from each address and check for replacement
     for i in range(5):
         if sc.find_way(address[i]) is not None:
             return False
@@ -215,8 +213,7 @@ def check_lru(sc):
 
     reset(sc)
 
-    # Setup 5 addresses with different tags
-    # but in the same set
+    # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
     # Write different data to each address
@@ -242,8 +239,7 @@ def check_random(sc):
 
     reset(sc)
 
-    # Setup 5 addresses with different tags
-    # but in the same set
+    # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]
 
     # Write different data to each address

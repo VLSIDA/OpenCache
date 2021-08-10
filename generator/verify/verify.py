@@ -19,8 +19,8 @@ from globals import OPTS
 
 class verify:
     """
-    Class to generate files for verification and verify the design
-    by running EDA tools.
+    Class to generate files for verification and verify the design by running
+    EDA tools.
     """
 
     def __init__(self, cache_config, name):
@@ -35,8 +35,7 @@ class verify:
             self.data = test_data(cache_config, name)
             self.dram = dram(cache_config, name)
 
-        # Print subprocess outputs on the terminal
-        # if verbose debug is enabled
+        # Print subprocess outputs on the terminal if verbose debug is enabled
         self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL
         self.stderr = None if OPTS.verbose_level >= 2 else STDOUT
 
@@ -59,8 +58,8 @@ class verify:
 
     def simulate(self):
         """
-        Save required files and simulate the design
-        by running an EDA tool's simulator.
+        Save required files and simulate the design by running an EDA tool's
+        simulator.
         """
 
         debug.info(1, "  Initializing simulation...")
@@ -95,8 +94,8 @@ class verify:
 
     def synthesize(self):
         """
-        Save required files and synthesize the design
-        by running an EDA tool's synthesizer.
+        Save required files and synthesize the design by running an EDA tool's
+        synthesizer.
         """
 
         debug.info(1, "  Initializing synthesis...")
@@ -197,9 +196,9 @@ class verify:
                 stderr=self.stderr) != 0:
             debug.error("    FuseSoC failed to run!", -1)
 
-        # Delete the temporary CONF file
-        # If this file is not deleted, it can cause syntheses
-        # to fail in the future.
+        # Delete the temporary CONF file.
+        # If this file is not deleted, it can cause syntheses to fail in the
+        # future.
         os.remove(path + "fusesoc.conf")
 
 
@@ -215,8 +214,8 @@ class verify:
                 else:
                     new_file.write(line)
 
-        # Verification needs only the Verilog files
-        # This option will decrease OpenRAM's runtime (hopefully)
+        # Verification needs only the Verilog files.
+        # This option will decrease OpenRAM's runtime (hopefully).
         new_file.write("netlist_only = True\n")
 
         new_file.close()
@@ -269,8 +268,7 @@ class verify:
     def check_sim_result(self, path, file_name):
         """ Read the log file of the simulation. """
 
-        # Result of the simulation is supposed to be
-        # at the end of the log file
+        # Result of the simulation is supposed to be at the end of the log file
         with open("{0}build/{1}/sim-icarus/{2}".format(path,
                                                        self.core.core_name.replace(":", "_"),
                                                        file_name)) as f:

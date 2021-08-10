@@ -41,8 +41,7 @@ class memory_block_base(block_base):
         """ Add flush signal control. """
 
         # If flush is high, state switches to FLUSH.
-        # In the FLUSH state, cache will write all data lines back to main
-        # memory.
+        # In the FLUSH state, cache will write all data lines back to main memory.
         with m.Elif(dsgn.flush):
             m.d.comb += dsgn.tag_read_addr.eq(0)
             m.d.comb += dsgn.data_read_addr.eq(0)
@@ -59,8 +58,8 @@ class memory_block_base(block_base):
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
-        # In the RESET state, cache sends write request to the tag array to
-        # reset the current set.
+        # In the RESET state, cache sends write request to the tag array to reset
+        # the current set.
         # set register is incremented by the Request Block.
         # When set register reaches the end, state switches to IDLE.
         with m.Case(State.RESET):
@@ -82,8 +81,8 @@ class memory_block_base(block_base):
             with m.Switch(dsgn.way):
                 for i in range(dsgn.num_ways):
                     with m.Case(i):
-                        # Check if current set is clean or main memory is available, and
-                        # all ways of the set are checked
+                        # Check if current set is clean or main memory is available,
+                        # and all ways of the set are checked
                         if i == dsgn.num_ways - 1:
                             with m.If(~dsgn.tag_read_dout.dirty(i) | ~dsgn.main_stall):
                                 # Request the next tag and data lines from SRAMs
@@ -140,8 +139,8 @@ class memory_block_base(block_base):
                 with m.If(dsgn.main_stall):
                     m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
                     m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-                # If main memory is available, switch to WAIT_WRITE and wait
-                # for main memory to complete writing.
+                # If main memory is available, switch to WAIT_WRITE and wait for
+                # main memory to complete writing.
                 with m.Else():
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)
@@ -149,10 +148,10 @@ class memory_block_base(block_base):
                     m.d.comb += dsgn.main_din.eq(dsgn.data_read_dout)
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                # If main memory is busy, switch to WRITE and wait for main
-                # memory to be available.
-                # If main memory is available, switch to WAIT_WRITE and wait
-                # for main memory to complete writing.
+                # If main memory is busy, switch to WRITE and wait for main memory
+                # to be available.
+                # If main memory is available, switch to WAIT_WRITE and wait for
+                # main memory to complete writing.
                 with m.If(~dsgn.main_stall):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
@@ -178,8 +177,8 @@ class memory_block_base(block_base):
                                 for j in range(dsgn.words_per_line):
                                     with m.Case(j):
                                         m.d.comb += dsgn.data_write_din.byte(i, j).eq(dsgn.din_reg.byte(i))
-                # Read next lines from SRAMs even though the CPU is not
-                # sending a new request since read is non-destructive.
+                # Read next lines from SRAMs even though the CPU is not sending
+                # a new request since read is non-destructive.
                 m.d.comb += dsgn.tag_read_addr.eq(dsgn.addr.parse_set())
                 m.d.comb += dsgn.data_read_addr.eq(dsgn.addr.parse_set())
 

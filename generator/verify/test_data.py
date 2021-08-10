@@ -108,8 +108,8 @@ class test_data:
                 self.stall[i] = self.sc.stall_cycles(self.addr[i])
                 if self.web[i]:
                     # Overwrite data for read to prevent bugs
-                    # NOTE: If the same address is written twice,
-                    # this data could be old.
+                    # NOTE: If the same address is written twice, this data
+                    # could be old.
                     self.data[i] = self.sc.read(self.addr[i])
                 else:
                     self.sc.write(self.addr[i], self.data[i])

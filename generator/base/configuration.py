@@ -19,10 +19,7 @@ class configuration:
 
 
     def calculate_configs(self, paths):
-        """
-        Calculate config options for
-        internal SRAM arrays of the cache.
-        """
+        """ Calculate config options for internal SRAM arrays of the cache. """
 
         # Store config file options in a list
         config_opts = []

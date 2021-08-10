@@ -29,10 +29,10 @@ class request_block_base(block_base):
         """ Add reset signal control. """
 
         # If rst is high, input registers are reset.
-        # set register becomes 1 since it is going to be used to reset all
-        # lines in the tag array.
-        # way register becomes 0 since it is going to be used to reset all
-        # ways in a tag line.
+        # set register becomes 1 since it is going to be used to reset all lines
+        # in the tag array.
+        # way register becomes 0 since it is going to be used to reset all ways
+        # in a tag line.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.tag.eq(0)
             m.d.comb += dsgn.set.eq(1)

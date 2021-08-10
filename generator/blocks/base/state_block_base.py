@@ -54,8 +54,8 @@ class state_block_base(block_base):
 
         # In the RESET state, state switches to IDLE if reset is completed.
         with m.Case(State.RESET):
-            # When set reaches the limit, the last write request is sent
-            # to the tag array.
+            # When set reaches the limit, the last write request is sent to the
+            # tag array.
             with m.If(dsgn.set == dsgn.num_rows - 1):
                 m.d.comb += dsgn.state.eq(State.IDLE)
 

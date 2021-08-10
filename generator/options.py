@@ -40,9 +40,9 @@ class options(optparse.Values):
     #! Returning line is not yet supported
     return_type = "word"
 
-    # Data hazard might occur when the same location is read and
-    # written at the same cycle. If SRAM arrays are guaranteed to
-    # be data hazard proof, this can be set False.
+    # Data hazard might occur when the same location is read and written at the
+    # same cycle. If SRAM arrays are guaranteed to be data hazard proof, this
+    # can be set False.
     data_hazard = True
 
     # Define the output file paths
@@ -72,9 +72,8 @@ class options(optparse.Values):
     # Verify the design by synthesizing
     synthesize = False
 
-    # OpenRAM needs to be run for verification. If the output of
-    # it has already been generated, this can be set False for
-    # faster verification.
+    # OpenRAM needs to be run for verification. If the output of it has already
+    # been generated, this can be set False for faster verification.
     run_openram = True
 
     num_threads = 1

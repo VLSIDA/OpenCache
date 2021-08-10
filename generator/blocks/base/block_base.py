@@ -9,8 +9,8 @@
 class block_base:
     """
     This is the base class of always block modules.
-    Methods of this class can be overridden for specific implementation
-    of each always block.
+    Methods of this class can be overridden for specific implementation of each
+    always block.
     """
 
     def __init__(self):

@@ -11,8 +11,8 @@ from cache_signal import CacheSignal
 
 class n_way_random_cache(cache_base):
     """
-    This is the design module of N-way set associative cache
-    with random replacement policy.
+    This is the design module of N-way set associative cache with random
+    replacement policy.
     """
 
     def __init__(self, cache_config, name):

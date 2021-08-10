@@ -11,8 +11,7 @@ from block_factory import factory
 
 class logic:
     """
-    This is the logic base class. Design block classes
-    are instantiated here.
+    This is the logic base class. Design block classes are instantiated here.
     This is inherited by the cache_base class.
     """
 

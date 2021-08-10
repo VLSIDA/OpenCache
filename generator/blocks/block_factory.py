@@ -13,10 +13,9 @@ from globals import OPTS
 
 class block_factory:
     """
-    This is a factory pattern to create block modules to be
-    used in logic class.
-    Logic blocks can be overridden for more specific Verilog
-    design. This factory makes block instantiation easier.
+    This is a factory pattern to create block modules to be used in logic class.
+    Logic blocks can be overridden for more specific Verilog design.
+    This factory makes block instantiation easier.
     """
 
     def __init__(self):
@@ -35,10 +34,9 @@ class block_factory:
         subdir_list = [item for item in os.listdir(BLOCK_DIR) if os.path.isdir(os.path.join(BLOCK_DIR, item))]
         for subdir in subdir_list:
             full_path = "{0}/{1}".format(BLOCK_DIR, subdir)
-            # Use sys.path.insert instead of sys.path.append
-            # Python searches in sequential order and common
-            # folders (such as verify) with OpenRAM can result
-            # in importing wrong source codes.
+            # Use sys.path.insert instead of sys.path.append Python searches in
+            # sequential order and common folders (such as verify) with OpenRAM
+            # can result in importing wrong source codes.
             if "__pycache__" not in full_path:
                 sys.path.insert(1, "{}".format(full_path))
 

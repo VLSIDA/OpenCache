@@ -80,8 +80,8 @@ class replacement_block_lru(replacement_block_base):
         # In the IDLE state, way is reset and the corresponding line from the
         # use array is requested.
         with m.Case(State.IDLE):
-            # Read next lines from SRAMs even though CPU is not
-            # sending a new request since read is non-destructive.
+            # Read next lines from SRAMs even though CPU is not sending a new
+            # request since read is non-destructive.
             m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
 
 
@@ -154,8 +154,8 @@ class replacement_block_lru(replacement_block_base):
             m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
             with m.If(~dsgn.main_stall):
                 # Each way in a set has its own use numbers. These numbers
-                # start from 0. Every time a way is needed to be evicted,
-                # the way having 0 use number is chosen.
+                # start from 0. Every time a way is needed to be evicted, the
+                # way having 0 use number is chosen.
                 # Every time a way is accessed (read or write), its corresponding
                 # use number is increased to the maximum value and other ways which
                 # have use numbers more than accessed way's use number are decremented

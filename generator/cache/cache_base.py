@@ -14,8 +14,7 @@ from cache_signal import CacheSignal
 class cache_base(design, logic, configuration):
     """
     This is the abstract parent class of cache modules.
-    Some common methods among different cache modules
-    are implemented here.
+    Some common methods among different cache modules are implemented here.
     """
 
     def __init__(self, cache_config, name):

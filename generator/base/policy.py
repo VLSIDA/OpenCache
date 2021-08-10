@@ -6,8 +6,7 @@
 # All rights reserved.
 #
 """
-Enum classes to represent cache policies
-are defined here.
+Enum classes to represent cache policies are defined here.
 """
 from enum import IntEnum
 

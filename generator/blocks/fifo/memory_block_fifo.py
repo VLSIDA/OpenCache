@@ -49,8 +49,8 @@ class memory_block_fifo(memory_block_base):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
-            # Compare all ways' tags to find a hit. Since each way has a
-            # different tag, only one of them can match at most.
+            # Compare all ways' tags to find a hit. Since each way has a different
+            # tag, only one of them can match at most.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
                     # Set main memory's csb to 1 again since it could be set 0 above

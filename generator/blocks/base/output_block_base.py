@@ -35,9 +35,9 @@ class output_block_base(block_base):
     def add_idle(self, dsgn, m):
         """ Add statements for the IDLE state. """
 
-        # In the IDLE state, stall is low while there is no request from
-        # the CPU. When there is a request, state switches to COMPARE and
-        # stall becomes high in the next cycle.
+        # In the IDLE state, stall is low while there is no request from the CPU.
+        # When there is a request, state switches to COMPARE and stall becomes
+        # high in the next cycle.
         with m.Case(State.IDLE):
             m.d.comb += dsgn.stall.eq(0)
 

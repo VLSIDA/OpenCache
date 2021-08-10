@@ -292,10 +292,9 @@ def setup_paths():
     subdir_list = [item for item in os.listdir(OPENCACHE_HOME) if os.path.isdir(os.path.join(OPENCACHE_HOME, item))]
     for subdir in subdir_list:
         full_path = "{0}/{1}".format(OPENCACHE_HOME, subdir)
-        # Use sys.path.insert instead of sys.path.append
-        # Python searches in sequential order and common
-        # folders (such as verify) with OpenRAM can result
-        # in importing wrong source codes.
+        # Use sys.path.insert instead of sys.path.append Python searches in
+        # sequential order and common folders (such as verify) with OpenRAM
+        # can result in importing wrong source codes.
         if "__pycache__" not in full_path:
             sys.path.insert(1, "{}".format(full_path))
 
@@ -304,7 +303,7 @@ def init_paths():
     """ Create the output directory if it doesn't exist """
 
     # Don't delete the output dir, it may have other files!
-    # make the directory if it doesn't exist
+    # Make the directory if it doesn't exist
     try:
         debug.info(1, "Creating output directory: {}".format(OPTS.output_path))
         os.makedirs(OPTS.output_path, 0o750)
@@ -328,7 +327,8 @@ def init_paths():
 
 def report_status():
     """
-    Check for valid arguments and report the info about the cache being generated.
+    Check for valid arguments and report the info about the cache being
+    generated.
     """
     global OPTS
 

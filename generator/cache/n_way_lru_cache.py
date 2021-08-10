@@ -13,8 +13,8 @@ from globals import OPTS
 
 class n_way_lru_cache(cache_base):
     """
-    This is the design module of N-way set associative cache
-    with LRU replacement policy.
+    This is the design module of N-way set associative cache with LRU
+    replacement policy.
     """
 
     def __init__(self, cache_config, name):
@@ -23,10 +23,7 @@ class n_way_lru_cache(cache_base):
 
 
     def calculate_configs(self, paths):
-        """
-        Calculate config options for
-        internal SRAM arrays of the cache.
-        """
+        """ Calculate config options for internal SRAM arrays of the cache. """
 
         # Store config file options in a list
         config_opts = super().calculate_configs(paths)

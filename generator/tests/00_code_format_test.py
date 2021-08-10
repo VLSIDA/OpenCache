@@ -84,8 +84,8 @@ def check_file_tab(file_name):
 
 def check_file_carriage(file_name):
     """
-    Check if file contains carriage returns at the end of lines
-    and return the number of carriage return lines.
+    Check if file contains carriage returns at the end of lines and return the
+    number of carriage return lines.
     """
 
     f = open(file_name, 'r+b')
@@ -109,8 +109,8 @@ def check_file_carriage(file_name):
 
 def check_file_whitespace(file_name):
     """
-    Check if file contains a line with only whitespace (except \n)
-    and return the number of whitespace only lines.
+    Check if file contains a line with only whitespace (except \n) and return
+    the number of whitespace only lines.
     """
 
     f = open(file_name, 'r')
@@ -134,8 +134,8 @@ def check_file_whitespace(file_name):
 
 def check_file_print_call(file_name):
     """
-    Check if file (except debug.py) calls the _print_ function. We should
-    use the debug output with verbosity instead!
+    Check if file (except debug.py) calls the _print_ function. We should use
+    the debug output with verbosity instead!
     """
 
     file = open(file_name, "r+b")

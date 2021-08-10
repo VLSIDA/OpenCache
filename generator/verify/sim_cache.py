@@ -54,8 +54,8 @@ class sim_cache:
             self.random = 0
             self.update_random(self.num_rows)
 
-        # Return 1 less stall cycles since test_data.v waits for 1 cycle
-        # in order to submit the request.
+        # Return 1 less stall cycles since test_data.v waits for 1 cycle in
+        # order to submit the request.
         return self.num_rows - 1
 
 
@@ -73,8 +73,8 @@ class sim_cache:
 
     def flush(self):
         """
-        Write dirty data lines back to DRAM and
-        return the number of stall cycles.
+        Write dirty data lines back to DRAM and return the number of stall
+        cycles.
         """
 
         stalls = 0
@@ -109,10 +109,7 @@ class sim_cache:
 
 
     def merge_address(self, tag_decimal, set_decimal, offset_decimal):
-        """
-        Create the address consists of given
-        tag, set, and offset values.
-        """
+        """ Create the address consists of given tag, set, and offset values. """
 
         tag_binary    = "{0:0{1}b}".format(tag_decimal, self.tag_size)
         set_binary    = "{0:0{1}b}".format(set_decimal, self.set_size)
@@ -262,9 +259,9 @@ class sim_cache:
 
         # In order to calculate the stall cycles correctly, random counter
         # needs to be updated temporarily here.
-        # If there is a data hazard, cache stalls in WAIT_HAZARD state,
-        # which results in incrementing the random counter. Therefore,
-        # we will increment it here.
+        # If there is a data hazard, cache stalls in WAIT_HAZARD state, which
+        # results in incrementing the random counter. Therefore, we will
+        # increment it here.
         if self.is_data_hazard(address):
             self.update_random(1)
 
@@ -273,8 +270,8 @@ class sim_cache:
             # the request is a miss
             stall_cycles += 1
 
-            # If DRAM is not yet ready and the request is miss, cache needs to wait
-            # until DRAM is ready
+            # If DRAM is not yet ready and the request is miss, cache needs to
+            # wait until DRAM is ready
             stall_cycles += self.dram_stalls
             self.dram_stalls = 0
 
@@ -283,15 +280,14 @@ class sim_cache:
             evicted_way = self.way_to_evict(set_decimal)
             is_dirty    = self.dirty_array[set_decimal][evicted_way]
 
-            # If a way is written back before being replaced,
-            # cache stalls for 2n+1 cycles in total:
+            # If a way is written back before being replaced, cache stalls for
+            # 2n+1 cycles in total:
             # - n while writing
             # - 1 for sending the read request to DRAM
             # - n while reading
             stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
 
-        # After the calculation is done, the random counter should be
-        # decremented.
+        # After the calculation is done, the random counter should be decremented
         if self.is_data_hazard(address):
             self.update_random(-1)
 
@@ -303,19 +299,18 @@ class sim_cache:
 
         _, set_decimal, _ = self.parse_address(address)
 
-        # No data hazard if this is the first request or current
-        # request is not in the same set with the previous request
+        # No data hazard if this is the first request or current request is not
+        # in the same set with the previous request
         if self.prev_set is None or set_decimal != self.prev_set:
             return False
 
         if self.replacement_policy == RP.LRU:
             # In LRU cache, use bits are updated in each access.
-            # Therefore, when there are two requests to the same
-            # set, data hazard on LRU SRAM might occur.
+            # Therefore, when there are two requests to the same set, data
+            # hazard on LRU SRAM might occur.
             return True
         else:
-            # If previous request was hit and write
-            # If previous request was miss
+            # If previous request was hit and write If previous request was miss
             return (self.prev_hit and not self.prev_web) or (not self.prev_hit)
 
         return False
@@ -326,9 +321,8 @@ class sim_cache:
 
         # Check if replacement policy matches
         if self.replacement_policy == RP.FIFO:
-            # Starting from 0, increase the FIFO number every time a
-            # new data is brought from DRAM.
-            #
+            # Starting from 0, increase the FIFO number every time a new data
+            # is brought from DRAM.
             # When it reaches the max value, go back to 0 and proceed.
             self.fifo_array[set_decimal] += 1
             self.fifo_array[set_decimal] %= self.num_ways
@@ -339,12 +333,11 @@ class sim_cache:
 
         # Check if replacement policy matches
         if self.replacement_policy == RP.LRU:
-            # There is a number for each way in a set. They are ordered
-            # by their access time relative to each other.
-            #
-            # When a way is accessed (read or write), it is brought to
-            # the top of the order (highest possible number) and numbers
-            # which are more than its previous value are decreased by one.
+            # There is a number for each way in a set. They are ordered by their
+            # access time relative to each other.
+            # When a way is accessed (read or write), it is brought to the top
+            # of the order (highest possible number) and numbers which are more
+            # than its previous value are decreased by one.
             for i in range(self.num_ways):
                 if self.lru_array[set_decimal][i] > self.lru_array[set_decimal][way]:
                     self.lru_array[set_decimal][i] -= 1
@@ -356,11 +349,9 @@ class sim_cache:
 
         # Check if replacement policy matches
         if self.replacement_policy == RP.RANDOM:
-            # In the real hardware, random caches have a register acting 
-            # like a counter. This register is incremented at every posedge
-            # of the clock.
-            #
-            # Since we cannot guarantee how many cycles a miss will take,
-            # this register essentially has random values.
+            # In the real hardware, random caches have a register acting like a
+            # counter. This register is incremented at every posedge of the clock.
+            # Since we cannot guarantee how many cycles a miss will take, this
+            # register essentially has random values.
             self.random += cycles
             self.random %= self.num_ways

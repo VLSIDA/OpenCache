@@ -34,8 +34,8 @@ class state_block_random(state_block_base):
                 with m.If(dsgn.main_stall):
                     m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
                     m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-                # If main memory is available, switch to WAIT_WRITE and
-                # wait for main memory to complete writing.
+                # If main memory is available, switch to WAIT_WRITE and wait for
+                # main memory to complete writing.
                 with m.Else():
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)

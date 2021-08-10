@@ -15,8 +15,8 @@ from globals import OPTS
 
 class design(Elaboratable):
     """
-    This is the base class for "elaboratable" design
-    modules. Cache modules will inherit this.
+    This is the base class for "elaboratable" design modules.
+    Cache modules will inherit this.
     """
 
     def __init__(self):
@@ -63,8 +63,8 @@ class design(Elaboratable):
 
         m = Module()
 
-        # NOTE: IO signals must be added before elaborating. Otherwise,
-        # nMigen fails to detect port signals and their directions.
+        # NOTE: IO signals must be added before elaborating. Otherwise, nMigen
+        # fails to detect port signals and their directions.
 
         self.add_internal_signals()
         self.add_srams(m)
@@ -166,8 +166,8 @@ class design(Elaboratable):
     def add_flop_block(self, m):
         """ Add flip-flop block to cache design. """
 
-        # In this block, flip-flop registers are updated at
-        # every positive edge of the clock.
+        # In this block, flip-flop registers are updated at every positive edge
+        # of the clock.
         for _, v in self.__dict__.items():
             if isinstance(v, CacheSignal) and v.is_flop:
                 m.d.sync += v.eq(v.next, sync=True)
@@ -177,8 +177,8 @@ class design(Elaboratable):
         """ Add default statements of all flip-flops. """
 
         # Add default statements for flip-flops only.
-        # Default statements of other registers are automatically
-        # added by nMigen library.
+        # Default statements of other registers are automatically added by
+        # nMigen library.
         for _, v in self.__dict__.items():
             if isinstance(v, CacheSignal) and v.is_flop:
                 m.d.comb += v.eq(v)

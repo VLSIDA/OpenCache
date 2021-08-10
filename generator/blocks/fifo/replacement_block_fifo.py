@@ -24,8 +24,8 @@ class replacement_block_fifo(replacement_block_base):
         """ Add reset signal control. """
 
         # If rst is high, way is reset and FIFO numbers are reset.
-        # way register becomes 0 since it is going to be used to reset all
-        # ways in FIFO and tag lines.
+        # way register becomes 0 since it is going to be used to reset all ways
+        # in FIFO and tag lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
             m.d.comb += dsgn.use_write_csb.eq(0)
@@ -37,8 +37,8 @@ class replacement_block_fifo(replacement_block_base):
         """ Add flush signal control. """
 
         # If flush is high, way is reset.
-        # way register becomes 0 since it is going to be used to write all
-        # data lines back to main memory.
+        # way register becomes 0 since it is going to be used to write all data
+        # lines back to main memory.
         with m.Elif(dsgn.flush):
             m.d.comb += dsgn.way.eq(0)
 
@@ -54,8 +54,8 @@ class replacement_block_fifo(replacement_block_base):
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
-        # In the RESET state, way register is used to reset all ways in tag
-        # and use lines.
+        # In the RESET state, way register is used to reset all ways in tag and
+        # use lines.
         with m.Case(State.RESET):
             m.d.comb += dsgn.use_write_csb.eq(0)
             m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
@@ -65,8 +65,8 @@ class replacement_block_fifo(replacement_block_base):
     def add_flush(self, dsgn, m):
         """ Add statements for the FLUSH state. """
 
-        # In the FLUSH state, way register is used to write all data lines
-        # back to main memory.
+        # In the FLUSH state, way register is used to write all data lines back
+        # to main memory.
         with m.Case(State.FLUSH):
             # If current set is clean or main memory is available, increment
             # the way register.
@@ -80,8 +80,8 @@ class replacement_block_fifo(replacement_block_base):
         # In the IDLE state, way is reset and the corresponding line from the
         # use array is requested.
         with m.Case(State.IDLE):
-            # Read next lines from SRAMs even though CPU is not
-            # sending a new request since read is non-destructive.
+            # Read next lines from SRAMs even though CPU is not sending a new
+            # request since read is non-destructive.
             m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
 
 
@@ -104,8 +104,8 @@ class replacement_block_fifo(replacement_block_base):
             m.d.comb += dsgn.way.eq(dsgn.use_read_dout)
             # The corresponding use array line needs to be requested if current
             # request is hit.
-            # Read next lines from SRAMs even though CPU is not
-            # sending a new request since read is non-destructive.
+            # Read next lines from SRAMs even though CPU is not sending a new
+            # request since read is non-destructive.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
                     m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
