@@ -22,6 +22,31 @@ class n_way_fifo_cache(cache_base):
         super().__init__(cache_config, name)
 
 
+    def calculate_configs(self, paths):
+        """
+        Calculate config options for
+        internal SRAM arrays of the cache.
+        """
+
+        # Store config file options in a list
+        config_opts = super().calculate_configs(paths)
+
+        # Use array of the cache
+        use_opts = {}
+        use_opts["path"] = paths["use"]
+        use_opts["opts"] = {}
+        use_opts["opts"]["word_size"]    = self.way_size
+        use_opts["opts"]["num_words"]    = self.num_rows
+        use_opts["opts"]["num_rw_ports"] = 0
+        use_opts["opts"]["num_r_ports"]  = 1
+        use_opts["opts"]["num_w_ports"]  = 1
+        use_opts["opts"]["output_path"]  = '"{}fifo_array"'.format(OPTS.output_path)
+        use_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.use_array_name)
+        config_opts.append(use_opts)
+
+        return config_opts
+
+
     def add_internal_signals(self):
         """ Add internal registers and wires to cache design. """
 
