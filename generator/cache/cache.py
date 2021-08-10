@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import debug
-from globals import OPTS
 from policy import Associativity as AS, ReplacementPolicy as RP
+from globals import OPTS
 
 
 class cache:

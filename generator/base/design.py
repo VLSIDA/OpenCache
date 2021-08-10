@@ -5,11 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from nmigen import *
+from nmigen import Elaboratable, Module, Instance
+from nmigen import ClockSignal, ResetSignal
+from nmigen import Value
 from nmigen.back import verilog
 from cache_signal import CacheSignal
 from state import State
-from policy import ReplacementPolicy as RP
 from globals import OPTS
 
 

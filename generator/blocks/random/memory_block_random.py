@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 from memory_block_base import memory_block_base
-from nmigen import *
 from state import State
 
 

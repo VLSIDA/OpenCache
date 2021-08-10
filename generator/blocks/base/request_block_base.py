@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 from block_base import block_base
-from nmigen import *
 from state import State
 
 
