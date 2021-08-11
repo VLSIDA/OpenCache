@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from memory_block_base import memory_block_base
+from state_block_base import state_block_base
 from state import State
 
 
-class memory_block_random(memory_block_base):
+class state_block_random(state_block_base):
     """
-    This class extends base memory controller module for random replacement
+    This class extends base state controller module for random replacement
     policy.
     """
 

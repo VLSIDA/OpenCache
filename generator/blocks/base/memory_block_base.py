@@ -132,15 +132,13 @@ class memory_block_base(block_base):
 
         # In the COMPARE state, cache compares tags.
         with m.Case(State.COMPARE):
+            m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
+            m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m):
-                # If DRAM is busy, switch to WRITE and wait for DRAM to be available
-                with m.If(dsgn.main_stall):
-                    m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
-                    m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.Else():
+                with m.If(~dsgn.main_stall):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_read_dout.tag()))

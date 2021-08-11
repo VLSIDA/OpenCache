@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from state_block_base import state_block_base
+from memory_block_base import memory_block_base
 from nmigen import Cat
 from state import State
 
 
-class state_block_random(state_block_base):
+class memory_block_random(memory_block_base):
     """
-    This class extends base state controller module for random replacement
+    This class extends base memory controller module for random replacement
     policy.
     """
 
@@ -27,15 +27,13 @@ class state_block_random(state_block_base):
         # In the COMPARE state, cache compares tags.
         # Stall and dout are driven by the Output Block.
         with m.Case(State.COMPARE):
+            m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
+            m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m, dsgn.random):
-                # If DRAM is busy, switch to WRITE and wait for DRAM to be available
-                with m.If(dsgn.main_stall):
-                    m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
-                    m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.Else():
+                with m.If(~dsgn.main_stall):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_read_dout.tag(dsgn.random)))
@@ -43,8 +41,6 @@ class state_block_random(state_block_base):
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
                 with m.If(~dsgn.main_stall):
-                    m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
-                    m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
             # Check if there is an empty way. All empty ways need to be filled
@@ -52,8 +48,6 @@ class state_block_random(state_block_base):
             for i in range(dsgn.num_ways):
                 with m.If(~dsgn.tag_read_dout.valid(i)):
                     with m.If(~dsgn.main_stall):
-                        m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
-                        m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
                         m.d.comb += dsgn.main_csb.eq(0)
                         m.d.comb += dsgn.main_web.eq(1)
                         m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))

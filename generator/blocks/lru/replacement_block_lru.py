@@ -100,13 +100,12 @@ class replacement_block_lru(replacement_block_base):
         # policy of the cache.
         # Also use numbers are updated if current request is hit.
         with m.Case(State.COMPARE):
+            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
                 with m.If(dsgn.use_read_dout.use(i) == Const(0, dsgn.way_size)):
                     # Check if current request is clean miss
                     m.d.comb += dsgn.way.eq(i)
-                    with dsgn.check_dirty_miss(m, i):
-                        m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
             # Check if current request is a hit
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
