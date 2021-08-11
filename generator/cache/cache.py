@@ -66,10 +66,10 @@ class cache:
         }
         if not self.replacement_policy.has_sram_array(): del cpaths["use"]
         for k, cpath in cpaths.items():
-            debug.print_raw("  Config: Writing to {}".format(cpath))
+            debug.print_raw("Config: Writing to {}".format(cpath))
         self.config_write(cpaths)
 
         # Write the Verilog file
         vpath = OPTS.output_path + self.c.name + ".v"
-        debug.print_raw("  Verilog: Writing to {}".format(vpath))
+        debug.print_raw("Verilog: Writing to {}".format(vpath))
         self.verilog_write(vpath)

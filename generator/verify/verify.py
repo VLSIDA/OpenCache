@@ -53,7 +53,7 @@ class verify:
         if OPTS.synthesize:
             self.synthesize()
 
-        debug.print_raw("  Verification completed.")
+        debug.print_raw("Verification completed.")
 
 
     def simulate(self):
@@ -62,34 +62,34 @@ class verify:
         simulator.
         """
 
-        debug.info(1, "  Initializing simulation...")
-        debug.info(1, "    Writing simulation files...")
+        debug.info(1, "Initializing simulation...")
+        debug.info(1, "Writing simulation files...")
 
         # Write the test bench file
         tb_path = OPTS.temp_path + "test_bench.v"
-        debug.info(1, "      Verilog (Test bench): Writing to {}".format(tb_path))
+        debug.info(1, "Verilog (Test bench): Writing to {}".format(tb_path))
         self.tb.write(tb_path)
 
         # Write the test data file
         data_path = OPTS.temp_path + "test_data.v"
-        debug.info(1, "      Verilog (Test data): Writing to {}".format(data_path))
+        debug.info(1, "Verilog (Test data): Writing to {}".format(data_path))
         self.data.generate_data()
         self.data.write(data_path)
 
         # Write the DRAM file
         dram_path = OPTS.temp_path + "dram.v"
-        debug.info(1, "      Verilog (DRAM): Writing to {}".format(dram_path))
+        debug.info(1, "Verilog (DRAM): Writing to {}".format(dram_path))
         self.dram.write(dram_path)
 
         # Run FuseSoc for simulation
-        debug.info(1, "    Running FuseSoC for simulation...")
+        debug.info(1, "Running FuseSoC for simulation...")
         self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, True)
 
         # Check the result of the simulation
         if self.check_sim_result(OPTS.temp_path, "icarus.log"):
-            debug.info(1, "    Simulation successful")
+            debug.info(1, "Simulation successful")
         else:
-            debug.error("    Simulation failed!", 1)
+            debug.error("Simulation failed!", 1)
 
 
     def synthesize(self):
@@ -98,10 +98,10 @@ class verify:
         synthesizer.
         """
 
-        debug.info(1, "  Initializing synthesis...")
+        debug.info(1, "Initializing synthesis...")
 
         # Convert SRAM modules to blackbox
-        debug.info(1, "    Converting OpenRAM modules to blackbox...")
+        debug.info(1, "Converting OpenRAM modules to blackbox...")
         self.convert_to_blacbox(OPTS.temp_path + OPTS.tag_array_name + ".v")
         self.convert_to_blacbox(OPTS.temp_path + OPTS.data_array_name + ".v")
 
@@ -109,14 +109,14 @@ class verify:
             self.convert_to_blacbox(OPTS.temp_path + OPTS.use_array_name + ".v")
 
         # Run FuseSoc for synthesis
-        debug.info(1, "    Running FuseSoC for synthesis...")
+        debug.info(1, "Running FuseSoC for synthesis...")
         self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, False)
 
         # Check the result of the synthesis
         if self.check_synth_result(OPTS.temp_path, "yosys.log"):
-            debug.info(1, "    Synthesis successful")
+            debug.info(1, "Synthesis successful")
         else:
-            debug.error("    Synthesis failed!", 1)
+            debug.error("Synthesis failed!", 1)
 
 
     def prepare_files(self):
@@ -124,17 +124,17 @@ class verify:
 
         # Write the CORE file
         core_path = OPTS.temp_path + "verify.core"
-        debug.info(1, "  CORE: Writing to {}".format(core_path))
+        debug.info(1, "CORE: Writing to {}".format(core_path))
         self.core.write(core_path)
 
         # Copy the generated cache Verilog file
         cache_path = OPTS.temp_path + self.name + ".v"
-        debug.info(1, "  Copying the cache design file to the temp subfolder")
+        debug.info(1, "Copying the cache design file to the temp subfolder")
         copyfile(OPTS.output_path + self.name + ".v", cache_path)
 
         if OPTS.run_openram:
             # Copy the configuration files
-            debug.info(1, "  Copying the config files to the temp subfolder")
+            debug.info(1, "Copying the config files to the temp subfolder")
             self.copy_config_file(OPTS.data_array_name + "_config.py", OPTS.temp_path)
             self.copy_config_file(OPTS.tag_array_name + "_config.py", OPTS.temp_path)
 
@@ -143,18 +143,18 @@ class verify:
                 self.copy_config_file(OPTS.use_array_name + "_config.py", OPTS.temp_path)
 
             # Run OpenRAM to generate Verilog files of SRAMs
-            debug.info(1, "  Running OpenRAM for the data array...")
+            debug.info(1, "Running OpenRAM for the data array...")
             self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.data_array_name))
 
-            debug.info(1, "  Running OpenRAM for the tag array...")
+            debug.info(1, "Running OpenRAM for the tag array...")
             self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.tag_array_name))
 
             # Random replacement policy doesn't need a separate SRAM array
             if self.replacement_policy.has_sram_array():
-                debug.info(1, "  Running OpenRAM for the use array")
+                debug.info(1, "Running OpenRAM for the use array")
                 self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.use_array_name))
         else:
-            debug.info(1, "  Skipping to run OpenRAM")
+            debug.info(1, "Skipping to run OpenRAM")
 
 
     def run_openram(self, config_path):
@@ -167,7 +167,7 @@ class verify:
                 shell=True,
                 stdout=self.stdout,
                 stderr=self.stderr) != 0:
-            debug.error("    OpenRAM failed!", -1)
+            debug.error("OpenRAM failed!", -1)
 
 
     def run_fusesoc(self, library_name, core_name, path, is_sim):
@@ -177,8 +177,8 @@ class verify:
 
         fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "synth", core_name)
 
-        debug.info(1, "      Adding {} core as library...".format("simulation" if is_sim else "synthesis"))
-        debug.info(1, "      Running the {}...".format("simulation" if is_sim else "synthesis"))
+        debug.info(1, "Adding {} core as library...".format("simulation" if is_sim else "synthesis"))
+        debug.info(1, "Running the {}...".format("simulation" if is_sim else "synthesis"))
 
         # Add the CORE file as a library
         if call(fusesoc_library_command,
@@ -186,7 +186,7 @@ class verify:
                 shell=True,
                 stdout=self.stdout,
                 stderr=self.stderr) != 0:
-            debug.error("    FuseSoC failed to add library!", -1)
+            debug.error("FuseSoC failed to add library!", -1)
 
         # Run the library for simulation or synthesis
         if call(fusesoc_run_command,
@@ -194,7 +194,7 @@ class verify:
                 shell=True,
                 stdout=self.stdout,
                 stderr=self.stderr) != 0:
-            debug.error("    FuseSoC failed to run!", -1)
+            debug.error("FuseSoC failed to run!", -1)
 
         # Delete the temporary CONF file.
         # If this file is not deleted, it can cause syntheses to fail in the
