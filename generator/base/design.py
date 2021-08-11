@@ -91,7 +91,7 @@ class design(Elaboratable):
         self.dout  = CacheSignal(self.word_size)
         self.stall = CacheSignal(reset=1)
 
-        # Main memory interface
+        # DRAM interface
         self.main_csb   = CacheSignal(reset_less=True, reset=1)
         self.main_web   = CacheSignal(reset_less=True, reset=1)
         self.main_addr  = CacheSignal(self.address_size - self.offset_size, reset_less=True)

@@ -64,9 +64,9 @@ class state_block_base(block_base):
 
         # In the FLUSH state, state switches to IDLE if flush is completed.
         with m.Case(State.FLUSH):
-            # If the last set's last way is clean or main memory will receive
-            # the last write request, flush is completed.
-            # FIXME: Cache switches to IDLE while main memory is still writing
+            # If the last set's last way is clean or DRAM will receive the last
+            # write request, flush is completed.
+            # FIXME: Cache switches to IDLE while DRAM is still writing
             # the last data line. This may cause a simulation mismatch.
             # This is the behavior that we probably want, so fix sim_cache
             # instead.
@@ -104,10 +104,10 @@ class state_block_base(block_base):
         #   IDLE        if current request is hit and CPU isn't sending a new request
         #   COMPARE     if current request is hit and CPU is sending a new request
         #   WAIT_HAZARD if current request is hit and data hazard is possible
-        #   WRITE       if current request is dirty miss and main memory is busy
-        #   WAIT_WRITE  if current request is dirty miss and main memory is available
-        #   READ        if current request is clean miss and main memory is busy
-        #   WAIT_READ   if current request is clean miss and main memory is available
+        #   WRITE       if current request is dirty miss and DRAM is busy
+        #   WAIT_WRITE  if current request is dirty miss and DRAM is available
+        #   READ        if current request is clean miss and DRAM is busy
+        #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m):
@@ -136,8 +136,8 @@ class state_block_base(block_base):
         """ Add statements for the WRITE state. """
 
         # In the WRITE state, state switches to:
-        #   WRITE      if main memory didn't respond yet
-        #   WAIT_WRITE if main memory responded
+        #   WRITE      if DRAM didn't respond yet
+        #   WAIT_WRITE if DRAM responded
         with m.Case(State.WRITE):
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.state.eq(State.WAIT_WRITE)
@@ -147,8 +147,8 @@ class state_block_base(block_base):
         """ Add statements for the WAIT_WRITE state. """
 
         # In the WAIT_WRITE state, state switches to:
-        #   WAIT_WRITE if main memory didn't respond yet
-        #   WAIT_READ  if main memory responded
+        #   WAIT_WRITE if DRAM didn't respond yet
+        #   WAIT_READ  if DRAM responded
         with m.Case(State.WAIT_WRITE):
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.state.eq(State.WAIT_READ)
@@ -158,8 +158,8 @@ class state_block_base(block_base):
         """ Add statements for the READ state. """
 
         # In the READ state, state switches to:
-        #   READ      if main memory didn't respond yet
-        #   WAIT_READ if main memory responded
+        #   READ      if DRAM didn't respond yet
+        #   WAIT_READ if DRAM responded
         with m.Case(State.READ):
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.state.eq(State.WAIT_READ)

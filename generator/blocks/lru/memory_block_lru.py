@@ -32,13 +32,12 @@ class memory_block_lru(memory_block_base):
                 with m.If(dsgn.use_read_dout.use(i) == Const(0, dsgn.way_size)):
                     # Assuming that current request is miss, check if it is dirty miss
                     with dsgn.check_dirty_miss(m, i):
-                        # If main memory is busy, switch to WRITE and wait for
-                        # main memory to be available.
+                        # If DRAM is busy, switch to WRITE and wait for DRAM to be available
                         with m.If(dsgn.main_stall):
                             m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
                             m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-                        # If main memory is available, switch to WAIT_WRITE and
-                        # wait for main memory to complete writing.
+                        # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                        # complete writing.
                         with m.Else():
                             m.d.comb += dsgn.main_csb.eq(0)
                             m.d.comb += dsgn.main_web.eq(0)
@@ -58,7 +57,7 @@ class memory_block_lru(memory_block_base):
             # should be checked after all miss assumptions are done.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
-                    # Set main memory's csb to 1 again since it could be set 0 above
+                    # Set DRAM's csb to 1 again since it could be set 0 above
                     m.d.comb += dsgn.main_csb.eq(1)
                     # Perform the write request
                     with m.If(~dsgn.web_reg):

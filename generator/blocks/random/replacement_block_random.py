@@ -43,7 +43,7 @@ class replacement_block_random(replacement_block_base):
 
         # If flush is high, way is reset.
         # way register becomes 0 since it is going to be used to write all data
-        # lines back to main memory.
+        # lines back to DRAM.
         with m.Elif(dsgn.flush):
             m.d.comb += dsgn.way.eq(0)
 
@@ -60,10 +60,9 @@ class replacement_block_random(replacement_block_base):
         """ Add statements for the FLUSH state. """
 
         # In the FLUSH state, way register is used to write all data lines back
-        # to main memory.
+        # to DRAM.
         with m.Case(State.FLUSH):
-            # If current set is clean or main memory is available, increment
-            # the way register.
+            # If current set is clean or DRAM is available, increment the way register
             with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall)):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 

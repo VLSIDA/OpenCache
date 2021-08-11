@@ -58,12 +58,12 @@ class output_block_base(block_base):
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
 
-        # In the WAIT_READ state, stall is low and data output is valid when
-        # main memory completes the read request.
+        # In the WAIT_READ state, stall is low and data output is valid when DRAM
+        # completes the read request.
         # Data output is valid even if the current request is write since read
         # is non-destructive.
         with m.Case(State.WAIT_READ):
-            # Check if main memory answers to the read request
+            # Check if DRAM answers to the read request
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.stall.eq(0)
                 m.d.comb += dsgn.dout.eq(dsgn.main_dout.word(dsgn.offset))

@@ -17,7 +17,7 @@ class memory_block_base(block_base):
     different cache designs.
 
     In this block, cache communicates with memory components such as tag array,
-    data array, use array, and main memory.
+    data array, use array, and DRAM.
     """
 
     def __init__(self):
@@ -41,7 +41,7 @@ class memory_block_base(block_base):
         """ Add flush signal control. """
 
         # If flush is high, state switches to FLUSH.
-        # In the FLUSH state, cache will write all data lines back to main memory.
+        # In the FLUSH state, cache will write all data lines back to DRAM.
         with m.Elif(dsgn.flush):
             m.d.comb += dsgn.tag_read_addr.eq(0)
             m.d.comb += dsgn.data_read_addr.eq(0)
@@ -71,7 +71,7 @@ class memory_block_base(block_base):
     def add_flush(self, dsgn, m):
         """ Add statements for the FLUSH state. """
 
-        # In the FLUSH state, cache sends write request to main memory.
+        # In the FLUSH state, cache sends write request to DRAM.
         # set register is incremented by the Request Block.
         # way register is incremented by the Replacement Block.
         # When set and way registers reach the end, state switches to IDLE.
@@ -81,21 +81,21 @@ class memory_block_base(block_base):
             with m.Switch(dsgn.way):
                 for i in range(dsgn.num_ways):
                     with m.Case(i):
-                        # Check if current set is clean or main memory is available,
+                        # Check if current set is clean or DRAM is available,
                         # and all ways of the set are checked
                         if i == dsgn.num_ways - 1:
                             with m.If(~dsgn.tag_read_dout.dirty(i) | ~dsgn.main_stall):
                                 # Request the next tag and data lines from SRAMs
                                 m.d.comb += dsgn.tag_read_addr.eq(dsgn.set + 1)
                                 m.d.comb += dsgn.data_read_addr.eq(dsgn.set + 1)
-                        # Check if current set is dirty and main memory is available
+                        # Check if current set is dirty and DRAM is available
                         with m.If(dsgn.tag_read_dout.dirty(i) & ~dsgn.main_stall):
                             # Update dirty bits in the tag line
                             m.d.comb += dsgn.tag_write_csb.eq(0)
                             m.d.comb += dsgn.tag_write_addr.eq(dsgn.set)
                             m.d.comb += dsgn.tag_write_din.eq(dsgn.tag_read_dout)
                             m.d.comb += dsgn.tag_write_din.tag_word(i).eq(Cat(dsgn.tag_read_dout.tag(i), 0b10))
-                            # Send the write request to main memory
+                            # Send the write request to DRAM
                             m.d.comb += dsgn.main_csb.eq(0)
                             m.d.comb += dsgn.main_web.eq(0)
                             m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_read_dout.tag(i)))
@@ -134,13 +134,12 @@ class memory_block_base(block_base):
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m):
-                # If main memory is busy, switch to WRITE and wait for main
-                # memory to be available.
+                # If DRAM is busy, switch to WRITE and wait for DRAM to be available
                 with m.If(dsgn.main_stall):
                     m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
                     m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-                # If main memory is available, switch to WAIT_WRITE and wait for
-                # main memory to complete writing.
+                # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                # complete writing
                 with m.Else():
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)
@@ -148,16 +147,15 @@ class memory_block_base(block_base):
                     m.d.comb += dsgn.main_din.eq(dsgn.data_read_dout)
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                # If main memory is busy, switch to WRITE and wait for main memory
-                # to be available.
-                # If main memory is available, switch to WAIT_WRITE and wait for
-                # main memory to complete writing.
+                # If DRAM is busy, switch to WRITE and wait for DRAM to be available
+                # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                # complete writing
                 with m.If(~dsgn.main_stall):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
             with dsgn.check_hit(m):
-                # Set main memory's csb to 1 again since it could be set 0 above
+                # Set DRAM's csb to 1 again since it could be set 0 above
                 m.d.comb += dsgn.main_csb.eq(1)
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
@@ -186,14 +184,14 @@ class memory_block_base(block_base):
     def add_write(self, dsgn, m):
         """ Add statements for the WRITE state. """
 
-        # In the WRITE state, cache waits for main memory to be available.
-        # When main memory is available, write request is sent.
+        # In the WRITE state, cache waits for DRAM to be available.
+        # When DRAM is available, write request is sent.
         with m.Case(State.WRITE):
             m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
             m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-            # If main memory is busy, wait in this state.
-            # If main memory is available, switch to WAIT_WRITE and wait for
-            # main memory to complete writing.
+            # If DRAM is busy, wait in this state.
+            # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+            # complete writing.
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.main_csb.eq(0)
                 m.d.comb += dsgn.main_web.eq(0)
@@ -204,15 +202,14 @@ class memory_block_base(block_base):
     def add_wait_write(self, dsgn, m):
         """ Add statements for the WAIT_WRITE state. """
 
-        # In the WAIT_WRITE state, cache waits for main memory to complete
-        # writing.
-        # When main memory completes writing, read request is sent.
+        # In the WAIT_WRITE state, cache waits for DRAM to complete writing.
+        # When DRAM completes writing, read request is sent.
         with m.Case(State.WAIT_WRITE):
             m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
             m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-            # If main memory is busy, wait in this state.
-            # If main memory completes writing, switch to WAIT_READ and wait
-            # for main memory to complete reading.
+            # If DRAM is busy, wait in this state.
+            # If DRAM completes writing, switch to WAIT_READ and wait for DRAM to
+            # complete reading.
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.main_csb.eq(0)
                 m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
@@ -221,15 +218,15 @@ class memory_block_base(block_base):
     def add_read(self, dsgn, m):
         """ Add statements for the READ state. """
 
-        # In the READ state, cache waits for main memory to be available.
-        # When main memory is available, read request is sent.
+        # In the READ state, cache waits for DRAM to be available.
+        # When DRAM is available, read request is sent.
         # TODO: Is this state really necessary? WAIT_WRITE state may be used instead
         with m.Case(State.READ):
             m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
             m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-            # If main memory is busy, wait in this state.
-            # If main memory completes writing, switch to WAIT_READ and wait
-            # for main memory to complete reading.
+            # If DRAM is busy, wait in this state.
+            # If DRAM completes writing, switch to WAIT_READ and wait for DRAM to
+            # complete reading.
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.main_csb.eq(0)
                 m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
@@ -238,14 +235,13 @@ class memory_block_base(block_base):
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
 
-        # In the WAIT_READ state, cache waits for main memory to complete
-        # reading.
-        # When main memory completes reading, request is completed.
+        # In the WAIT_READ state, cache waits for DRAM to complete reading
+        # When DRAM completes reading, request is completed.
         with m.Case(State.WAIT_READ):
             m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
             m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
-            # If main memory is busy, cache waits in this state.
-            # If main memory completes reading, cache switches to:
+            # If DRAM is busy, cache waits in this state.
+            # If DRAM completes reading, cache switches to:
             #   IDLE    if CPU isn't sending a new request
             #   COMPARE if CPU is sending a new request
             with m.If(~dsgn.main_stall):

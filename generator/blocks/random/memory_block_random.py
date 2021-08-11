@@ -27,10 +27,10 @@ class memory_block_random(memory_block_base):
         #   IDLE        if current request is hit and CPU isn't sending a new request
         #   COMPARE     if current request is hit and CPU is sending a new request
         #   WAIT_HAZARD if current request is hit and data hazard is possible
-        #   WRITE       if current request is dirty miss and main memory is busy
-        #   WAIT_WRITE  if current request is dirty miss and main memory is available
-        #   READ        if current request is clean miss and main memory is busy
-        #   WAIT_READ   if current request is clean miss and main memory is available
+        #   WRITE       if current request is dirty miss and DRAM is busy
+        #   WAIT_WRITE  if current request is dirty miss and DRAM is available
+        #   READ        if current request is clean miss and DRAM is busy
+        #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m, dsgn.random):

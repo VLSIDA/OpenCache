@@ -46,7 +46,7 @@ class request_block_base(block_base):
 
         # If flush is high, input registers are not reset.
         # However, way and set registers becomes 0 since it is going to be used
-        # to write dirty lines back to main memory.
+        # to write dirty lines back to DRAM.
         with m.Elif(dsgn.flush):
             m.d.comb += dsgn.set.eq(0)
 
@@ -72,10 +72,10 @@ class request_block_base(block_base):
         """ Add statements for the FLUSH state. """
 
         # In the FLUSH state, set register is used to write all dirty lines
-        # back to main memory.
+        # back to DRAM.
         with m.Case(State.FLUSH):
-            # If current set is clean or main memory is available, increment
-            # the set register when all ways in the set are checked
+            # If current set is clean or DRAM is available, increment the set
+            # register when all ways in the set are checked
             with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1)):
                 m.d.comb += dsgn.set.eq(dsgn.set + 1)
 
@@ -111,8 +111,7 @@ class request_block_base(block_base):
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
 
-        # In the COMPARE state, the request is decoded if main memory completed
-        # read request.
+        # In the COMPARE state, the request is decoded if DRAM completed read request
         with m.Case(State.WAIT_READ):
             with m.If(~dsgn.main_stall):
                 m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
