@@ -97,7 +97,7 @@ class CacheSignal(Signal):
         return self.word_select(way * CacheSignal.words_per_line + offset, CacheSignal.word_size)
 
 
-    def line(self, way):
+    def line(self, way=0):
         """ Return a data line of a data signal. """
 
         return self.word_select(way, CacheSignal.line_size)
