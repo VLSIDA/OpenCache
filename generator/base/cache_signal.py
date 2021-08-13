@@ -19,8 +19,9 @@ class CacheSignal(Signal):
 
         super().__init__(shape=shape, name=name, reset=reset, reset_less=is_flop or reset_less)
 
-        # Find the declared name of this instance
-        self.name = tracer.get_var_name()
+        if name is None:
+            # Find the declared name of this instance
+            self.name = tracer.get_var_name()
 
         self.is_flop = is_flop
 
