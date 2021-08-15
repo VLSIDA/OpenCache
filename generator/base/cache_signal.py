@@ -44,6 +44,12 @@ class CacheSignal(Signal):
         return super().eq(value)
 
 
+    def way(self, way=0):
+        """ Return bits allocated for a way. """
+
+        return self.word_select(way, self.width // CacheSignal.num_ways)
+
+
     def parse_tag(self):
         """ Return tag bits of an address signal. """
 
