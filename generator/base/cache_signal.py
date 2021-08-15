@@ -89,7 +89,7 @@ class CacheSignal(Signal):
     def tag_word(self, way=0):
         """ Return whole tag word of a tag signal. """
 
-        return self.word_select(way, CacheSignal.tag_word_size)
+        return self.way(way)
 
 
     def byte(self, byte_offset, word_offset=0, way=0):
@@ -107,10 +107,10 @@ class CacheSignal(Signal):
     def line(self, way=0):
         """ Return a data line of a data signal. """
 
-        return self.word_select(way, CacheSignal.line_size)
+        return self.way(way)
 
 
     def use(self, way=0):
         """ Return use bits of a use signal. """
 
-        return self.word_select(way, CacheSignal.way_size)
+        return self.way(way)
