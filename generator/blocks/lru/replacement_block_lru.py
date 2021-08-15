@@ -28,9 +28,7 @@ class replacement_block_lru(replacement_block_base):
         # ways in tag and use lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
-            m.d.comb += dsgn.use_write_csb.eq(0)
-            m.d.comb += dsgn.use_write_addr.eq(0)
-            m.d.comb += dsgn.use_write_din.eq(0)
+            dsgn.use_array.write(0, 0)
 
 
     def add_flush_sig(self, dsgn, m):
@@ -57,9 +55,7 @@ class replacement_block_lru(replacement_block_base):
         # In the RESET state, way register is used to reset all ways in tag
         # and use lines.
         with m.Case(State.RESET):
-            m.d.comb += dsgn.use_write_csb.eq(0)
-            m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
-            m.d.comb += dsgn.use_write_din.eq(0)
+            dsgn.use_array.write(dsgn.set, 0)
 
 
     def add_flush(self, dsgn, m):
@@ -69,7 +65,7 @@ class replacement_block_lru(replacement_block_base):
         # back to DRAM.
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall)):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 
 
@@ -81,7 +77,7 @@ class replacement_block_lru(replacement_block_base):
         with m.Case(State.IDLE):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+            dsgn.use_array.read(dsgn.addr.parse_set())
 
 
     def add_wait_hazard(self, dsgn, m):
@@ -90,7 +86,7 @@ class replacement_block_lru(replacement_block_base):
         # In the WAIT_READ state, corresponding line from the use array is
         # requested.
         with m.Case(State.WAIT_HAZARD):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
 
 
     def add_compare(self, dsgn, m):
@@ -100,17 +96,16 @@ class replacement_block_lru(replacement_block_base):
         # policy of the cache.
         # Also use numbers are updated if current request is hit.
         with m.Case(State.COMPARE):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
-                with m.If(dsgn.use_read_dout.use(i) == Const(0, dsgn.way_size)):
+                with m.If(dsgn.use_array.output().use(i) == Const(0, dsgn.way_size)):
                     # Check if current request is clean miss
                     m.d.comb += dsgn.way.eq(i)
             # Check if current request is a hit
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
-                    m.d.comb += dsgn.use_write_csb.eq(0)
-                    m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
+                    dsgn.use_array.write(dsgn.set, dsgn.use_array.output())
                     # Each way in a set has its own use numbers. These numbers
                     # start from 0. Every time a way is needed to be evicted,
                     # the way having 0 use number is chosen.
@@ -119,11 +114,11 @@ class replacement_block_lru(replacement_block_base):
                     # have use numbers more than accessed way's use number are decremented
                     # by 1.
                     for j in range(dsgn.num_ways):
-                        m.d.comb += dsgn.use_write_din.use(j).eq(dsgn.use_read_dout.use(j) - (dsgn.use_read_dout.use(j) > dsgn.use_read_dout.use(i)))
-                    m.d.comb += dsgn.use_write_din.use(i).eq(dsgn.num_ways - 1)
+                        m.d.comb += dsgn.use_array.input().use(j).eq(dsgn.use_array.output().use(j) - (dsgn.use_array.output().use(j) > dsgn.use_array.output().use(i)))
+                    m.d.comb += dsgn.use_array.input().use(i).eq(dsgn.num_ways - 1)
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.
-                    m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+                    dsgn.use_array.read(dsgn.addr.parse_set())
 
 
     def add_wait_write(self, dsgn, m):
@@ -132,7 +127,7 @@ class replacement_block_lru(replacement_block_base):
         # In the WAIT_WRITE and READ states, use line is read to update it
         # in the WAIT_READ state.
         with m.Case(State.WAIT_WRITE):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
 
 
     def add_read(self, dsgn, m):
@@ -141,7 +136,7 @@ class replacement_block_lru(replacement_block_base):
         # In the WAIT_WRITE and READ states, use line is read to update it
         # in the WAIT_READ state.
         with m.Case(State.READ):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
 
 
     def add_wait_read(self, dsgn, m):
@@ -149,7 +144,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the WAIT_READ state, use numbers are updated.
         with m.Case(State.WAIT_READ):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
             with m.If(~dsgn.main_stall):
                 # Each way in a set has its own use numbers. These numbers
                 # start from 0. Every time a way is needed to be evicted, the
@@ -158,14 +153,13 @@ class replacement_block_lru(replacement_block_base):
                 # use number is increased to the maximum value and other ways which
                 # have use numbers more than accessed way's use number are decremented
                 # by 1.
-                m.d.comb += dsgn.use_write_csb.eq(0)
-                m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
+                dsgn.use_array.write(dsgn.set, dsgn.use_array.output())
                 for i in range(dsgn.num_ways):
-                    m.d.comb += dsgn.use_write_din.use(i).eq(dsgn.use_read_dout.use(i) - (dsgn.use_read_dout.use(i) > dsgn.use_read_dout.use(dsgn.way)))
+                    m.d.comb += dsgn.use_array.input().use(i).eq(dsgn.use_array.output().use(i) - (dsgn.use_array.output().use(i) > dsgn.use_array.output().use(dsgn.way)))
                 with m.Switch(dsgn.way):
                     for i in range(dsgn.num_ways):
                         with m.Case(i):
-                            m.d.comb += dsgn.use_write_din.use(i).eq(dsgn.num_ways - 1)
+                            m.d.comb += dsgn.use_array.input().use(i).eq(dsgn.num_ways - 1)
                 # Read next lines from SRAMs even though CPU is not
                 # sending a new request since read is non-destructive.
-                m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+                dsgn.use_array.read(dsgn.addr.parse_set())

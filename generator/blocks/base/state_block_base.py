@@ -70,7 +70,7 @@ class state_block_base(block_base):
             # the last data line. This may cause a simulation mismatch.
             # This is the behavior that we probably want, so fix sim_cache
             # instead.
-            with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1) & (dsgn.set == dsgn.num_rows - 1)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1) & (dsgn.set == dsgn.num_rows - 1)):
                 m.d.comb += dsgn.state.eq(State.IDLE)
 
 

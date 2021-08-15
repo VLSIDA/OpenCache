@@ -76,7 +76,7 @@ class request_block_base(block_base):
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the set
             # register when all ways in the set are checked
-            with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1)):
                 m.d.comb += dsgn.set.eq(dsgn.set + 1)
 
 

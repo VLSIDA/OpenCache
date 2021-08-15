@@ -9,6 +9,7 @@ from design import design
 from logic import logic
 from configuration import configuration
 from cache_signal import CacheSignal
+from sram_instance import SramInstance
 
 
 class cache_base(design, logic, configuration):
@@ -27,13 +28,14 @@ class cache_base(design, logic, configuration):
 
         # Copy configs to CacheSignal class for calculations
         cache_config.set_local_config(CacheSignal)
+        cache_config.set_local_config(SramInstance)
 
 
     def check_dirty_miss(self, m, way=0):
         """ Return nMigen context manager instance to check dirty miss. """
 
         # Assume dirty miss if valid and dirty bits of the way are set
-        return m.If(self.tag_read_dout.valid(way) & self.tag_read_dout.dirty(way))
+        return m.If(self.tag_array.output().valid(way) & self.tag_array.output().dirty(way))
 
 
     def check_clean_miss(self, m):
@@ -47,4 +49,4 @@ class cache_base(design, logic, configuration):
         """ Return nMigen context manager instance to check hit. """
 
         # Request is hit if valid bit is set and address' tag matches the way's tag
-        return m.If(self.tag_read_dout.valid(way) & (self.tag_read_dout.tag(way) == self.tag))
+        return m.If(self.tag_array.output().valid(way) & (self.tag_array.output().tag(way) == self.tag))

@@ -27,17 +27,17 @@ class memory_block_fifo(memory_block_base):
         # In the COMPARE state, cache compares tags.
         # Stall and output are driven by the Output Block.
         with m.Case(State.COMPARE):
-            m.d.comb += dsgn.tag_read_addr.eq(dsgn.set)
-            m.d.comb += dsgn.data_read_addr.eq(dsgn.set)
+            dsgn.tag_array.read(dsgn.set)
+            dsgn.data_array.read(dsgn.set)
             # Assuming that current request is miss, check if it is dirty miss
-            with dsgn.check_dirty_miss(m, dsgn.use_read_dout):
+            with dsgn.check_dirty_miss(m, dsgn.use_array.output()):
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
                 with m.If(~dsgn.main_stall):
                     m.d.comb += dsgn.main_csb.eq(0)
                     m.d.comb += dsgn.main_web.eq(0)
-                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_read_dout.tag(dsgn.use_read_dout)))
-                    m.d.comb += dsgn.main_din.eq(dsgn.data_read_dout.line(dsgn.use_read_dout))
+                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())))
+                    m.d.comb += dsgn.main_din.eq(dsgn.data_array.output().line(dsgn.use_array.output()))
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
                 with m.If(~dsgn.main_stall):
@@ -53,24 +53,10 @@ class memory_block_fifo(memory_block_base):
                     # Perform the write request
                     with m.If(~dsgn.web_reg):
                         # Update dirty bit in the tag line
-                        m.d.comb += dsgn.tag_write_csb.eq(0)
-                        m.d.comb += dsgn.tag_write_addr.eq(dsgn.set)
-                        m.d.comb += dsgn.tag_write_din.eq(dsgn.tag_read_dout)
-                        m.d.comb += dsgn.tag_write_din.dirty(i).eq(1)
-                        # Write the word over the write mask
-                        # NOTE: This switch statement is written manually (not only with
-                        # word_select) because word_select fails to generate correct case
-                        # statements if offset calculation is a bit complex.
-                        m.d.comb += dsgn.data_write_csb.eq(0)
-                        m.d.comb += dsgn.data_write_addr.eq(dsgn.set)
-                        m.d.comb += dsgn.data_write_din.eq(dsgn.data_read_dout)
-                        for j in range(dsgn.num_bytes):
-                            with m.If(dsgn.wmask_reg[j]):
-                                with m.Switch(dsgn.offset):
-                                    for k in range(dsgn.words_per_line):
-                                        with m.Case(k):
-                                            m.d.comb += dsgn.data_write_din.byte(j, k, i).eq(dsgn.din_reg.byte(j))
+                        dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b11), i)
+                        dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
+                        dsgn.data_array.write_bytes(dsgn.wmask_reg, i, dsgn.offset, dsgn.din_reg)
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.
-                    m.d.comb += dsgn.tag_read_addr.eq(dsgn.addr.parse_set())
-                    m.d.comb += dsgn.data_read_addr.eq(dsgn.addr.parse_set())
+                    dsgn.tag_array.read(dsgn.addr.parse_set())
+                    dsgn.data_array.read(dsgn.addr.parse_set())

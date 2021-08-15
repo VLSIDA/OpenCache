@@ -45,7 +45,7 @@ class state_block_random(state_block_base):
                 with m.Else():
                     m.d.comb += dsgn.state.eq(State.WAIT_READ)
             for i in range(dsgn.num_ways):
-                with m.If(~dsgn.tag_read_dout.valid(i)):
+                with m.If(~dsgn.tag_array.output().valid(i)):
                     with m.If(dsgn.main_stall):
                         m.d.comb += dsgn.state.eq(State.READ)
                     with m.Else():

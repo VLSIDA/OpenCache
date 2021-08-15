@@ -27,9 +27,7 @@ class replacement_block_fifo(replacement_block_base):
         # in FIFO and tag lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
-            m.d.comb += dsgn.use_write_csb.eq(0)
-            m.d.comb += dsgn.use_write_addr.eq(0)
-            m.d.comb += dsgn.use_write_din.eq(0)
+            dsgn.use_array.write(0, 0)
 
 
     def add_flush_sig(self, dsgn, m):
@@ -56,9 +54,7 @@ class replacement_block_fifo(replacement_block_base):
         # In the RESET state, way register is used to reset all ways in tag and
         # use lines.
         with m.Case(State.RESET):
-            m.d.comb += dsgn.use_write_csb.eq(0)
-            m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
-            m.d.comb += dsgn.use_write_din.eq(0)
+            dsgn.use_array.write(dsgn.set, 0)
 
 
     def add_flush(self, dsgn, m):
@@ -68,7 +64,7 @@ class replacement_block_fifo(replacement_block_base):
         # to DRAM.
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_read_dout.dirty(dsgn.way) | ~dsgn.main_stall)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall)):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 
 
@@ -80,7 +76,7 @@ class replacement_block_fifo(replacement_block_base):
         with m.Case(State.IDLE):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+            dsgn.use_array.read(dsgn.addr.parse_set())
 
 
     def add_wait_hazard(self, dsgn, m):
@@ -89,7 +85,7 @@ class replacement_block_fifo(replacement_block_base):
         # In the WAIT_READ state, corresponding line from the use array is
         # requested.
         with m.Case(State.WAIT_HAZARD):
-            m.d.comb += dsgn.use_read_addr.eq(dsgn.set)
+            dsgn.use_array.read(dsgn.set)
 
 
     def add_compare(self, dsgn, m):
@@ -99,14 +95,14 @@ class replacement_block_fifo(replacement_block_base):
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
         with m.Case(State.COMPARE):
-            m.d.comb += dsgn.way.eq(dsgn.use_read_dout)
+            m.d.comb += dsgn.way.eq(dsgn.use_array.output())
             # The corresponding use array line needs to be requested if current
             # request is hit.
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
-                    m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+                    dsgn.use_array.read(dsgn.addr.parse_set())
 
 
     def add_wait_read(self, dsgn, m):
@@ -118,9 +114,7 @@ class replacement_block_fifo(replacement_block_base):
                 # Each set has its own FIFO number. These numbers start from 0 and
                 # always show the next way to be placed. When new data is placed on
                 # that way, FIFO number is incremented.
-                m.d.comb += dsgn.use_write_csb.eq(0)
-                m.d.comb += dsgn.use_write_addr.eq(dsgn.set)
-                m.d.comb += dsgn.use_write_din.eq(dsgn.way + 1)
+                dsgn.use_array.write(dsgn.set, dsgn.way + 1)
                 # Read next lines from SRAMs even though CPU is not
                 # sending a new request since read is non-destructive.
-                m.d.comb += dsgn.use_read_addr.eq(dsgn.addr.parse_set())
+                dsgn.use_array.read(dsgn.addr.parse_set())

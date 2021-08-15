@@ -33,7 +33,7 @@ class state_block_fifo(state_block_base):
         #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
-            with dsgn.check_dirty_miss(m, dsgn.use_read_dout):
+            with dsgn.check_dirty_miss(m, dsgn.use_array.output()):
                 with m.If(dsgn.main_stall):
                     m.d.comb += dsgn.state.eq(State.WRITE)
                 with m.Else():

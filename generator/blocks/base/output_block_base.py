@@ -52,7 +52,7 @@ class output_block_base(block_base):
                 # Check if current request is hit
                 with dsgn.check_hit(m, i):
                     m.d.comb += dsgn.stall.eq(0)
-                    m.d.comb += dsgn.dout.eq(dsgn.data_read_dout.word(dsgn.offset, i))
+                    m.d.comb += dsgn.dout.eq(dsgn.data_array.output().word(dsgn.offset, i))
 
 
     def add_wait_read(self, dsgn, m):

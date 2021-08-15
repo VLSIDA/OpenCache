@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 from cache_base import cache_base
-from nmigen import Instance
 from cache_signal import CacheSignal
+from sram_instance import SramInstance
 from globals import OPTS
 
 
@@ -60,19 +60,4 @@ class n_way_lru_cache(cache_base):
 
         # Use array
         word_size = self.way_size * self.num_ways
-        self.use_write_csb  = CacheSignal(reset_less=True, reset=1)
-        self.use_write_addr = CacheSignal(self.set_size, reset_less=True)
-        self.use_write_din  = CacheSignal(word_size, reset_less=True)
-        self.use_read_csb   = CacheSignal(reset_less=True)
-        self.use_read_addr  = CacheSignal(self.set_size, reset_less=True)
-        self.use_read_dout  = CacheSignal(word_size)
-        m.submodules += Instance(OPTS.use_array_name,
-            ("i", "clk0",  self.clk),
-            ("i", "csb0",  self.use_write_csb),
-            ("i", "addr0", self.use_write_addr),
-            ("i", "din0",  self.use_write_din),
-            ("i", "clk1",  self.clk),
-            ("i", "csb1",  self.use_read_csb),
-            ("i", "addr1", self.use_read_addr),
-            ("o", "dout1", self.use_read_dout),
-        )
+        self.use_array = SramInstance(OPTS.use_array_name, word_size, self, m)

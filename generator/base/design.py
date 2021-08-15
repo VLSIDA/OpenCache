@@ -5,11 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from nmigen import Elaboratable, Module, Instance
+from nmigen import Elaboratable, Module
 from nmigen import ClockSignal, ResetSignal
 from nmigen import Value
 from nmigen.back import verilog
 from cache_signal import CacheSignal
+from sram_instance import SramInstance
 from state import State
 from globals import OPTS
 
@@ -127,41 +128,11 @@ class design(Elaboratable):
 
         # Tag array
         word_size = self.tag_word_size * self.num_ways
-        self.tag_write_csb  = CacheSignal(reset_less=True, reset=1)
-        self.tag_write_addr = CacheSignal(self.set_size, reset_less=True)
-        self.tag_write_din  = CacheSignal(word_size, reset_less=True)
-        self.tag_read_csb   = CacheSignal(reset_less=True)
-        self.tag_read_addr  = CacheSignal(self.set_size, reset_less=True)
-        self.tag_read_dout  = CacheSignal(word_size)
-        m.submodules += Instance(OPTS.tag_array_name,
-            ("i", "clk0",  self.clk),
-            ("i", "csb0",  self.tag_write_csb),
-            ("i", "addr0", self.tag_write_addr),
-            ("i", "din0",  self.tag_write_din),
-            ("i", "clk1",  self.clk),
-            ("i", "csb1",  self.tag_read_csb),
-            ("i", "addr1", self.tag_read_addr),
-            ("o", "dout1", self.tag_read_dout),
-        )
+        self.tag_array = SramInstance(OPTS.tag_array_name, word_size, self, m)
 
         # Data array
         word_size = self.line_size * self.num_ways
-        self.data_write_csb  = CacheSignal(reset_less=True, reset=1)
-        self.data_write_addr = CacheSignal(self.set_size, reset_less=True)
-        self.data_write_din  = CacheSignal(word_size, reset_less=True)
-        self.data_read_csb   = CacheSignal(reset_less=True)
-        self.data_read_addr  = CacheSignal(self.set_size, reset_less=True)
-        self.data_read_dout  = CacheSignal(word_size)
-        m.submodules += Instance(OPTS.data_array_name,
-            ("i", "clk0",  self.clk),
-            ("i", "csb0",  self.data_write_csb),
-            ("i", "addr0", self.data_write_addr),
-            ("i", "din0",  self.data_write_din),
-            ("i", "clk1",  self.clk),
-            ("i", "csb1",  self.data_read_csb),
-            ("i", "addr1", self.data_read_addr),
-            ("o", "dout1", self.data_read_dout),
-        )
+        self.data_array = SramInstance(OPTS.data_array_name, word_size, self, m)
 
 
     def add_flop_block(self, m):

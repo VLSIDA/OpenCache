@@ -35,7 +35,7 @@ class state_block_lru(state_block_base):
         with m.Case(State.COMPARE):
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
-                with m.If(dsgn.use_read_dout.use(i) == Const(0, dsgn.way_size)):
+                with m.If(dsgn.use_array.output().use(i) == Const(0, dsgn.way_size)):
                     # Assuming that current request is miss, check if it is dirty miss
                     with dsgn.check_dirty_miss(m, i):
                         with m.If(dsgn.main_stall):
