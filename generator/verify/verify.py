@@ -12,7 +12,7 @@ from re import findall
 from core import core
 from test_bench import test_bench
 from test_data import test_data
-from dram import dram
+from sim_dram import sim_dram
 import debug
 from globals import OPTS
 
@@ -33,7 +33,7 @@ class verify:
         if OPTS.simulate:
             self.tb   = test_bench(cache_config, name)
             self.data = test_data(cache_config, name)
-            self.dram = dram(cache_config, name)
+            self.dram = sim_dram(cache_config, name)
 
         # Print subprocess outputs on the terminal if verbose debug is enabled
         self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL

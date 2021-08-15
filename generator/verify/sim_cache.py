@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from policy import ReplacementPolicy as RP
-from dram import DRAM_DELAY
+from sim_dram import DRAM_DELAY
 
 
 class sim_cache:

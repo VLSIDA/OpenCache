@@ -8,7 +8,7 @@
 DRAM_DELAY = 4
 
 
-class dram:
+class sim_dram:
     """
     Class to generate the DRAM module for simulation.
     """
