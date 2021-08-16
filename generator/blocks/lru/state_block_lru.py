@@ -38,13 +38,13 @@ class state_block_lru(state_block_base):
                 with m.If(dsgn.use_array.output().use(i) == Const(0, dsgn.way_size)):
                     # Assuming that current request is miss, check if it is dirty miss
                     with dsgn.check_dirty_miss(m, i):
-                        with m.If(dsgn.main_stall):
+                        with m.If(dsgn.dram.stall()):
                             m.d.comb += dsgn.state.eq(State.WRITE)
                         with m.Else():
                             m.d.comb += dsgn.state.eq(State.WAIT_WRITE)
                     # Else, current request is clean miss
                     with dsgn.check_clean_miss(m):
-                        with m.If(dsgn.main_stall):
+                        with m.If(dsgn.dram.stall()):
                             m.d.comb += dsgn.state.eq(State.READ)
                         with m.Else():
                             m.d.comb += dsgn.state.eq(State.WAIT_READ)

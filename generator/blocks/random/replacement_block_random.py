@@ -63,7 +63,7 @@ class replacement_block_random(replacement_block_base):
         # to DRAM.
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 
 

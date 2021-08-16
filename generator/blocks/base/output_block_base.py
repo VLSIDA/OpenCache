@@ -64,6 +64,6 @@ class output_block_base(block_base):
         # is non-destructive.
         with m.Case(State.WAIT_READ):
             # Check if DRAM answers to the read request
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.stall.eq(0)
-                m.d.comb += dsgn.dout.eq(dsgn.main_dout.word(dsgn.offset))
+                m.d.comb += dsgn.dout.eq(dsgn.dram.output().word(dsgn.offset))

@@ -70,7 +70,7 @@ class state_block_base(block_base):
             # the last data line. This may cause a simulation mismatch.
             # This is the behavior that we probably want, so fix sim_cache
             # instead.
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1) & (dsgn.set == dsgn.num_rows - 1)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall()) & (dsgn.way == dsgn.num_ways - 1) & (dsgn.set == dsgn.num_rows - 1)):
                 m.d.comb += dsgn.state.eq(State.IDLE)
 
 
@@ -111,13 +111,13 @@ class state_block_base(block_base):
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m):
-                with m.If(dsgn.main_stall):
+                with m.If(dsgn.dram.stall()):
                     m.d.comb += dsgn.state.eq(State.WRITE)
                 with m.Else():
                     m.d.comb += dsgn.state.eq(State.WAIT_WRITE)
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                with m.If(dsgn.main_stall):
+                with m.If(dsgn.dram.stall()):
                     m.d.comb += dsgn.state.eq(State.READ)
                 with m.Else():
                     m.d.comb += dsgn.state.eq(State.WAIT_READ)
@@ -139,7 +139,7 @@ class state_block_base(block_base):
         #   WRITE      if DRAM didn't respond yet
         #   WAIT_WRITE if DRAM responded
         with m.Case(State.WRITE):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.state.eq(State.WAIT_WRITE)
 
 
@@ -150,7 +150,7 @@ class state_block_base(block_base):
         #   WAIT_WRITE if DRAM didn't respond yet
         #   WAIT_READ  if DRAM responded
         with m.Case(State.WAIT_WRITE):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.state.eq(State.WAIT_READ)
 
 
@@ -161,7 +161,7 @@ class state_block_base(block_base):
         #   READ      if DRAM didn't respond yet
         #   WAIT_READ if DRAM responded
         with m.Case(State.READ):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.state.eq(State.WAIT_READ)
 
 
@@ -173,7 +173,7 @@ class state_block_base(block_base):
         #   WAIT_HAZARD if data hazard is possible
         #   COMPARE     if CPU is sending a new request
         with m.Case(State.WAIT_READ):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 with m.If(dsgn.csb):
                     m.d.comb += dsgn.state.eq(State.IDLE)
                 with m.Else():

@@ -34,13 +34,13 @@ class state_block_fifo(state_block_base):
         with m.Case(State.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
             with dsgn.check_dirty_miss(m, dsgn.use_array.output()):
-                with m.If(dsgn.main_stall):
+                with m.If(dsgn.dram.stall()):
                     m.d.comb += dsgn.state.eq(State.WRITE)
                 with m.Else():
                     m.d.comb += dsgn.state.eq(State.WAIT_WRITE)
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                with m.If(dsgn.main_stall):
+                with m.If(dsgn.dram.stall()):
                     m.d.comb += dsgn.state.eq(State.READ)
                 with m.Else():
                     m.d.comb += dsgn.state.eq(State.WAIT_READ)

@@ -80,19 +80,16 @@ class memory_block_base(block_base):
                         # Check if current set is clean or DRAM is available,
                         # and all ways of the set are checked
                         if i == dsgn.num_ways - 1:
-                            with m.If(~dsgn.tag_array.output().dirty(i) | ~dsgn.main_stall):
+                            with m.If(~dsgn.tag_array.output().dirty(i) | ~dsgn.dram.stall()):
                                 # Request the next tag and data lines from SRAMs
                                 dsgn.tag_array.read(dsgn.set + 1)
                                 dsgn.data_array.read(dsgn.set + 1)
                         # Check if current set is dirty and DRAM is available
-                        with m.If(dsgn.tag_array.output().dirty(i) & ~dsgn.main_stall):
+                        with m.If(dsgn.tag_array.output().dirty(i) & ~dsgn.dram.stall()):
                             # Update dirty bits in the tag line
                             dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b10), i)
                             # Send the write request to DRAM
-                            m.d.comb += dsgn.main_csb.eq(0)
-                            m.d.comb += dsgn.main_web.eq(0)
-                            m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_array.output().tag(i)))
-                            m.d.comb += dsgn.main_din.eq(dsgn.data_array.output().line(i))
+                            dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(i)), dsgn.data_array.output().line(i))
 
 
     def add_idle(self, dsgn, m):
@@ -131,23 +128,19 @@ class memory_block_base(block_base):
             with dsgn.check_dirty_miss(m):
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.If(~dsgn.main_stall):
-                    m.d.comb += dsgn.main_csb.eq(0)
-                    m.d.comb += dsgn.main_web.eq(0)
-                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_array.output().tag()))
-                    m.d.comb += dsgn.main_din.eq(dsgn.data_array.output())
+                with m.If(~dsgn.dram.stall()):
+                    dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag()), dsgn.data_array.output())
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
                 # If DRAM is busy, switch to WRITE and wait for DRAM to be available
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.If(~dsgn.main_stall):
-                    m.d.comb += dsgn.main_csb.eq(0)
-                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
+                with m.If(~dsgn.dram.stall()):
+                    dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
             with dsgn.check_hit(m):
                 # Set DRAM's csb to 1 again since it could be set 0 above
-                m.d.comb += dsgn.main_csb.eq(1)
+                dsgn.dram.disable()
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
                     # Update dirty bit in the tag line
@@ -171,11 +164,8 @@ class memory_block_base(block_base):
             # If DRAM is busy, wait in this state.
             # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
             # complete writing.
-            with m.If(~dsgn.main_stall):
-                m.d.comb += dsgn.main_csb.eq(0)
-                m.d.comb += dsgn.main_web.eq(0)
-                m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.way)))
-                m.d.comb += dsgn.main_din.eq(dsgn.data_array.output().line(dsgn.way))
+            with m.If(~dsgn.dram.stall()):
+                dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.way)), dsgn.data_array.output().line(dsgn.way))
 
 
     def add_wait_write(self, dsgn, m):
@@ -189,9 +179,8 @@ class memory_block_base(block_base):
             # If DRAM is busy, wait in this state.
             # If DRAM completes writing, switch to WAIT_READ and wait for DRAM to
             # complete reading.
-            with m.If(~dsgn.main_stall):
-                m.d.comb += dsgn.main_csb.eq(0)
-                m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
+            with m.If(~dsgn.dram.stall()):
+                dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
 
 
     def add_read(self, dsgn, m):
@@ -206,9 +195,8 @@ class memory_block_base(block_base):
             # If DRAM is busy, wait in this state.
             # If DRAM completes writing, switch to WAIT_READ and wait for DRAM to
             # complete reading.
-            with m.If(~dsgn.main_stall):
-                m.d.comb += dsgn.main_csb.eq(0)
-                m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
+            with m.If(~dsgn.dram.stall()):
+                dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
 
 
     def add_wait_read(self, dsgn, m):
@@ -223,9 +211,9 @@ class memory_block_base(block_base):
             # If DRAM completes reading, cache switches to:
             #   IDLE    if CPU isn't sending a new request
             #   COMPARE if CPU is sending a new request
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, ~dsgn.web_reg, 0b1), dsgn.way)
-                dsgn.data_array.write(dsgn.set, dsgn.main_dout, dsgn.way)
+                dsgn.data_array.write(dsgn.set, dsgn.dram.output(), dsgn.way)
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
                     dsgn.data_array.write_bytes(dsgn.wmask_reg, dsgn.way, dsgn.offset, dsgn.din_reg)

@@ -64,7 +64,7 @@ class replacement_block_fifo(replacement_block_base):
         # to DRAM.
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 
 
@@ -110,7 +110,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the WAIT_READ state, FIFO number are updated.
         with m.Case(State.WAIT_READ):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 # Each set has its own FIFO number. These numbers start from 0 and
                 # always show the next way to be placed. When new data is placed on
                 # that way, FIFO number is incremented.

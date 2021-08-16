@@ -11,6 +11,7 @@ from nmigen import Value
 from nmigen.back import verilog
 from cache_signal import CacheSignal
 from sram_instance import SramInstance
+from dram import Dram
 from state import State
 from globals import OPTS
 
@@ -63,22 +64,23 @@ class design(Elaboratable):
     def elaborate(self, platform):
         """ Elaborate the design. Called by nMigen library. """
 
-        m = Module()
-
         # NOTE: IO signals must be added before elaborating. Otherwise, nMigen
         # fails to detect port signals and their directions.
 
         self.add_internal_signals()
-        self.add_srams(m)
-        self.add_flop_block(m)
-        self.add_default_statements(m)
-        self.add_logic_blocks(m)
+        self.add_srams(self.m)
+        self.add_flop_block(self.m)
+        self.add_default_statements(self.m)
+        self.add_logic_blocks(self.m)
 
-        return m
+        return self.m
 
 
     def add_io_signals(self):
         """ Add IO signals to cache design. """
+
+        # Create the module here
+        self.m = Module()
 
         # CPU interface
         self.clk   = ClockSignal()
@@ -92,16 +94,11 @@ class design(Elaboratable):
         self.dout  = CacheSignal(self.word_size)
         self.stall = CacheSignal(reset=1)
 
-        # DRAM interface
-        self.main_csb   = CacheSignal(reset_less=True, reset=1)
-        self.main_web   = CacheSignal(reset_less=True, reset=1)
-        self.main_addr  = CacheSignal(self.address_size - self.offset_size, reset_less=True)
-        self.main_din   = CacheSignal(self.line_size, reset_less=True)
-        self.main_dout  = CacheSignal(self.line_size)
-        self.main_stall = CacheSignal()
+        # Create a DRAM module
+        self.dram = Dram(self.m, self.address_size - self.offset_size, self.line_size)
 
         # Return all port signals
-        ports = []
+        ports = self.dram.get_pins()
         for _, v in self.__dict__.items():
             if isinstance(v, Value):
                 ports.append(v)

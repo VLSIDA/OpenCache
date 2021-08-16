@@ -33,23 +33,19 @@ class memory_block_fifo(memory_block_base):
             with dsgn.check_dirty_miss(m, dsgn.use_array.output()):
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.If(~dsgn.main_stall):
-                    m.d.comb += dsgn.main_csb.eq(0)
-                    m.d.comb += dsgn.main_web.eq(0)
-                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())))
-                    m.d.comb += dsgn.main_din.eq(dsgn.data_array.output().line(dsgn.use_array.output()))
+                with m.If(~dsgn.dram.stall()):
+                    dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())), dsgn.data_array.output().line(dsgn.use_array.output()))
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                with m.If(~dsgn.main_stall):
-                    m.d.comb += dsgn.main_csb.eq(0)
-                    m.d.comb += dsgn.main_addr.eq(Cat(dsgn.set, dsgn.tag))
+                with m.If(~dsgn.dram.stall()):
+                    dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
                     # Set DRAM's csb to 1 again since it could be set 0 above
-                    m.d.comb += dsgn.main_csb.eq(1)
+                    dsgn.dram.disable()
                     # Perform the write request
                     with m.If(~dsgn.web_reg):
                         # Update dirty bit in the tag line

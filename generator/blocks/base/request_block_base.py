@@ -76,7 +76,7 @@ class request_block_base(block_base):
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the set
             # register when all ways in the set are checked
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall) & (dsgn.way == dsgn.num_ways - 1)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall()) & (dsgn.way == dsgn.num_ways - 1)):
                 m.d.comb += dsgn.set.eq(dsgn.set + 1)
 
 
@@ -113,7 +113,7 @@ class request_block_base(block_base):
 
         # In the COMPARE state, the request is decoded if DRAM completed read request
         with m.Case(State.WAIT_READ):
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
                 m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
                 m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())

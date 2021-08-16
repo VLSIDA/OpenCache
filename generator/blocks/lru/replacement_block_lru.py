@@ -65,7 +65,7 @@ class replacement_block_lru(replacement_block_base):
         # back to DRAM.
         with m.Case(State.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.main_stall)):
+            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
 
 
@@ -145,7 +145,7 @@ class replacement_block_lru(replacement_block_base):
         # In the WAIT_READ state, use numbers are updated.
         with m.Case(State.WAIT_READ):
             dsgn.use_array.read(dsgn.set)
-            with m.If(~dsgn.main_stall):
+            with m.If(~dsgn.dram.stall()):
                 # Each way in a set has its own use numbers. These numbers
                 # start from 0. Every time a way is needed to be evicted, the
                 # way having 0 use number is chosen.
