@@ -37,6 +37,9 @@ class memory_block_fifo(memory_block_base):
                     dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())), dsgn.data_array.output().line(dsgn.use_array.output()))
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
+                # If DRAM is busy, switch to READ and wait for DRAM to be available
+                # If DRAM is available, switch to WAIT_READ and wait for DRAM to
+                # complete reading
                 with m.If(~dsgn.dram.stall()):
                     dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
@@ -44,12 +47,13 @@ class memory_block_fifo(memory_block_base):
             # tag, only one of them can match at most.
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
-                    # Set DRAM's csb to 1 again since it could be set 0 above
+                    # Disable DRAM since a request could be sent above
                     dsgn.dram.disable()
                     # Perform the write request
                     with m.If(~dsgn.web_reg):
-                        # Update dirty bit in the tag line
+                        # Update dirty bit
                         dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b11), i)
+                        # Perform write request
                         dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
                         dsgn.data_array.write_bytes(dsgn.wmask_reg, i, dsgn.offset, dsgn.din_reg)
                     # Read next lines from SRAMs even though CPU is not

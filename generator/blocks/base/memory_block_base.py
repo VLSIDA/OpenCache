@@ -132,9 +132,9 @@ class memory_block_base(block_base):
                     dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag()), dsgn.data_array.output())
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
-                # If DRAM is busy, switch to WRITE and wait for DRAM to be available
-                # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
-                # complete writing
+                # If DRAM is busy, switch to READ and wait for DRAM to be available
+                # If DRAM is available, switch to WAIT_READ and wait for DRAM to
+                # complete reading
                 with m.If(~dsgn.dram.stall()):
                     dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
             # Check if current request is hit
@@ -143,8 +143,9 @@ class memory_block_base(block_base):
                 dsgn.dram.disable()
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
-                    # Update dirty bit in the tag line
+                    # Update dirty bit
                     dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, 0b11))
+                    # Perform write request
                     dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
                     dsgn.data_array.write_bytes(dsgn.wmask_reg, 0, dsgn.offset, dsgn.din_reg)
                 # Read next lines from SRAMs even though the CPU is not sending
@@ -212,7 +213,9 @@ class memory_block_base(block_base):
             #   IDLE    if CPU isn't sending a new request
             #   COMPARE if CPU is sending a new request
             with m.If(~dsgn.dram.stall()):
+                # Update tag line
                 dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, ~dsgn.web_reg, 0b1), dsgn.way)
+                # Update data line
                 dsgn.data_array.write(dsgn.set, dsgn.dram.output(), dsgn.way)
                 # Perform the write request
                 with m.If(~dsgn.web_reg):

@@ -18,14 +18,21 @@ class SramInstance(Instance):
 
     def __init__(self, module_name, row_size, dsgn, m):
 
+        # Find the declared name of this instance
         array_name = tracer.get_var_name()
         short_name = array_name.split("_array")[0]
 
+        # Write enable
         self.write_csb  = CacheSignal(reset_less=True, reset=1, name=short_name + "_write_csb")
+        # Write address
         self.write_addr = CacheSignal(self.set_size, reset_less=True, name=short_name + "_write_addr")
+        # Write data
         self.write_din  = CacheSignal(row_size, reset_less=True, name=short_name + "_write_din")
+        # Read enable
         self.read_csb   = CacheSignal(reset_less=True, name=short_name + "_read_csb")
+        # Read address
         self.read_addr  = CacheSignal(self.set_size, reset_less=True, name=short_name + "_read_addr")
+        # Read data
         self.read_dout  = CacheSignal(row_size, name=short_name + "_read_dout")
 
         super().__init__(module_name,
@@ -39,8 +46,9 @@ class SramInstance(Instance):
             ("o", "dout1", self.read_dout),
         )
 
+        # Keep the design module for later use
         self.m = m
-
+        # Add this instance to the design module
         m.submodules += self
 
 
@@ -71,13 +79,16 @@ class SramInstance(Instance):
         # TODO: Use wmask feature of OpenRAM
         self.m.d.comb += self.write_din.eq(self.read_dout)
 
+        # If no way is given, set all input data
         if way is None:
             self.m.d.comb += self.write_din.eq(data)
+        # If way is a signal, wrap it with case statements
         elif isinstance(way, CacheSignal):
             with self.m.Switch(way):
                 for i in range(1 << way.width):
                     with self.m.Case(i):
                         self.m.d.comb += self.write_din.way(i).eq(data)
+        # If way is a constant, calculate the way part of the signal
         else:
             self.m.d.comb += self.write_din.way(way).eq(data)
 

@@ -15,13 +15,20 @@ class Dram:
 
     def __init__(self, m, address_size, row_size):
 
+        # Chip select
         self.main_csb   = CacheSignal(reset_less=True, reset=1)
+        # Write enable
         self.main_web   = CacheSignal(reset_less=True, reset=1)
+        # Address
         self.main_addr  = CacheSignal(address_size, reset_less=True)
+        # Data input
         self.main_din   = CacheSignal(row_size, reset_less=True)
+        # Data output
         self.main_dout  = CacheSignal(row_size)
+        # Stall
         self.main_stall = CacheSignal()
 
+        # Keep the design module for later use
         self.m = m
 
 
