@@ -17,8 +17,9 @@ from globals import OPTS
 class sim_cache_test(opencache_test):
 
     def runTest(self):
-        # FIXME: Config file path may not be found
-        config_file = "tests/configs/config.py"
+
+        OPENCACHE_HOME = os.getenv("OPENCACHE_HOME")
+        config_file = "{}/tests/configs/config.py".format(OPENCACHE_HOME)
         globals.init_opencache(config_file)
 
         # Run tests for direct-mapped

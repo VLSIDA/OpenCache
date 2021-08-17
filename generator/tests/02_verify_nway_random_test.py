@@ -17,8 +17,9 @@ from globals import OPTS
 class verify_test(opencache_test):
 
     def runTest(self):
-        # FIXME: Config file path may not be found
-        config_file = "tests/configs/config.py"
+
+        OPENCACHE_HOME = os.getenv("OPENCACHE_HOME")
+        config_file = "{}/tests/configs/config.py".format(OPENCACHE_HOME)
         globals.init_opencache(config_file)
 
         OPTS.num_ways = 4

@@ -18,7 +18,6 @@ class code_format_test(opencache_test):
     def runTest(self):
 
         OPENCACHE_HOME = os.getenv("OPENCACHE_HOME")
-
         config_file = "{}/tests/configs/config.py".format(OPENCACHE_HOME)
         globals.init_opencache(config_file)
 
