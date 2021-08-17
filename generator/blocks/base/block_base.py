@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import OPTS
+
 
 class block_base:
     """
@@ -41,7 +43,8 @@ class block_base:
         self.add_reset(dsgn, m)
         self.add_flush(dsgn, m)
         self.add_idle(dsgn, m)
-        self.add_wait_hazard(dsgn, m)
+        if OPTS.data_hazard:
+            self.add_wait_hazard(dsgn, m)
         self.add_compare(dsgn, m)
         self.add_write(dsgn, m)
         self.add_wait_write(dsgn, m)
