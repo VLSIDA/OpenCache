@@ -7,6 +7,7 @@
 #
 from state_block_base import state_block_base
 from state import State
+from globals import OPTS
 
 
 class state_block_fifo(state_block_base):
@@ -52,7 +53,11 @@ class state_block_fifo(state_block_base):
                     with m.If(dsgn.csb):
                         m.d.comb += dsgn.state.eq(State.IDLE)
                     with m.Else():
-                        with m.If(~dsgn.web_reg & (dsgn.set == dsgn.addr.parse_set())):
-                            m.d.comb += dsgn.state.eq(State.WAIT_HAZARD)
-                        with m.Else():
+                        # Don't use WAIT_HAZARD if data_hazard is disabled
+                        if OPTS.data_hazard:
+                            with m.If(~dsgn.web_reg & (dsgn.set == dsgn.addr.parse_set())):
+                                m.d.comb += dsgn.state.eq(State.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += dsgn.state.eq(State.COMPARE)
+                        else:
                             m.d.comb += dsgn.state.eq(State.COMPARE)
