@@ -7,6 +7,7 @@
 #
 from policy import ReplacementPolicy as RP
 from sim_dram import DRAM_DELAY
+from globals import OPTS
 
 
 class sim_cache:
@@ -296,6 +297,10 @@ class sim_cache:
 
     def is_data_hazard(self, address):
         """ Return whether a data hazard is detected. """
+
+        # Return false if data_hazard is disabled
+        if not OPTS.data_hazard:
+            return False
 
         _, set_decimal, _ = self.parse_address(address)
 
