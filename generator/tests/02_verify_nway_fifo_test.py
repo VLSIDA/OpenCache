@@ -14,7 +14,7 @@ from base.policy import ReplacementPolicy as RP
 from globals import OPTS
 
 
-class simulate_test(opencache_test):
+class verify_test(opencache_test):
 
     def runTest(self):
         # FIXME: Config file path may not be found
