@@ -33,10 +33,8 @@ class core:
         self.cf.write("  sim_files:\n")
         self.cf.write("    files:\n")
         self.cf.write("      - dram.v\n")
-
         if OPTS.replacement_policy.has_sram_array():
             self.cf.write("      - {}.v\n".format(OPTS.use_array_name))
-
         self.cf.write("      - {}.v\n".format(OPTS.tag_array_name))
         self.cf.write("      - {}.v\n".format(OPTS.data_array_name))
         self.cf.write("      - {}.v\n".format(OPTS.output_name))
@@ -47,10 +45,8 @@ class core:
 
         self.cf.write("  synth_files:\n")
         self.cf.write("    files:\n")
-
         if OPTS.replacement_policy.has_sram_array():
             self.cf.write("      - {}_bb.v\n".format(OPTS.use_array_name))
-
         self.cf.write("      - {}_bb.v\n".format(OPTS.tag_array_name))
         self.cf.write("      - {}_bb.v\n".format(OPTS.data_array_name))
         self.cf.write("      - {}.v\n".format(OPTS.output_name))

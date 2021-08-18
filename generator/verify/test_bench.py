@@ -30,15 +30,10 @@ class test_bench:
         self.tbf.write("module test_bench;\n\n")
 
         self.write_parameters()
-
         self.write_registers()
-
         self.write_clock_generator()
-
         self.write_reset_block()
-
         self.write_instances()
-
         self.write_tasks()
 
         self.tbf.write("  initial begin\n")
