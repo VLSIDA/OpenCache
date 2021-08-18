@@ -125,11 +125,11 @@ class design(Elaboratable):
 
         # Tag array
         word_size = self.tag_word_size * self.num_ways
-        self.tag_array = SramInstance(OPTS.tag_array_name, word_size, self, m)
+        self.tag_array = SramInstance(OPTS.tag_array_name, word_size, 1, self, m)
 
         # Data array
         word_size = self.line_size * self.num_ways
-        self.data_array = SramInstance(OPTS.data_array_name, word_size, self, m)
+        self.data_array = SramInstance(OPTS.data_array_name, word_size, OPTS.num_ways, self, m)
 
 
     def add_flop_block(self, m):

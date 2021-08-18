@@ -34,7 +34,10 @@ class memory_block_fifo(memory_block_base):
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
                 with m.If(~dsgn.dram.stall()):
-                    dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())), dsgn.data_array.output().line(dsgn.use_array.output()))
+                    with m.Switch(dsgn.use_array.output()):
+                        for i in range(dsgn.num_ways):
+                            with m.Case(i):
+                                dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.use_array.output())), dsgn.data_array.output(i))
             # Else, assume that current request is clean miss
             with dsgn.check_clean_miss(m):
                 # If DRAM is busy, switch to READ and wait for DRAM to be available
@@ -54,7 +57,7 @@ class memory_block_fifo(memory_block_base):
                         # Update dirty bit
                         dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b11), i)
                         # Perform write request
-                        dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
+                        dsgn.data_array.write(dsgn.set, dsgn.data_array.output(i), i)
                         dsgn.data_array.write_bytes(dsgn.wmask_reg, i, dsgn.offset, dsgn.din_reg)
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.

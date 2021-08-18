@@ -60,4 +60,4 @@ class n_way_fifo_cache(cache_base):
 
         # Use array
         word_size = self.way_size
-        self.use_array = SramInstance(OPTS.use_array_name, word_size, self, m)
+        self.use_array = SramInstance(OPTS.use_array_name, word_size, 1, self, m)

@@ -28,7 +28,7 @@ class configuration:
         data_opts = {}
         data_opts["path"] = paths["data"]
         data_opts["opts"] = {}
-        data_opts["opts"]["word_size"]    = self.row_size
+        data_opts["opts"]["word_size"]    = self.row_size // self.num_ways
         data_opts["opts"]["num_words"]    = self.num_rows
         data_opts["opts"]["num_rw_ports"] = 0
         data_opts["opts"]["num_r_ports"]  = 1

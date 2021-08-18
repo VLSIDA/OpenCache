@@ -89,7 +89,7 @@ class memory_block_base(block_base):
                             # Update dirty bits in the tag line
                             dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b10), i)
                             # Send the write request to DRAM
-                            dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(i)), dsgn.data_array.output().line(i))
+                            dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(i)), dsgn.data_array.output(i))
 
 
     def add_idle(self, dsgn, m):
@@ -166,7 +166,10 @@ class memory_block_base(block_base):
             # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
             # complete writing.
             with m.If(~dsgn.dram.stall()):
-                dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.way)), dsgn.data_array.output().line(dsgn.way))
+                with m.Switch(dsgn.way):
+                    for i in range(dsgn.num_ways):
+                        with m.Case(i):
+                            dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.way)), dsgn.data_array.output(i))
 
 
     def add_wait_write(self, dsgn, m):

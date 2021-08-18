@@ -10,87 +10,119 @@ from nmigen import tracer
 from cache_signal import CacheSignal
 
 
-class SramInstance(Instance):
+class SramInstance:
     """
-    This class inherits from the Instance class of nMigen library.
-    OpenRAM SRAM modules are represented with this class.
+    This class instantiates Instance class of nMigen library and holds OpenRAM
+    SRAM modules instances.
     """
 
-    def __init__(self, module_name, row_size, dsgn, m):
+    def __init__(self, module_name, row_size, num_arrays, dsgn, m):
 
         # Find the declared name of this instance
         array_name = tracer.get_var_name()
         short_name = array_name.split("_array")[0]
 
-        # Write enable
-        self.write_csb  = CacheSignal(reset_less=True, reset=1, name=short_name + "_write_csb")
-        # Write address
-        self.write_addr = CacheSignal(self.set_size, reset_less=True, name=short_name + "_write_addr")
-        # Write data
-        self.write_din  = CacheSignal(row_size, reset_less=True, name=short_name + "_write_din")
-        # Read enable
-        self.read_csb   = CacheSignal(reset_less=True, name=short_name + "_read_csb")
-        # Read address
-        self.read_addr  = CacheSignal(self.set_size, reset_less=True, name=short_name + "_read_addr")
-        # Read data
-        self.read_dout  = CacheSignal(row_size, name=short_name + "_read_dout")
+        self.num_arrays = num_arrays
+        real_row_size = row_size // num_arrays
 
-        super().__init__(module_name,
-            ("i", "clk0",  dsgn.clk),
-            ("i", "csb0",  self.write_csb),
-            ("i", "addr0", self.write_addr),
-            ("i", "din0",  self.write_din),
-            ("i", "clk1",  dsgn.clk),
-            ("i", "csb1",  self.read_csb),
-            ("i", "addr1", self.read_addr),
-            ("o", "dout1", self.read_dout),
-        )
+        # Append signals to these lists
+        self.write_csb  = []
+        self.write_addr = []
+        self.write_din  = []
+        self.read_csb   = []
+        self.read_addr  = []
+        self.read_dout  = []
+
+        for i in range(num_arrays):
+            # Write enable
+            self.write_csb.append(CacheSignal(reset_less=True, reset=1, name="{0}_write_csb{1}".format(short_name, i)))
+            # Write address
+            self.write_addr.append(CacheSignal(self.set_size, reset_less=True, name="{0}_write_addr{1}".format(short_name, i)))
+            # Write data
+            self.write_din.append(CacheSignal(real_row_size, reset_less=True, name="{0}_write_din{1}".format(short_name, i)))
+            # Read enable
+            self.read_csb.append(CacheSignal(reset_less=True, name="{0}_read_csb{1}".format(short_name, i)))
+            # Read address
+            self.read_addr.append(CacheSignal(self.set_size, reset_less=True, name="{0}_read_addr{1}".format(short_name, i)))
+            # Read data
+            self.read_dout.append(CacheSignal(real_row_size, name="{0}_read_dout{1}".format(short_name, i)))
+
+            # Add this instance to the design module
+            m.submodules += Instance(module_name,
+                ("i", "clk0",  dsgn.clk),
+                ("i", "csb0",  self.write_csb[i]),
+                ("i", "addr0", self.write_addr[i]),
+                ("i", "din0",  self.write_din[i]),
+                ("i", "clk1",  dsgn.clk),
+                ("i", "csb1",  self.read_csb[i]),
+                ("i", "addr1", self.read_addr[i]),
+                ("o", "dout1", self.read_dout[i]),
+            )
 
         # Keep the design module for later use
         self.m = m
-        # Add this instance to the design module
-        m.submodules += self
 
 
-    def input(self):
+    def input(self, way=0):
         """ Return the input signal. """
 
-        return self.write_din
+        return self.write_din[way]
 
 
-    def output(self):
+    def output(self, way=0):
         """ Return the output signal. """
 
-        return self.read_dout
+        return self.read_dout[way]
 
 
     def read(self, address):
         """ Send a new read request to SRAM. """
 
-        self.m.d.comb += self.read_csb.eq(0)
-        self.m.d.comb += self.read_addr.eq(address)
+        # Read the same address from all arrays
+        for i in range(self.num_arrays):
+            self.m.d.comb += self.read_csb[i].eq(0)
+            self.m.d.comb += self.read_addr[i].eq(address)
 
 
     def write(self, address, data, way=None):
         """ Send a new write request to SRAM. """
 
-        self.m.d.comb += self.write_csb.eq(0)
-        self.m.d.comb += self.write_addr.eq(address)
         # TODO: Use wmask feature of OpenRAM
-        self.m.d.comb += self.write_din.eq(self.read_dout)
 
         # If no way is given, set all input data
         if way is None:
-            self.m.d.comb += self.write_din.eq(data)
+            for i in range(self.num_arrays):
+                self.m.d.comb += self.write_csb[i].eq(0)
+                self.m.d.comb += self.write_addr[i].eq(address)
+                self.m.d.comb += self.write_din[i].eq(self.read_dout[i])
+                self.m.d.comb += self.write_din[i].eq(data)
         # If way is a signal, wrap it with case statements
         elif isinstance(way, CacheSignal):
             with self.m.Switch(way):
                 for i in range(1 << way.width):
                     with self.m.Case(i):
-                        self.m.d.comb += self.write_din.way(i).eq(data)
+                        if self.num_arrays > 1:
+                            self.m.d.comb += self.write_csb[i].eq(0)
+                            self.m.d.comb += self.write_addr[i].eq(address)
+                            self.m.d.comb += self.write_din[i].eq(self.read_dout[i])
+                            self.m.d.comb += self.write_din[i].eq(data)
+                        else:
+                            self.m.d.comb += self.write_csb[0].eq(0)
+                            self.m.d.comb += self.write_addr[0].eq(address)
+                            self.m.d.comb += self.write_din[0].eq(self.read_dout[0])
+                            self.m.d.comb += self.write_din[0].way(i).eq(data)
         # If way is a constant, calculate the way part of the signal
         else:
-            self.m.d.comb += self.write_din.way(way).eq(data)
+            if self.num_arrays > 1:
+                self.m.d.comb += self.write_csb[way].eq(0)
+                self.m.d.comb += self.write_addr[way].eq(address)
+                self.m.d.comb += self.write_din[way].eq(self.read_dout[way])
+                self.m.d.comb += self.write_din[way].eq(data)
+            else:
+                self.m.d.comb += self.write_csb[0].eq(0)
+                self.m.d.comb += self.write_addr[0].eq(address)
+                self.m.d.comb += self.write_din[0].eq(self.read_dout[0])
+                self.m.d.comb += self.write_din[0].way(way).eq(data)
 
 
     def write_bytes(self, wmask, way, offset, data):
@@ -109,4 +141,4 @@ class SramInstance(Instance):
                             with self.m.Switch(offset):
                                 for k in range(SramInstance.words_per_line):
                                     with self.m.Case(k):
-                                        self.m.d.comb += self.write_din.byte(i, k, j).eq(data.byte(i))
+                                        self.m.d.comb += self.write_din[j].byte(i, k).eq(data.byte(i))
