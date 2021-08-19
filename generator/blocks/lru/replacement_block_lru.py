@@ -28,7 +28,7 @@ class replacement_block_lru(replacement_block_base):
         # ways in tag and use lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
-            dsgn.use_array.write(0, 0)
+            dsgn.use_array.write(0, self.get_reset_value(dsgn))
 
 
     def add_flush_sig(self, dsgn, m):
@@ -55,7 +55,7 @@ class replacement_block_lru(replacement_block_base):
         # In the RESET state, way register is used to reset all ways in tag
         # and use lines.
         with m.Case(State.RESET):
-            dsgn.use_array.write(dsgn.set, 0)
+            dsgn.use_array.write(dsgn.set, self.get_reset_value(dsgn))
 
 
     def add_flush(self, dsgn, m):
@@ -163,3 +163,14 @@ class replacement_block_lru(replacement_block_base):
                 # Read next lines from SRAMs even though CPU is not
                 # sending a new request since read is non-destructive.
                 dsgn.use_array.read(dsgn.addr.parse_set())
+
+
+    def get_reset_value(self, dsgn):
+        """ Return the reset value for use array lines. """
+
+        reset_value = ["{0:0{1}b}".format(x, dsgn.way_size) for x in range(dsgn.num_ways)]
+        reset_value.reverse()
+        reset_value = "".join(reset_value)
+        reset_value = int(reset_value, 2)
+
+        return reset_value
