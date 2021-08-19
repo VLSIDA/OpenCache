@@ -73,7 +73,7 @@ class verify:
         # Write the test data file
         data_path = OPTS.temp_path + "test_data.v"
         debug.info(1, "Verilog (Test data): Writing to {}".format(data_path))
-        self.data.generate_data()
+        self.data.generate_data(OPTS.sim_size)
         self.data.write(data_path)
 
         # Write the DRAM file

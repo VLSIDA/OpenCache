@@ -76,6 +76,11 @@ class options(optparse.Values):
     # been generated, this can be set False for faster verification.
     run_openram = True
 
+    # Number of read/write operations in the simulation
+    # Random data are written and read from random addresses
+    sim_size = 64
+
+    # Number of threads for regression testing
     num_threads = 1
 
     verbose_level = 0
