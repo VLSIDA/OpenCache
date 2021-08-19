@@ -85,12 +85,7 @@ class request_block_base(block_base):
 
         # In the IDLE state, the request is decoded.
         with m.Case(State.IDLE):
-            m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
-            m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
-            m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())
-            m.d.comb += dsgn.web_reg.eq(dsgn.web)
-            m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
-            m.d.comb += dsgn.din_reg.eq(dsgn.din)
+            self.store_request(dsgn, m)
 
 
     def add_compare(self, dsgn, m):
@@ -100,12 +95,7 @@ class request_block_base(block_base):
         with m.Case(State.COMPARE):
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
-                    m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
-                    m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
-                    m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())
-                    m.d.comb += dsgn.web_reg.eq(dsgn.web)
-                    m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
-                    m.d.comb += dsgn.din_reg.eq(dsgn.din)
+                    self.store_request(dsgn, m)
 
 
     def add_wait_read(self, dsgn, m):
@@ -114,9 +104,15 @@ class request_block_base(block_base):
         # In the COMPARE state, the request is decoded if DRAM completed read request
         with m.Case(State.WAIT_READ):
             with m.If(~dsgn.dram.stall()):
-                m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
-                m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
-                m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())
-                m.d.comb += dsgn.web_reg.eq(dsgn.web)
-                m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
-                m.d.comb += dsgn.din_reg.eq(dsgn.din)
+                self.store_request(dsgn, m)
+
+
+    def store_request(self, dsgn, m):
+        """ Decode and store the request signals in flip-flops. """
+
+        m.d.comb += dsgn.tag.eq(dsgn.addr.parse_tag())
+        m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
+        m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())
+        m.d.comb += dsgn.web_reg.eq(dsgn.web)
+        m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
+        m.d.comb += dsgn.din_reg.eq(dsgn.din)
