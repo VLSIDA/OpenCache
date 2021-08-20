@@ -8,23 +8,19 @@
 import debug
 from math import log2, ceil
 from policy import Associativity as AS
+from globals import OPTS
 
 
 class cache_config:
     """ This is a structure that is used to hold the cache configuration options. """
 
-    def __init__(self, OPTS):
+    def __init__(self, total_size, word_size, words_per_line, address_size, num_ways):
 
-        self.total_size         = OPTS.total_size
-        self.word_size          = OPTS.word_size
-        self.words_per_line     = OPTS.words_per_line
-        self.address_size       = OPTS.address_size
-        self.num_ways           = OPTS.num_ways
-        self.replacement_policy = OPTS.replacement_policy
-        self.write_policy       = OPTS.write_policy
-        self.is_data_cache      = OPTS.is_data_cache
-        self.return_type        = OPTS.return_type
-        self.data_hazard        = OPTS.data_hazard
+        self.total_size     = total_size
+        self.word_size      = word_size
+        self.words_per_line = words_per_line
+        self.address_size   = address_size
+        self.num_ways       = num_ways
 
         self.compute_configs()
 
@@ -81,5 +77,7 @@ class cache_config:
             self.associativity = AS.N_WAY
         else:
             self.associativity = AS.FULLY
+        # Add associativity to OPTS
+        OPTS.associativity = self.associativity
 
         debug.info(1, "Associativity: {}".format(self.associativity))

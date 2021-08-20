@@ -105,7 +105,7 @@ class verify:
         self.convert_to_blacbox(OPTS.temp_path + OPTS.tag_array_name + ".v")
         self.convert_to_blacbox(OPTS.temp_path + OPTS.data_array_name + ".v")
 
-        if self.replacement_policy.has_sram_array():
+        if OPTS.replacement_policy.has_sram_array():
             self.convert_to_blacbox(OPTS.temp_path + OPTS.use_array_name + ".v")
 
         # Run FuseSoc for synthesis
@@ -139,7 +139,7 @@ class verify:
             self.copy_config_file(OPTS.tag_array_name + "_config.py", OPTS.temp_path)
 
             # Random replacement policy doesn't need a separate SRAM array
-            if self.replacement_policy.has_sram_array():
+            if OPTS.replacement_policy.has_sram_array():
                 self.copy_config_file(OPTS.use_array_name + "_config.py", OPTS.temp_path)
 
             # Run OpenRAM to generate Verilog files of SRAMs
@@ -150,7 +150,7 @@ class verify:
             self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.tag_array_name))
 
             # Random replacement policy doesn't need a separate SRAM array
-            if self.replacement_policy.has_sram_array():
+            if OPTS.replacement_policy.has_sram_array():
                 debug.info(1, "Running OpenRAM for the use array")
                 self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.use_array_name))
         else:

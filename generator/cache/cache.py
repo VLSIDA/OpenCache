@@ -21,18 +21,18 @@ class cache:
         self.name = name
 
         # Import the design module of the cache
-        if self.associativity == AS.DIRECT:
+        if OPTS.associativity == AS.DIRECT:
             from direct_cache import direct_cache as cache
-        elif self.associativity == AS.N_WAY:
-            if self.replacement_policy == RP.FIFO:
+        elif OPTS.associativity == AS.N_WAY:
+            if OPTS.replacement_policy == RP.FIFO:
                 from n_way_fifo_cache import n_way_fifo_cache as cache
-            elif self.replacement_policy == RP.LRU:
+            elif OPTS.replacement_policy == RP.LRU:
                 from n_way_lru_cache import n_way_lru_cache as cache
-            elif self.replacement_policy == RP.RANDOM:
+            elif OPTS.replacement_policy == RP.RANDOM:
                 from n_way_random_cache import n_way_random_cache as cache
             else:
                 debug.error("Invalid replacement policy.", -1)
-        elif self.associativity == AS.FULLY:
+        elif OPTS.associativity == AS.FULLY:
             # TODO: from full_cache import full_cache as cache
             debug.error("Fully associative cache is not supported at the moment.", -1)
         else:
@@ -64,7 +64,7 @@ class cache:
             "tag":  OPTS.output_path + OPTS.tag_array_name + "_config.py",
             "use":  OPTS.output_path + OPTS.use_array_name + "_config.py"
         }
-        if not self.replacement_policy.has_sram_array(): del cpaths["use"]
+        if not OPTS.replacement_policy.has_sram_array(): del cpaths["use"]
         for k, cpath in cpaths.items():
             debug.print_raw("Config: Writing to {}".format(cpath))
         self.config_write(cpaths)

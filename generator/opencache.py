@@ -36,7 +36,11 @@ g.report_status()
 from cache_config import cache_config
 
 # Configure the cache organization
-conf = cache_config(OPTS)
+conf = cache_config(total_size=OPTS.total_size,
+                    word_size=OPTS.word_size,
+                    words_per_line=OPTS.words_per_line,
+                    address_size=OPTS.address_size,
+                    num_ways=OPTS.num_ways)
 
 from cache import cache
 c = cache(cache_config=conf,
