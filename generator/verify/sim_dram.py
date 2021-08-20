@@ -13,10 +13,11 @@ class sim_dram:
     Class to generate the DRAM module for simulation.
     """
 
-    def __init__(self, cache_config, name):
+    def __init__(self, cache_config, name, data=None):
 
         cache_config.set_local_config(self)
         self.name = name
+        self.make_initial_data(data)
 
 
     def write(self, dram_path):
@@ -30,6 +31,7 @@ class sim_dram:
         self.write_io_ports()
         self.write_registers()
         self.write_logic_block()
+        self.write_initial_data()
 
         self.df.write("endmodule\n")
 
@@ -83,3 +85,23 @@ class sim_dram:
         self.df.write("        memory[addr] <= #(DELAY) din;\n")
         self.df.write("    end\n")
         self.df.write("  end\n\n")
+
+
+    def write_initial_data(self):
+        """ Write the initial data in the memory. """
+
+        if self.data:
+            self.df.write("  initial begin\n")
+            for i in range(len(self.data)):
+                self.df.write("    memory[{0}] <= {1};\n".format(i, self.data[i]))
+            self.df.write("  end\n\n")
+
+
+    def make_initial_data(self, data):
+        """ Prepare the intial data in the memory. """
+
+        self.data = []
+        for line in data:
+            self.data.append(0)
+            for i in range(len(line)):
+                self.data[-1] += line[i] << i * self.word_size

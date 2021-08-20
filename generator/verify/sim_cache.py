@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from random import randrange
 from policy import ReplacementPolicy as RP
 from sim_dram import DRAM_DELAY
 from globals import OPTS
@@ -65,6 +66,11 @@ class sim_cache:
 
         # DRAM list has a line in each row
         self.dram = [[None] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
+
+        # Initialize DRAM with random data
+        for line_i in range(2 ** (self.tag_size + self.set_size)):
+            for word_i in range(self.words_per_line):
+                self.dram[line_i][word_i] = randrange(1 << self.word_size)
 
         # Remaining DRAM stall cycles.
         # This is used to calculate how many cycles are needed to calculate
