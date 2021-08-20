@@ -65,12 +65,7 @@ class sim_cache_test(opencache_test):
 def setup_sim_cache():
     """ Setup a sim_cache instance. """
 
-    from cache_config import cache_config
-    conf = cache_config(total_size=OPTS.total_size,
-                        word_size=OPTS.word_size,
-                        words_per_line=OPTS.words_per_line,
-                        address_size=OPTS.address_size,
-                        num_ways=OPTS.num_ways)
+    conf = make_config()
 
     from sim_cache import sim_cache
     sc = sim_cache(cache_config=conf)

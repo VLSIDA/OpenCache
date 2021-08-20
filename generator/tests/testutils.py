@@ -73,6 +73,17 @@ class opencache_test(unittest.TestCase):
             self.fail("Verification failed.")
 
 
+def make_config():
+    """ Make a cache_config instance. """
+
+    from cache_config import cache_config
+    return cache_config(total_size=OPTS.total_size,
+                        word_size=OPTS.word_size,
+                        words_per_line=OPTS.words_per_line,
+                        address_size=OPTS.address_size,
+                        num_ways=OPTS.num_ways)
+
+
 def header(filename):
     """ Print the banner for unit test. """
 
