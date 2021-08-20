@@ -59,7 +59,6 @@ class configuration:
         config_opts = self.calculate_configs(paths)
 
         for opts in config_opts:
-            c_file = open(opts["path"], "w")
-            for k, v in opts["opts"].items():
-                c_file.write("{0} = {1}\n".format(k, v))
-            c_file.close()
+            with open(opts["path"], "w") as c_file:
+                for k, v in opts["opts"].items():
+                    c_file.write("{0} = {1}\n".format(k, v))
