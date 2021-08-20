@@ -135,10 +135,16 @@ class SramInstance:
         # complex.
         for i in range(SramInstance.num_bytes):
             with self.m.If(wmask[i]):
-                with self.m.Switch(way):
-                    for j in range(SramInstance.num_ways):
-                        with self.m.Case(j):
-                            with self.m.Switch(offset):
-                                for k in range(SramInstance.words_per_line):
-                                    with self.m.Case(k):
-                                        self.m.d.comb += self.write_din[j].byte(i, k).eq(data.byte(i))
+                if isinstance(way, CacheSignal):
+                    with self.m.Switch(way):
+                        for j in range(SramInstance.num_ways):
+                            with self.m.Case(j):
+                                with self.m.Switch(offset):
+                                    for k in range(SramInstance.words_per_line):
+                                        with self.m.Case(k):
+                                            self.m.d.comb += self.write_din[j].byte(i, k).eq(data.byte(i))
+                else:
+                    with self.m.Switch(offset):
+                        for k in range(SramInstance.words_per_line):
+                            with self.m.Case(k):
+                                self.m.d.comb += self.write_din[way].byte(i, k).eq(data.byte(i))
