@@ -24,7 +24,6 @@ class sim_dram:
         """ Write the DRAM file. """
 
         self.df = open(dram_path, "w")
-
         self.df.write("module dram (clk, rst, csb, web, addr, din, dout, stall);\n\n")
 
         self.write_parameters()
@@ -34,7 +33,6 @@ class sim_dram:
         self.write_initial_data()
 
         self.df.write("endmodule\n")
-
         self.df.close()
 
 

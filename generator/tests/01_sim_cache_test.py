@@ -50,21 +50,14 @@ class sim_cache_test(opencache_test):
         sc = setup_sim_cache()
 
         self.check_true(check_reset(sc))
-
         self.check_true(check_flush(sc))
-
         self.check_true(check_hit(sc))
-
         self.check_true(check_dirty(sc))
-
         self.check_true(check_read_write(sc))
-
         if OPTS.replacement_policy == RP.FIFO:
             self.check_true(check_fifo(sc))
-
         if OPTS.replacement_policy == RP.LRU:
             self.check_true(check_lru(sc))
-
         if OPTS.replacement_policy == RP.RANDOM:
             self.check_true(check_random(sc))
 

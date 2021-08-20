@@ -115,9 +115,8 @@ class design(Elaboratable):
         self.web_reg   = CacheSignal(is_flop=True)
         self.wmask_reg = CacheSignal(self.num_bytes, is_flop=True)
         self.din_reg   = CacheSignal(self.word_size, is_flop=True)
-
         # State flop
-        self.state = CacheSignal(State, is_flop=True)
+        self.state     = CacheSignal(State, is_flop=True)
 
 
     def add_srams(self, m):

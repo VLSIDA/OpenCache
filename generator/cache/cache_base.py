@@ -26,7 +26,7 @@ class cache_base(design, logic, configuration):
         cache_config.set_local_config(self)
         self.name = name
 
-        # Copy configs to CacheSignal class for calculations
+        # Copy configs to module classes for calculations
         cache_config.set_local_config(CacheSignal)
         cache_config.set_local_config(SramInstance)
 

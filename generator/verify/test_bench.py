@@ -24,7 +24,6 @@ class test_bench:
         """ Write the test bench file. """
 
         self.tbf = open(tb_path, "w")
-
         self.tbf.write("// Timescale is overwritten when running the EDA tool to prevent bugs\n")
         self.tbf.write("// `timescale 1ns / 1ps\n\n")
         self.tbf.write("module test_bench;\n\n")
@@ -40,7 +39,6 @@ class test_bench:
         self.tbf.write("    `include \"test_data.v\"\n")
         self.tbf.write("  end\n\n")
         self.tbf.write("endmodule\n")
-
         self.tbf.close()
 
 

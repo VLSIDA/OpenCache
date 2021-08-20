@@ -25,16 +25,16 @@ class test_data:
         """  Generate random test data and expected outputs. """
 
         # Operation
-        self.op    = ["reset"]
+        self.op = ["reset"]
         # Write enable
-        self.web   = [1]
+        self.web = [1]
         # Write mask
         # TODO: Write test data for write mask
         self.wmask = ["0" * self.num_bytes]
         # Address
-        self.addr  = [0]
+        self.addr = [0]
         # Data input/output
-        self.data  = [0]
+        self.data = [0]
         # Number of stall cycles after the request
         self.stall = [0]
 
@@ -121,7 +121,6 @@ class test_data:
         test_count = 0
 
         self.tdf = open(data_path, "w")
-
         self.tdf.write("// Initial delay to align with the cache and SRAMs.\n")
         self.tdf.write("// SRAMs return data at the negedge of the clock.\n")
         self.tdf.write("// Therefore, cache's output will be valid after the negedge.\n")
@@ -156,5 +155,4 @@ class test_data:
 
         self.tdf.write("end_simulation();\n")
         self.tdf.write("$finish;\n")
-
         self.tdf.close()
