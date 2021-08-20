@@ -91,8 +91,11 @@ def reset(sc):
 def check_reset(sc):
     """ Check if reset() functions properly. """
 
-    # Write 1 to address 0
-    sc.write(0, 1)
+    # Read data from address 0
+    data = sc.read(0)
+
+    # Write inverse of data to address 0
+    sc.write(0, ~data)
 
     # Reset the cache
     sc.reset()
@@ -101,8 +104,8 @@ def check_reset(sc):
     if sc.find_way(0) is not None:
         return False
 
-    # Read unknown data from address 0
-    if sc.read(0) is not None:
+    # Read the first data from address 0
+    if sc.read(0) != data:
         return False
 
     return True
@@ -173,15 +176,14 @@ def check_read_write(sc):
 
     reset(sc)
 
-    # Read unknown from address 0
-    if sc.read(0) is not None:
-        return False
+    # Read data from address 0
+    data = sc.read(0)
 
-    # Write 1 from address 0
-    sc.write(0, 1)
+    # Write inverse of data to address 0
+    sc.write(0, ~data)
 
-    # Read 1 from address 0
-    if sc.read(0) != 1:
+    # Read inverse of data from address 0
+    if sc.read(0) != ~data:
         return False
 
     return True
