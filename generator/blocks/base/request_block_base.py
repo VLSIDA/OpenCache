@@ -16,7 +16,8 @@ class request_block_base(block_base):
     different cache designs.
 
     In this block, CPU's request is decoded. Address is parsed into tag, set
-    and offset values, and write enable and data input are saved in flops.
+    and offset values, and write enable, write mask and data input are saved in
+    flip-flops.
     """
 
     def __init__(self):
