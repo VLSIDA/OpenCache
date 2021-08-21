@@ -18,7 +18,7 @@ In this state, cache reads `addr` input and requests tag and data lines from its
 internal SRAMs. If `csb` input is high, cache waits in this state. Otherwise, cache
 switches to the **Compare** state.
 
-## Wait Hazard
+## Wait for Hazard
 In this state, cache avoids data hazard by stalling itself for 1 cycle. Cache requests
 tag and data lines from its internal SRAMS, and switches to the **Compare** state.
 
@@ -32,7 +32,7 @@ writes the input if write.
     * If `csb` is low, it also reads the next address from the pipeline and requests
     corresponding tag and data lines from internal SRAMs. If the next address is in
     the same set with the current address, data hazard might occur. In this case, cache
-    switches to the **Wait Hazard** state.
+    switches to the **Wait for Hazard** state.
 
     * If `csb` is high, cache switches to the **Idle** state and stall signals stays
     low.
@@ -41,27 +41,27 @@ writes the input if write.
 `stall` becomes high since cache will wait for DRAM’s response.
 
     * If the data line is dirty, cache sends the dirty line to DRAM. Cache switches to
-    the **Wait Write** state if DRAM’s `main_stall` signal is low. Otherwise, it
+    the **Wait for Write** state if DRAM’s `main_stall` signal is low. Otherwise, it
     switches to the **Write** state.
 
     * If the data line is not dirty, cache requests the new data line from DRAM. Cache
-    switches to the **Wait Read** state if `main_stall` signal is low. Otherwise, it
+    switches to the **Wait for Read** state if `main_stall` signal is low. Otherwise, it
     switches to the **Read** state.
 
 ## Write
 Cache waits in this state until `main_stall` signal is low. When it is low, cache sends
-the dirty line to DRAM and switches to the **Wait Write** state.
+the dirty line to DRAM and switches to the **Wait for Write** state.
 
-## Wait Write
+## Wait for Write
 Cache waits in this state until `main_stall` signal becomes low. When it is low, cache
 requests the new data line from DRAM. `stall` signal stays high. Cache switches to the
-**Wait Read** state.
+**Wait for Read** state.
 
 ## Read
 Cache waits in this state until `stall` signal is low. When it is low, cache requests
-the new data line from DRAM and switches to the **Wait Read** state.
+the new data line from DRAM and switches to the **Wait for Read** state.
 
-## Wait Read
+## Wait for Read
 Cache waits in this state until `main_stall` signal becomes low. When it is low, cache
 sends the new tag and data lines to internal SRAMs.
 
