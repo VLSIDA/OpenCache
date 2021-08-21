@@ -5,7 +5,7 @@ An open-source cache generator using [OpenRAM] SRAM arrays.
 OpenCache is an open-source Python generator to create a cache design using OpenRAM's SRAM arrays.
 
 # Documentation
-[This](./docs/Overview.md) serves as the documentation of OpenCache that explains how generated caches work.
+[This](./docs/Overview.rst) serves as the documentation of OpenCache that explains how generated caches work.
 
 # Basic Setup
 ## Dependencies
@@ -41,7 +41,7 @@ Clone the repository.
 git clone https://github.com/VLSIDA/OpenCache.git
 cd OpenCache/generator
 ```
-Create a Python configuration file. All configuration parameters can be found in [here](./docs/Configuration.md).
+Create a Python configuration file. All configuration parameters can be found in [here](./docs/Parameter.rst).
 A simple configuration file is:
 ```python
 from policy import ReplacementPolicy, WritePolicy

@@ -1,10 +1,16 @@
-# Replacement Policies
-Replacement policies are defined in [policy.py](../generator/base/policy.py).
+====================
+Replacement Policies
+====================
+Replacement policies are defined in `policy.py <../generator/base/policy.py>`_.
 
-## None
+----
+None
+----
 Direct-mapped cache doesn't have a replacement policy.
 
-## First In First Out
+------------------
+First In First Out
+------------------
 First In First Out (FIFO) replacement policy is implemented with a single pointer entry
 in the use array.
 
@@ -15,7 +21,9 @@ When a way is replaced, the corresponding use number is incremented by 1. Since 
 starts from 0 and flips when it reaches the way limit, data will be evicted in the order
 they arrive. 
 
-## Least Recently Used
+-------------------
+Least Recently Used
+-------------------
 Least Recently Used (LRU) replacement policy is implemented with a queue of use order
 entries in the use array.
 
@@ -25,7 +33,9 @@ way in the set. These numbers show the relative use order of each way.
 When a way is used (read or write), its use number is brought to the end of the queue
 (maximum value). When a way needs to be evicted, the way with 0 use number is chosen.
 
-## Random
+------
+Random
+------
 Random replacement policy is implemented with a single counter, without a separate use
 array.
 
