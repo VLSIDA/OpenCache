@@ -120,39 +120,38 @@ class test_data:
 
         test_count = 0
 
-        self.tdf = open(data_path, "w")
-        self.tdf.write("// Initial delay to align with the cache and SRAMs.\n")
-        self.tdf.write("// SRAMs return data at the negedge of the clock.\n")
-        self.tdf.write("// Therefore, cache's output will be valid after the negedge.\n")
-        self.tdf.write("#(CLOCK_DELAY + DELAY + 1);\n\n")
+        with open(data_path, "w") as file:
+            file.write("// Initial delay to align with the cache and SRAMs.\n")
+            file.write("// SRAMs return data at the negedge of the clock.\n")
+            file.write("// Therefore, cache's output will be valid after the negedge.\n")
+            file.write("#(CLOCK_DELAY + DELAY + 1);\n\n")
 
-        # Check requests
-        for i in range(len(self.op)):
-            self.tdf.write("// {0} operation (Test #{1})\n".format(self.op[i].capitalize(),
-                                                                   test_count))
+            # Check requests
+            for i in range(len(self.op)):
+                file.write("// {0} operation (Test #{1})\n".format(self.op[i].capitalize(),
+                                                                    test_count))
 
-            if self.op[i] == "reset" or self.op[i] == "flush":
-                self.tdf.write("assert_{}();\n".format(self.op[i]))
-            else:
-                self.tdf.write("cache_csb   = 0;\n")
-                self.tdf.write("cache_web   = {};\n".format(self.web[i]))
-                self.tdf.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
-                self.tdf.write("cache_addr  = {};\n".format(self.addr[i]))
-                if not self.web[i]:
-                    self.tdf.write("cache_din   = {};\n".format(self.data[i]))
+                if self.op[i] == "reset" or self.op[i] == "flush":
+                    file.write("assert_{}();\n".format(self.op[i]))
+                else:
+                    file.write("cache_csb   = 0;\n")
+                    file.write("cache_web   = {};\n".format(self.web[i]))
+                    file.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
+                    file.write("cache_addr  = {};\n".format(self.addr[i]))
+                    if not self.web[i]:
+                        file.write("cache_din   = {};\n".format(self.data[i]))
 
-            # Wait for 1 cycle so that cache will receive the request
-            self.tdf.write("\n#(CLOCK_DELAY * 2);\n\n")
+                # Wait for 1 cycle so that cache will receive the request
+                file.write("\n#(CLOCK_DELAY * 2);\n\n")
 
-            if self.stall[i]:
-                self.tdf.write("check_stall({0}, {1});\n\n".format(self.stall[i], test_count))
+                if self.stall[i]:
+                    file.write("check_stall({0}, {1});\n\n".format(self.stall[i], test_count))
 
-            # Check read request after stalls
-            if self.op[i] == "read":
-                self.tdf.write("check_dout({0}, {1});\n\n".format(self.data[i], test_count))
+                # Check read request after stalls
+                if self.op[i] == "read":
+                    file.write("check_dout({0}, {1});\n\n".format(self.data[i], test_count))
 
-            test_count += 1
+                test_count += 1
 
-        self.tdf.write("end_simulation();\n")
-        self.tdf.write("$finish;\n")
-        self.tdf.close()
+            file.write("end_simulation();\n")
+            file.write("$finish;\n")
