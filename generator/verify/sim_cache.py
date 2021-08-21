@@ -247,13 +247,23 @@ class sim_cache:
         return self.data_array[set_decimal][way][offset_decimal]
 
 
-    def write(self, address, data_input):
+    def write(self, address, mask, data_input):
         """ Write data to an address. """
 
         _, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
         self.dirty_array[set_decimal][way] = 1
-        self.data_array[set_decimal][way][offset_decimal] = data_input
+
+        # Write input data over the write mask
+        orig_data = self.data_array[set_decimal][way][offset_decimal]
+        wr_data = 0
+        for i in range(len(mask)):
+            if mask[i] == "1":
+                byte = (data_input >> (i * 8)) % (1 << 8)
+            else:
+                byte = (orig_data >> (i * 8)) % (1 << 8)
+            wr_data += byte << (i * 8)
+        self.data_array[set_decimal][way][offset_decimal] = wr_data
 
         # Update previous write enable
         self.prev_web = 0

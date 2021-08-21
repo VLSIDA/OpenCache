@@ -86,8 +86,11 @@ def check_reset(sc):
     # Read data from address 0
     data = sc.read(0)
 
+    # Calculate the negation of data
+    neg_data = (~data & 0xFFFFFFFF)
+
     # Write inverse of data to address 0
-    sc.write(0, ~data)
+    sc.write(0, "1111", neg_data)
 
     # Reset the cache
     sc.reset()
@@ -109,7 +112,7 @@ def check_flush(sc):
     reset(sc)
 
     # Write 1 to address 0
-    sc.write(0, 1)
+    sc.write(0, "1111", 1)
 
     # Flush and reset the cache
     sc.flush()
@@ -154,7 +157,7 @@ def check_dirty(sc):
         return False
 
     # Write 1 to address 0
-    sc.write(0, 1)
+    sc.write(0, "1111", 1)
 
     # Address 0 is dirty
     if not sc.is_dirty(0):
@@ -171,11 +174,14 @@ def check_read_write(sc):
     # Read data from address 0
     data = sc.read(0)
 
+    # Calculate the negation of data
+    neg_data = (~data & 0xFFFFFFFF)
+
     # Write inverse of data to address 0
-    sc.write(0, ~data)
+    sc.write(0, "1111", neg_data)
 
     # Read inverse of data from address 0
-    if sc.read(0) != ~data:
+    if sc.read(0) != neg_data:
         return False
 
     return True
@@ -191,7 +197,7 @@ def check_fifo(sc):
 
     # Write different data to each address
     for i in range(5):
-        sc.write(address[i], i + 1)
+        sc.write(address[i], "1111", i + 1)
 
     # Read from each address and check for replacement
     for i in range(5):
@@ -213,7 +219,7 @@ def check_lru(sc):
 
     # Write different data to each address
     for i in range(5):
-        sc.write(address[i], i + 1)
+        sc.write(address[i], "1111", i + 1)
 
     # address[0] must be evicted
     if sc.find_way(address[0]) is not None:
@@ -239,7 +245,7 @@ def check_random(sc):
 
     # Write different data to each address
     for i in range(5):
-        sc.write(address[i], i + 1)
+        sc.write(address[i], "1111", i + 1)
 
     # address[3] must be evicted
     if sc.find_way(address[3]) is not None:

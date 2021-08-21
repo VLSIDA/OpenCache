@@ -112,7 +112,7 @@ class test_data:
                     # could be old.
                     self.data[i] = self.sc.read(self.addr[i])
                 else:
-                    self.sc.write(self.addr[i], self.data[i])
+                    self.sc.write(self.addr[i], self.wmask[i], self.data[i])
 
 
     def write(self, data_path):
