@@ -259,7 +259,7 @@ class sim_cache:
         wr_data = 0 if self.num_masks else data_input
 
         for i in range(self.num_masks):
-            part = data_input if mask[i] == "1" else orig_data
+            part = data_input if mask[-(i + 1)] == "1" else orig_data
             part = (part >> (i * self.write_size)) % (1 << self.write_size)
             wr_data += part << (i * self.write_size)
 
