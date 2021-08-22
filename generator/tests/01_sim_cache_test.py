@@ -22,6 +22,8 @@ class sim_cache_test(opencache_test):
         config_file = "{}/tests/configs/config.py".format(OPENCACHE_HOME)
         globals.init_opencache(config_file)
 
+        OPTS.write_size = 8
+
         # Run tests for direct-mapped
         OPTS.num_ways = 1
         OPTS.replacement_policy = RP.NONE
