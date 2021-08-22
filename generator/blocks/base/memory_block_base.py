@@ -33,6 +33,7 @@ class memory_block_base(block_base):
         # In the RESET state, cache will set all tag and use array lines to 0.
         with m.If(dsgn.rst):
             dsgn.tag_array.write(0, 0)
+            dsgn.data_array.write(0, 0)
 
 
     def add_flush_sig(self, dsgn, m):
@@ -62,6 +63,7 @@ class memory_block_base(block_base):
         # When set register reaches the end, state switches to IDLE.
         with m.Case(State.RESET):
             dsgn.tag_array.write(dsgn.set, 0)
+            dsgn.data_array.write(dsgn.set, 0)
 
 
     def add_flush(self, dsgn, m):
