@@ -1,7 +1,7 @@
 ===============
 Associativities
 ===============
-Associativities policies are defined in `policy.py <../generator/base/policy.py>`_.
+Associativities are defined in `policy.py <../generator/base/policy.py>`_.
 
 -------------
 Direct-mapped
