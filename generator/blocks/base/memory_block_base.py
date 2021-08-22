@@ -149,7 +149,7 @@ class memory_block_base(block_base):
                     dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, 0b11))
                     # Perform write request
                     dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
-                    dsgn.data_array.write_bytes(dsgn.wmask_reg, 0, dsgn.offset, dsgn.din_reg)
+                    dsgn.data_array.write_input(0, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive.
                 dsgn.tag_array.read(dsgn.addr.parse_set())
@@ -224,7 +224,7 @@ class memory_block_base(block_base):
                 dsgn.data_array.write(dsgn.set, dsgn.dram.output(), dsgn.way)
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
-                    dsgn.data_array.write_bytes(dsgn.wmask_reg, dsgn.way, dsgn.offset, dsgn.din_reg)
+                    dsgn.data_array.write_input(dsgn.way, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive
                 dsgn.tag_array.read(dsgn.addr.parse_set())

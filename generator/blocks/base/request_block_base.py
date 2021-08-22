@@ -38,7 +38,8 @@ class request_block_base(block_base):
             m.d.comb += dsgn.set.eq(1)
             m.d.comb += dsgn.offset.eq(0)
             m.d.comb += dsgn.web_reg.eq(1)
-            m.d.comb += dsgn.wmask_reg.eq(0)
+            if dsgn.num_masks:
+                m.d.comb += dsgn.wmask_reg.eq(0)
             m.d.comb += dsgn.din_reg.eq(0)
 
 
@@ -115,5 +116,6 @@ class request_block_base(block_base):
         m.d.comb += dsgn.set.eq(dsgn.addr.parse_set())
         m.d.comb += dsgn.offset.eq(dsgn.addr.parse_offset())
         m.d.comb += dsgn.web_reg.eq(dsgn.web)
-        m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
+        if dsgn.num_masks:
+            m.d.comb += dsgn.wmask_reg.eq(dsgn.wmask)
         m.d.comb += dsgn.din_reg.eq(dsgn.din)

@@ -81,6 +81,7 @@ def make_config():
                         word_size=OPTS.word_size,
                         words_per_line=OPTS.words_per_line,
                         address_size=OPTS.address_size,
+                        write_size=OPTS.write_size,
                         num_ways=OPTS.num_ways)
 
 

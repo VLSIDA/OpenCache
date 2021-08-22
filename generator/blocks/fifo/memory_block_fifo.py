@@ -58,7 +58,7 @@ class memory_block_fifo(memory_block_base):
                         dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b11), i)
                         # Perform write request
                         dsgn.data_array.write(dsgn.set, dsgn.data_array.output(i), i)
-                        dsgn.data_array.write_bytes(dsgn.wmask_reg, i, dsgn.offset, dsgn.din_reg)
+                        dsgn.data_array.write_input(i, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.
                     dsgn.tag_array.read(dsgn.addr.parse_set())

@@ -92,10 +92,10 @@ class CacheSignal(Signal):
         return self.way(way)
 
 
-    def byte(self, byte_offset, word_offset=0, way=0):
-        """ Return a data byte of a data signal. """
+    def mask(self, mask_offset, word_offset=0, way=0):
+        """ Return a mask part of a data signal. """
 
-        return self.word_select((way * CacheSignal.words_per_line + word_offset) * CacheSignal.num_bytes + byte_offset, 8)
+        return self.word_select((way * CacheSignal.words_per_line + word_offset) * CacheSignal.num_masks + mask_offset, CacheSignal.write_size)
 
 
     def word(self, offset, way=0):

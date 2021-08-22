@@ -51,7 +51,8 @@ class test_bench:
         self.tbf.write("  parameter  OFFSET_WIDTH  = {};\n\n".format(self.offset_size))
 
         self.tbf.write("  parameter  WORD_WIDTH    = {};\n".format(self.word_size))
-        self.tbf.write("  parameter  BYTE_COUNT    = {};\n".format(self.num_bytes))
+        if self.num_masks:
+            self.tbf.write("  parameter  MASK_COUNT    = {};\n".format(self.num_masks))
         self.tbf.write("  parameter  WORD_COUNT    = {};\n".format(self.words_per_line))
         self.tbf.write("  localparam LINE_WIDTH    = WORD_WIDTH * WORD_COUNT;\n\n")
 
@@ -74,7 +75,8 @@ class test_bench:
         self.tbf.write("  reg cache_flush;\n")
         self.tbf.write("  reg cache_csb;\n")
         self.tbf.write("  reg cache_web;\n")
-        self.tbf.write("  reg [BYTE_COUNT-1:0] cache_wmask;\n")
+        if self.num_masks:
+            self.tbf.write("  reg [MASK_COUNT-1:0] cache_wmask;\n")
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
         self.tbf.write("  reg [WORD_WIDTH-1:0] cache_din;\n\n")
 
@@ -115,7 +117,8 @@ class test_bench:
         self.tbf.write("    cache_flush = 0;\n")
         self.tbf.write("    cache_csb   = 1;\n")
         self.tbf.write("    cache_web   = 1;\n")
-        self.tbf.write("    cache_wmask = 0;\n")
+        if self.num_masks:
+           self.tbf.write("    cache_wmask = 0;\n")
         self.tbf.write("    error_count = 0;\n")
         self.tbf.write("  end\n\n")
 
@@ -129,7 +132,8 @@ class test_bench:
         self.tbf.write("    .flush      (cache_flush),\n")
         self.tbf.write("    .csb        (cache_csb),\n")
         self.tbf.write("    .web        (cache_web),\n")
-        self.tbf.write("    .wmask      (cache_wmask),\n")
+        if self.num_masks:
+            self.tbf.write("    .wmask      (cache_wmask),\n")
         self.tbf.write("    .addr       (cache_addr),\n")
         self.tbf.write("    .din        (cache_din),\n")
         self.tbf.write("    .dout       (cache_dout),\n")

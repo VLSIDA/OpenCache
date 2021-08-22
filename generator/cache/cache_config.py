@@ -14,12 +14,17 @@ from globals import OPTS
 class cache_config:
     """ This is a structure that is used to hold the cache configuration options. """
 
-    def __init__(self, total_size, word_size, words_per_line, address_size, num_ways):
+    def __init__(self, total_size, word_size, words_per_line, address_size, write_size, num_ways):
 
         self.total_size     = total_size
         self.word_size      = word_size
         self.words_per_line = words_per_line
         self.address_size   = address_size
+        # Don't add a write mask if it is the same size as data word
+        if write_size and write_size == word_size:
+            self.write_size = None
+        else:
+            self.write_size = write_size
         self.num_ways       = num_ways
 
         self.compute_configs()
@@ -67,8 +72,11 @@ class cache_config:
         # Way size is used in replacement policy
         self.way_size = ceil(log2(self.num_ways))
 
-        # Number of bytes in a word
-        self.num_bytes = ceil(self.word_size / 8)
+        # Number of write masks
+        if self.write_size:
+            self.num_masks = self.word_size // self.write_size
+        else:
+            self.num_masks = 0
 
         # Set the associativity of the cache
         if self.num_ways == 1:

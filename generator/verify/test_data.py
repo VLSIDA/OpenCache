@@ -30,7 +30,7 @@ class test_data:
         self.web = [1]
         # Write mask
         # TODO: Write test data for write mask
-        self.wmask = ["0" * self.num_bytes]
+        self.wmask = ["0" * self.num_masks]
         # Address
         self.addr = [0]
         # Data input/output
@@ -50,7 +50,7 @@ class test_data:
 
             self.op.append("write")
             self.web.append(0)
-            self.wmask.append("1" * self.num_bytes)
+            self.wmask.append("1" * self.num_masks)
             self.addr.append(random_address)
             # Data written should not be 0 since cache output is
             # 0 by default
@@ -64,7 +64,7 @@ class test_data:
         # that no request will be sent to SRAMs before flush.
         self.op.append("read")
         self.web.append(1)
-        self.wmask.append("0" * self.num_bytes)
+        self.wmask.append("0" * self.num_masks)
         self.addr.append(self.addr[-1])
         self.data.append(self.data[-1])
         self.stall.append(0)
@@ -72,7 +72,7 @@ class test_data:
         # Flush the cache after writing is done
         self.op.append("flush")
         self.web.append(1)
-        self.wmask.append("0" * self.num_bytes)
+        self.wmask.append("0" * self.num_masks)
         self.addr.append(0)
         self.data.append(0)
         self.stall.append(0)
@@ -87,7 +87,7 @@ class test_data:
             if self.op[index] == "write":
                 self.op.append("read")
                 self.web.append(1)
-                self.wmask.append("0" * self.num_bytes)
+                self.wmask.append("0" * self.num_masks)
                 self.addr.append(self.addr[index])
                 # If the same address is written twice, this data may be old.
                 # Therefore, data values for read operations are going to be
@@ -136,7 +136,8 @@ class test_data:
                 else:
                     file.write("cache_csb   = 0;\n")
                     file.write("cache_web   = {};\n".format(self.web[i]))
-                    file.write("cache_wmask = {0}'b{1};\n".format(self.num_bytes, self.wmask[i]))
+                    if self.num_masks:
+                        file.write("cache_wmask = {0}'b{1};\n".format(self.num_masks, self.wmask[i]))
                     file.write("cache_addr  = {};\n".format(self.addr[i]))
                     if not self.web[i]:
                         file.write("cache_din   = {};\n".format(self.data[i]))

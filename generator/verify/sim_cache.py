@@ -256,13 +256,15 @@ class sim_cache:
 
         # Write input data over the write mask
         orig_data = self.data_array[set_decimal][way][offset_decimal]
-        wr_data = 0
-        for i in range(len(mask)):
+        wr_data = 0 if self.num_masks else data_input
+
+        for i in range(self.num_masks):
             if mask[i] == "1":
-                byte = (data_input >> (i * 8)) % (1 << 8)
+                part = (data_input >> (i * self.write_size)) % (1 << self.write_size)
             else:
-                byte = (orig_data >> (i * 8)) % (1 << 8)
-            wr_data += byte << (i * 8)
+                part = (orig_data >> (i * self.write_size)) % (1 << self.write_size)
+            wr_data += part << (i * self.write_size)
+
         self.data_array[set_decimal][way][offset_decimal] = wr_data
 
         # Update previous write enable

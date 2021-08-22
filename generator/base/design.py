@@ -88,7 +88,8 @@ class design(Elaboratable):
         self.flush = CacheSignal()
         self.csb   = CacheSignal()
         self.web   = CacheSignal()
-        self.wmask = CacheSignal(self.num_bytes)
+        if self.num_masks:
+            self.wmask = CacheSignal(self.num_masks)
         self.addr  = CacheSignal(self.address_size)
         self.din   = CacheSignal(self.word_size)
         self.dout  = CacheSignal(self.word_size)
@@ -113,7 +114,8 @@ class design(Elaboratable):
         self.set       = CacheSignal(self.set_size, is_flop=True)
         self.offset    = CacheSignal(self.offset_size, is_flop=True)
         self.web_reg   = CacheSignal(is_flop=True)
-        self.wmask_reg = CacheSignal(self.num_bytes, is_flop=True)
+        if self.num_masks:
+            self.wmask_reg = CacheSignal(self.num_masks, is_flop=True)
         self.din_reg   = CacheSignal(self.word_size, is_flop=True)
         # State flop
         self.state     = CacheSignal(State, is_flop=True)

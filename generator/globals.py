@@ -348,6 +348,10 @@ def report_status():
     if OPTS.total_size % OPTS.word_size:
         debug.error("Total size is not divisible by word size.", -1)
 
+    # If write size is specified, word size should be divisible by it
+    if OPTS.write_size is not None and OPTS.word_size % OPTS.write_size:
+        debug.error("Word size is not divisible by write size.", -1)
+
     from policy import ReplacementPolicy as RP
     # Direct-mapped cache doesn't have a replacement policy
     if OPTS.num_ways == 1 and OPTS.replacement_policy != RP.NONE:

@@ -25,6 +25,10 @@ class options(optparse.Values):
     # words_per_line = 0
     # address_size = 0
 
+    # Write size is used to create write masks
+    # Write mask will not be used if not specified
+    write_size = None
+
     # Currently supports direct and n-way caches
     num_ways = 1
     # Replacement policy of the cache

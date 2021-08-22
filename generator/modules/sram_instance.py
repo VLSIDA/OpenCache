@@ -125,15 +125,15 @@ class SramInstance:
                 self.m.d.comb += self.write_din[0].way(way).eq(data)
 
 
-    def write_bytes(self, wmask, way, offset, data):
-        """ Add bytes to write request to SRAM. """
+    def write_input(self, way, offset, data, wmask=None):
+        """ Add inbput data to write request to SRAM. """
+
+        # NOTE: These switch statements are written manually (not only with
+        # word_select) because word_select fails to generate correct case
+        # statements if offset calculation is a bit complex.
 
         # Write the word over the write mask
-        # NOTE: This switch statement is written manually (not only
-        # with word_select) because word_select fails to generate
-        # correct case statements if offset calculation is a bit
-        # complex.
-        for i in range(SramInstance.num_bytes):
+        for i in range(SramInstance.num_masks):
             with self.m.If(wmask[i]):
                 if isinstance(way, CacheSignal):
                     with self.m.Switch(way):
@@ -142,9 +142,24 @@ class SramInstance:
                                 with self.m.Switch(offset):
                                     for k in range(SramInstance.words_per_line):
                                         with self.m.Case(k):
-                                            self.m.d.comb += self.write_din[j].byte(i, k).eq(data.byte(i))
+                                            self.m.d.comb += self.write_din[j].mask(i, k).eq(data.mask(i))
                 else:
                     with self.m.Switch(offset):
                         for k in range(SramInstance.words_per_line):
                             with self.m.Case(k):
-                                self.m.d.comb += self.write_din[way].byte(i, k).eq(data.byte(i))
+                                self.m.d.comb += self.write_din[way].mask(i, k).eq(data.mask(i))
+        # Write mask is not used
+        if not SramInstance.num_masks:
+            if isinstance(way, CacheSignal):
+                with self.m.Switch(way):
+                    for j in range(SramInstance.num_ways):
+                        with self.m.Case(j):
+                            with self.m.Switch(offset):
+                                for k in range(SramInstance.words_per_line):
+                                    with self.m.Case(k):
+                                        self.m.d.comb += self.write_din[j].word(k).eq(data)
+            else:
+                with self.m.Switch(offset):
+                    for k in range(SramInstance.words_per_line):
+                        with self.m.Case(k):
+                            self.m.d.comb += self.write_din[way].word(k).eq(data)
