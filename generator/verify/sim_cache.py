@@ -259,10 +259,8 @@ class sim_cache:
         wr_data = 0 if self.num_masks else data_input
 
         for i in range(self.num_masks):
-            if mask[i] == "1":
-                part = (data_input >> (i * self.write_size)) % (1 << self.write_size)
-            else:
-                part = (orig_data >> (i * self.write_size)) % (1 << self.write_size)
+            part = data_input if mask[i] == "1" else orig_data
+            part = (part >> (i * self.write_size)) % (1 << self.write_size)
             wr_data += part << (i * self.write_size)
 
         self.data_array[set_decimal][way][offset_decimal] = wr_data
