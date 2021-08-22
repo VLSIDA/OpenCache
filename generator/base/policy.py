@@ -59,10 +59,7 @@ class ReplacementPolicy(IntEnum):
 
 
     def has_sram_array(self):
-        """
-        Return True if the replacement policy
-        needs a separate SRAM array.
-        """
+        """ Return True if the replacement policy needs a separate SRAM array. """
 
         return self not in [
             ReplacementPolicy.NONE,
