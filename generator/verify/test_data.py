@@ -29,7 +29,6 @@ class test_data:
         # Write enable
         self.web = [1]
         # Write mask
-        # TODO: Write test data for write mask
         self.wmask = ["0" * self.num_masks]
         # Address
         self.addr = [0]
@@ -50,7 +49,7 @@ class test_data:
 
             self.op.append("write")
             self.web.append(0)
-            self.wmask.append("1" * self.num_masks)
+            self.wmask.append("".join([choice(["1", "0"]) for _ in range(self.num_masks)]))
             self.addr.append(random_address)
             # Data written should not be 0 since cache output is
             # 0 by default
