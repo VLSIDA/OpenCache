@@ -50,9 +50,9 @@ class sim_cache:
         if OPTS.replacement_policy == RP.RANDOM:
             # Random register is reset when rst is high.
             # During the RESET state, it keeps getting incremented.
-            # It starts with unknown. Cache sets it 0 first, then
-            # increments. Therefore, random is equal to num_rows
-            # when the first request is in the COMPARE state.
+            # It starts with unknown. Cache sets it 0 first, then increments.
+            # Therefore, random is equal to num_rows when the first request is
+            # in the COMPARE state.
             self.random = 0
             self.update_random(self.num_rows)
 
@@ -283,8 +283,7 @@ class sim_cache:
             self.update_random(1)
 
         if self.find_way(address) is None:
-            # Stalls 1 cycle in the COMPARE state since
-            # the request is a miss
+            # Stalls 1 cycle in the COMPARE state since the request is a miss
             stall_cycles += 1
 
             # If DRAM is not yet ready and the request is miss, cache needs to

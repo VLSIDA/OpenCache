@@ -41,8 +41,7 @@ class test_data:
         # Write random data to random addresses initially
         for i in range(test_size):
             random_tag = randrange(2 ** self.tag_size)
-            # Write to first two sets only so that
-            # we can test replacement
+            # Write to first two sets only so that we can test replacement
             random_set = randrange(2)
             random_offset = randrange(2 ** self.offset_size)
             random_address = self.sc.merge_address(random_tag, random_set, random_offset)
@@ -51,8 +50,7 @@ class test_data:
             self.web.append(0)
             self.wmask.append("".join([choice(["1", "0"]) for _ in range(self.num_masks)]))
             self.addr.append(random_address)
-            # Data written should not be 0 since cache output is
-            # 0 by default
+            # Data written should not be 0 since cache output is 0 by default
             self.data.append(randrange(1, 2 ** self.word_size))
             self.stall.append(0)
 
