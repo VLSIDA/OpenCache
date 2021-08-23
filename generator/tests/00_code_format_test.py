@@ -9,6 +9,7 @@
 import unittest
 from testutils import *
 import sys, os, re
+sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
 import debug
 
