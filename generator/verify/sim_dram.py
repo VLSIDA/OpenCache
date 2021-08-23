@@ -91,7 +91,9 @@ class sim_dram:
         if self.data:
             self.df.write("  initial begin\n")
             for i in range(len(self.data)):
-                self.df.write("    memory[{0}] <= {1};\n".format(i, self.data[i]))
+                self.df.write("    memory[{0}] <= {1}'d{2};\n".format(i,
+                                                                      self.word_size * self.words_per_line,
+                                                                      self.data[i]))
             self.df.write("  end\n\n")
 
 
