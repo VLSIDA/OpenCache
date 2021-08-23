@@ -50,8 +50,7 @@ class memory_block_base(block_base):
         """ Add statements for each cache state. """
 
         with m.Else():
-            with m.Switch(dsgn.state):
-                super().add_states(dsgn, m)
+            super().add_states(dsgn, m)
 
 
     def add_reset(self, dsgn, m):

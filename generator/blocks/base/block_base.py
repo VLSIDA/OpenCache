@@ -40,16 +40,17 @@ class block_base:
     def add_states(self, dsgn, m):
         """ Add statements for each cache state. """
 
-        self.add_reset(dsgn, m)
-        self.add_flush(dsgn, m)
-        self.add_idle(dsgn, m)
-        if OPTS.data_hazard:
-            self.add_wait_hazard(dsgn, m)
-        self.add_compare(dsgn, m)
-        self.add_write(dsgn, m)
-        self.add_wait_write(dsgn, m)
-        self.add_read(dsgn, m)
-        self.add_wait_read(dsgn, m)
+        with m.Switch(dsgn.state):
+            self.add_reset(dsgn, m)
+            self.add_flush(dsgn, m)
+            self.add_idle(dsgn, m)
+            if OPTS.data_hazard:
+                self.add_wait_hazard(dsgn, m)
+            self.add_compare(dsgn, m)
+            self.add_write(dsgn, m)
+            self.add_wait_write(dsgn, m)
+            self.add_read(dsgn, m)
+            self.add_wait_read(dsgn, m)
 
 
     def add_reset(self, dsgn, m):

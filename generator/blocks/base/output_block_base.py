@@ -24,13 +24,6 @@ class output_block_base(block_base):
         super().__init__()
 
 
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Switch(dsgn.state):
-            super().add_states(dsgn, m)
-
-
     def add_idle(self, dsgn, m):
         """ Add statements for the IDLE state. """
 
