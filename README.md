@@ -14,7 +14,7 @@ The OpenCache has the following dependencies:
 + [nMigen] 0.2 or higher
 + [yosys] 0.9+4081 or higher
 
-If want to verify the design via simulation and/or synthesis, you will need:
+If you want to verify the design via simulation and/or synthesis, you will need:
 + [OpenRAM]
 + [FuseSoC] 1.12 or higher
 + [Icarus] 10.3 or higher
