@@ -25,23 +25,12 @@ class memory_block_base(block_base):
         super().__init__()
 
 
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-
-        # If rst is high, state switches to RESET.
-        # Registers, which are reset only once, are reset here.
-        # In the RESET state, cache will set all tag and use array lines to 0.
-        with m.If(dsgn.rst):
-            dsgn.tag_array.write(0, 0)
-            dsgn.data_array.write(0, 0)
-
-
     def add_flush_sig(self, dsgn, m):
         """ Add flush signal control. """
 
         # If flush is high, state switches to FLUSH.
         # In the FLUSH state, cache will write all data lines back to DRAM.
-        with m.Elif(dsgn.flush):
+        with m.If(dsgn.flush):
             dsgn.tag_array.read(0)
             dsgn.data_array.read(0)
 

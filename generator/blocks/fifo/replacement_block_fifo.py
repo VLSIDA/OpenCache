@@ -27,7 +27,6 @@ class replacement_block_fifo(replacement_block_base):
         # in FIFO and tag lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
-            dsgn.use_array.write(0, 0)
 
 
     def add_flush_sig(self, dsgn, m):

@@ -54,11 +54,12 @@ class sim_cache:
             # Therefore, random is equal to num_rows when the first request is
             # in the COMPARE state.
             self.random = 0
-            self.update_random(self.num_rows)
+            self.update_random(self.num_rows + 1)
 
-        # Return 1 less stall cycles since test_data.v waits for 1 cycle in
-        # order to submit the request.
-        return self.num_rows - 1
+        # Normally we would return 1 less stall cycles since test_data.v waits
+        # for 1 cycle in order to submit the request. However, cache spends 1
+        # more cycle when switching to the RESET state.
+        return self.num_rows + 1 - 1
 
 
     def reset_dram(self):

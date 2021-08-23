@@ -28,7 +28,6 @@ class replacement_block_lru(replacement_block_base):
         # ways in tag and use lines.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.way.eq(0)
-            dsgn.use_array.write(0, self.get_reset_value(dsgn))
 
 
     def add_flush_sig(self, dsgn, m):

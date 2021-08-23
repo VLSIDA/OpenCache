@@ -35,7 +35,7 @@ class request_block_base(block_base):
         # in a tag line.
         with m.If(dsgn.rst):
             m.d.comb += dsgn.tag.eq(0)
-            m.d.comb += dsgn.set.eq(1)
+            m.d.comb += dsgn.set.eq(0)
             m.d.comb += dsgn.offset.eq(0)
             m.d.comb += dsgn.web_reg.eq(1)
             if dsgn.num_masks:
