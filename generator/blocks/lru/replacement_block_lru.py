@@ -20,33 +20,6 @@ class replacement_block_lru(replacement_block_base):
         super().__init__()
 
 
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-
-        # If rst is high, way is reset and use numbers are reset.
-        # way register becomes 0 since it is going to be used to reset all
-        # ways in tag and use lines.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.way.eq(0)
-
-
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-
-        # If flush is high, way is reset.
-        # way register becomes 0 since it is going to be used to write all
-        # data lines back to DRAM.
-        with m.Elif(dsgn.flush):
-            m.d.comb += dsgn.way.eq(0)
-
-
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Else():
-            super().add_states(dsgn, m)
-
-
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
@@ -161,6 +134,26 @@ class replacement_block_lru(replacement_block_base):
                 # Read next lines from SRAMs even though CPU is not
                 # sending a new request since read is non-destructive.
                 dsgn.use_array.read(dsgn.addr.parse_set())
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+
+        # If flush is high, way is reset.
+        # way register becomes 0 since it is going to be used to write all
+        # data lines back to DRAM.
+        with m.If(dsgn.flush):
+            m.d.comb += dsgn.way.eq(0)
+
+
+    def add_reset_sig(self, dsgn, m):
+        """ Add reset signal control. """
+
+        # If rst is high, way is reset and use numbers are reset.
+        # way register becomes 0 since it is going to be used to reset all
+        # ways in tag and use lines.
+        with m.If(dsgn.rst):
+            m.d.comb += dsgn.way.eq(0)
 
 
     def get_reset_value(self, dsgn):

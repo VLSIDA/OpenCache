@@ -25,29 +25,6 @@ class state_block_base(block_base):
         super().__init__()
 
 
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-
-        # If rst is high, state switches to RESET.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.state.eq(State.RESET)
-
-
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-
-        # If flush is high, state switches to FLUSH.
-        with m.Elif(dsgn.flush):
-            m.d.comb += dsgn.state.eq(State.FLUSH)
-
-
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Else():
-            super().add_states(dsgn, m)
-
-
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
@@ -189,3 +166,19 @@ class state_block_base(block_base):
                             m.d.comb += dsgn.state.eq(State.COMPARE)
                     else:
                         m.d.comb += dsgn.state.eq(State.COMPARE)
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+
+        # If flush is high, state switches to FLUSH.
+        with m.If(dsgn.flush):
+            m.d.comb += dsgn.state.eq(State.FLUSH)
+
+
+    def add_reset_sig(self, dsgn, m):
+        """ Add reset signal control. """
+
+        # If rst is high, state switches to RESET.
+        with m.If(dsgn.rst):
+            m.d.comb += dsgn.state.eq(State.RESET)

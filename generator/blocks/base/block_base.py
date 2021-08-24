@@ -22,19 +22,9 @@ class block_base:
     def add(self, dsgn, m):
         """ Add all sections of the always block code. """
 
-        self.add_reset_sig(dsgn, m)
-        self.add_flush_sig(dsgn, m)
         self.add_states(dsgn, m)
-
-
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-        pass
-
-
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-        pass
+        self.add_flush_sig(dsgn, m)
+        self.add_reset_sig(dsgn, m)
 
 
     def add_states(self, dsgn, m):
@@ -95,4 +85,14 @@ class block_base:
 
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
+        pass
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+        pass
+
+
+    def add_reset_sig(self, dsgn, m):
+        """ Add reset signal control. """
         pass

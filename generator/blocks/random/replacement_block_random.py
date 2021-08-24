@@ -27,34 +27,6 @@ class replacement_block_random(replacement_block_base):
         super().add(dsgn, m)
 
 
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-
-        # If rst is high, way and random are reset.
-        # way register becomes 0 since it is going to be used to reset all ways
-        # tag lines.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.way.eq(0)
-            m.d.comb += dsgn.random.eq(0)
-
-
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-
-        # If flush is high, way is reset.
-        # way register becomes 0 since it is going to be used to write all data
-        # lines back to DRAM.
-        with m.Elif(dsgn.flush):
-            m.d.comb += dsgn.way.eq(0)
-
-
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Else():
-            super().add_states(dsgn, m)
-
-
     def add_flush(self, dsgn, m):
         """ Add statements for the FLUSH state. """
 
@@ -78,3 +50,24 @@ class replacement_block_random(replacement_block_base):
             for i in range(dsgn.num_ways):
                 with m.If(~dsgn.tag_array.output().valid(i)):
                     m.d.comb += dsgn.way.eq(i)
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+
+        # If flush is high, way is reset.
+        # way register becomes 0 since it is going to be used to write all data
+        # lines back to DRAM.
+        with m.If(dsgn.flush):
+            m.d.comb += dsgn.way.eq(0)
+
+
+    def add_reset_sig(self, dsgn, m):
+        """ Add reset signal control. """
+
+        # If rst is high, way and random are reset.
+        # way register becomes 0 since it is going to be used to reset all ways
+        # tag lines.
+        with m.If(dsgn.rst):
+            m.d.comb += dsgn.way.eq(0)
+            m.d.comb += dsgn.random.eq(0)

@@ -25,23 +25,6 @@ class memory_block_base(block_base):
         super().__init__()
 
 
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-
-        # If flush is high, state switches to FLUSH.
-        # In the FLUSH state, cache will write all data lines back to DRAM.
-        with m.If(dsgn.flush):
-            dsgn.tag_array.read(0)
-            dsgn.data_array.read(0)
-
-
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Else():
-            super().add_states(dsgn, m)
-
-
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
@@ -217,3 +200,13 @@ class memory_block_base(block_base):
                 # a new request since read is non-destructive
                 dsgn.tag_array.read(dsgn.addr.parse_set())
                 dsgn.data_array.read(dsgn.addr.parse_set())
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+
+        # If flush is high, state switches to FLUSH.
+        # In the FLUSH state, cache will write all data lines back to DRAM.
+        with m.If(dsgn.flush):
+            dsgn.tag_array.read(0)
+            dsgn.data_array.read(0)

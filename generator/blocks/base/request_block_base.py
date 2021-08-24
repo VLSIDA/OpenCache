@@ -25,41 +25,6 @@ class request_block_base(block_base):
         super().__init__()
 
 
-    def add_reset_sig(self, dsgn, m):
-        """ Add reset signal control. """
-
-        # If rst is high, input registers are reset.
-        # set register becomes 1 since it is going to be used to reset all lines
-        # in the tag array.
-        # way register becomes 0 since it is going to be used to reset all ways
-        # in a tag line.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.tag.eq(0)
-            m.d.comb += dsgn.set.eq(0)
-            m.d.comb += dsgn.offset.eq(0)
-            m.d.comb += dsgn.web_reg.eq(1)
-            if dsgn.num_masks:
-                m.d.comb += dsgn.wmask_reg.eq(0)
-            m.d.comb += dsgn.din_reg.eq(0)
-
-
-    def add_flush_sig(self, dsgn, m):
-        """ Add flush signal control. """
-
-        # If flush is high, input registers are not reset.
-        # However, way and set registers becomes 0 since it is going to be used
-        # to write dirty lines back to DRAM.
-        with m.Elif(dsgn.flush):
-            m.d.comb += dsgn.set.eq(0)
-
-
-    def add_states(self, dsgn, m):
-        """ Add statements for each cache state. """
-
-        with m.Else():
-            super().add_states(dsgn, m)
-
-
     def add_reset(self, dsgn, m):
         """ Add statements for the RESET state. """
 
@@ -106,6 +71,34 @@ class request_block_base(block_base):
         with m.Case(State.WAIT_READ):
             with m.If(~dsgn.dram.stall()):
                 self.store_request(dsgn, m)
+
+
+    def add_flush_sig(self, dsgn, m):
+        """ Add flush signal control. """
+
+        # If flush is high, input registers are not reset.
+        # However, way and set registers becomes 0 since it is going to be used
+        # to write dirty lines back to DRAM.
+        with m.If(dsgn.flush):
+            m.d.comb += dsgn.set.eq(0)
+
+
+    def add_reset_sig(self, dsgn, m):
+        """ Add reset signal control. """
+
+        # If rst is high, input registers are reset.
+        # set register becomes 1 since it is going to be used to reset all lines
+        # in the tag array.
+        # way register becomes 0 since it is going to be used to reset all ways
+        # in a tag line.
+        with m.If(dsgn.rst):
+            m.d.comb += dsgn.tag.eq(0)
+            m.d.comb += dsgn.set.eq(0)
+            m.d.comb += dsgn.offset.eq(0)
+            m.d.comb += dsgn.web_reg.eq(1)
+            if dsgn.num_masks:
+                m.d.comb += dsgn.wmask_reg.eq(0)
+            m.d.comb += dsgn.din_reg.eq(0)
 
 
     def store_request(self, dsgn, m):
