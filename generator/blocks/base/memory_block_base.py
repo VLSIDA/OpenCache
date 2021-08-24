@@ -80,16 +80,6 @@ class memory_block_base(block_base):
             dsgn.data_array.read(dsgn.addr.parse_set())
 
 
-    def add_wait_hazard(self, dsgn, m):
-        """ Add statements for the WAIT_HAZARD state. """
-
-        # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
-        # Read requests are sent to tag and data arrays.
-        with m.Case(State.WAIT_HAZARD):
-            dsgn.tag_array.read(dsgn.set)
-            dsgn.data_array.read(dsgn.set)
-
-
     def add_compare(self, dsgn, m):
         """ Add statements for the COMPARE state. """
 
@@ -200,6 +190,16 @@ class memory_block_base(block_base):
                 # a new request since read is non-destructive
                 dsgn.tag_array.read(dsgn.addr.parse_set())
                 dsgn.data_array.read(dsgn.addr.parse_set())
+
+
+    def add_wait_hazard(self, dsgn, m):
+        """ Add statements for the WAIT_HAZARD state. """
+
+        # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
+        # Read requests are sent to tag and data arrays.
+        with m.Case(State.WAIT_HAZARD):
+            dsgn.tag_array.read(dsgn.set)
+            dsgn.data_array.read(dsgn.set)
 
 
     def add_flush_sig(self, dsgn, m):

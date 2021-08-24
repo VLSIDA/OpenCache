@@ -51,15 +51,6 @@ class replacement_block_lru(replacement_block_base):
             dsgn.use_array.read(dsgn.addr.parse_set())
 
 
-    def add_wait_hazard(self, dsgn, m):
-        """ Add statements for the WAIT_HAZARD state. """
-
-        # In the WAIT_READ state, corresponding line from the use array is
-        # requested.
-        with m.Case(State.WAIT_HAZARD):
-            dsgn.use_array.read(dsgn.set)
-
-
     def add_compare(self, dsgn, m):
         """ Add statements for the COMPARE state. """
 
@@ -134,6 +125,15 @@ class replacement_block_lru(replacement_block_base):
                 # Read next lines from SRAMs even though CPU is not
                 # sending a new request since read is non-destructive.
                 dsgn.use_array.read(dsgn.addr.parse_set())
+
+
+    def add_wait_hazard(self, dsgn, m):
+        """ Add statements for the WAIT_HAZARD state. """
+
+        # In the WAIT_READ state, corresponding line from the use array is
+        # requested.
+        with m.Case(State.WAIT_HAZARD):
+            dsgn.use_array.read(dsgn.set)
 
 
     def add_flush_sig(self, dsgn, m):

@@ -34,13 +34,13 @@ class block_base:
             self.add_reset(dsgn, m)
             self.add_flush(dsgn, m)
             self.add_idle(dsgn, m)
-            if OPTS.data_hazard:
-                self.add_wait_hazard(dsgn, m)
             self.add_compare(dsgn, m)
             self.add_write(dsgn, m)
             self.add_wait_write(dsgn, m)
             self.add_read(dsgn, m)
             self.add_wait_read(dsgn, m)
+            if OPTS.data_hazard:
+                self.add_wait_hazard(dsgn, m)
 
 
     def add_reset(self, dsgn, m):
@@ -55,11 +55,6 @@ class block_base:
 
     def add_idle(self, dsgn, m):
         """ Add statements for the IDLE state. """
-        pass
-
-
-    def add_wait_hazard(self, dsgn, m):
-        """ Add statements for the WAIT_HAZARD state. """
         pass
 
 
@@ -85,6 +80,11 @@ class block_base:
 
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
+        pass
+
+
+    def add_wait_hazard(self, dsgn, m):
+        """ Add statements for the WAIT_HAZARD state. """
         pass
 
 

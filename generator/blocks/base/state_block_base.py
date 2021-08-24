@@ -61,19 +61,6 @@ class state_block_base(block_base):
                 m.d.comb += dsgn.state.eq(State.COMPARE)
 
 
-    def add_wait_hazard(self, dsgn, m):
-        """ Add statements for the WAIT_HAZARD state. """
-
-        # In the WAIT_HAZARD state, state switches to COMPARE.
-        # This state is used to prevent data hazard.
-        # Data hazard might occur when there are read and write requests to the
-        # same address of SRAMs.
-        # This state delays the cache request 1 cycle so that read requests
-        # will be performed after write is completed.
-        with m.Case(State.WAIT_HAZARD):
-            m.d.comb += dsgn.state.eq(State.COMPARE)
-
-
     def add_compare(self, dsgn, m):
         """ Add statements for the COMPARE state. """
 
@@ -166,6 +153,19 @@ class state_block_base(block_base):
                             m.d.comb += dsgn.state.eq(State.COMPARE)
                     else:
                         m.d.comb += dsgn.state.eq(State.COMPARE)
+
+
+    def add_wait_hazard(self, dsgn, m):
+        """ Add statements for the WAIT_HAZARD state. """
+
+        # In the WAIT_HAZARD state, state switches to COMPARE.
+        # This state is used to prevent data hazard.
+        # Data hazard might occur when there are read and write requests to the
+        # same address of SRAMs.
+        # This state delays the cache request 1 cycle so that read requests
+        # will be performed after write is completed.
+        with m.Case(State.WAIT_HAZARD):
+            m.d.comb += dsgn.state.eq(State.COMPARE)
 
 
     def add_flush_sig(self, dsgn, m):
