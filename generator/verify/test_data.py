@@ -53,18 +53,6 @@ class test_data:
             self.data.append(randrange(1, 2 ** self.word_size))
             self.stall.append(0)
 
-        # FIXME: This is a temporary hack to avoid a possible problem.
-        # If the previous write request needs to update SRAMs (will probably do),
-        # asserting flush will prevent cache from updating SRAMs. In order to
-        # overcome this issue, we will read the last write (it will be hit) so
-        # that no request will be sent to SRAMs before flush.
-        self.op.append("read")
-        self.web.append(1)
-        self.wmask.append("0" * self.num_masks)
-        self.addr.append(self.addr[-1])
-        self.data.append(self.data[-1])
-        self.stall.append(0)
-
         # Flush the cache after writing is done
         self.op.append("flush")
         self.web.append(1)
