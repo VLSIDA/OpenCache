@@ -40,6 +40,7 @@ class block_base:
             self.add_read(dsgn, m)
             self.add_wait_read(dsgn, m)
             if OPTS.data_hazard:
+                self.add_flush_hazard(dsgn, m)
                 self.add_wait_hazard(dsgn, m)
 
 
@@ -80,6 +81,11 @@ class block_base:
 
     def add_wait_read(self, dsgn, m):
         """ Add statements for the WAIT_READ state. """
+        pass
+
+
+    def add_flush_hazard(self, dsgn, m):
+        """ Add statements for the FLUSH_HAZARD state. """
         pass
 
 

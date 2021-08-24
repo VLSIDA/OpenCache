@@ -192,6 +192,16 @@ class memory_block_base(block_base):
                 dsgn.data_array.read(dsgn.addr.parse_set())
 
 
+    def add_flush_hazard(self, dsgn, m):
+        """ Add statements for the FLUSH_HAZARD state. """
+
+        # In the FLUSH_HAZARD state, cache waits in this state for 1 cycle.
+        # Read requests are sent to tag and data arrays.
+        with m.Case(State.FLUSH_HAZARD):
+            dsgn.tag_array.read(0)
+            dsgn.data_array.read(0)
+
+
     def add_wait_hazard(self, dsgn, m):
         """ Add statements for the WAIT_HAZARD state. """
 

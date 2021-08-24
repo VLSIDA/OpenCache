@@ -155,6 +155,19 @@ class state_block_base(block_base):
                         m.d.comb += dsgn.state.eq(State.COMPARE)
 
 
+    def add_flush_hazard(self, dsgn, m):
+        """ Add statements for the FLUSH_HAZARD state. """
+
+        # In the FLUSH_HAZARD state, state switches to FLUSH.
+        # This state is used to prevent data hazard.
+        # Data hazard might occur when there are read and write requests to the
+        # same address of SRAMs.
+        # This state delays the cache request 1 cycle so that read requests
+        # will be performed after write is completed.
+        with m.Case(State.FLUSH_HAZARD):
+            m.d.comb += dsgn.state.eq(State.FLUSH)
+
+
     def add_wait_hazard(self, dsgn, m):
         """ Add statements for the WAIT_HAZARD state. """
 
@@ -173,7 +186,16 @@ class state_block_base(block_base):
 
         # If flush is high, state switches to FLUSH.
         with m.If(dsgn.flush):
-            m.d.comb += dsgn.state.eq(State.FLUSH)
+            # Don't use FLUSH_HAZARD if data_hazard is disabled
+            if OPTS.data_hazard:
+                # If set register is 0, data hazard might occur. In order to
+                # prevent this, cache will switch to FLUSH_HAZARD state.
+                with m.If(dsgn.set):
+                    m.d.comb += dsgn.state.eq(State.FLUSH)
+                with m.Else():
+                    m.d.comb += dsgn.state.eq(State.FLUSH_HAZARD)
+            else:
+                m.d.comb += dsgn.state.eq(State.FLUSH)
 
 
     def add_reset_sig(self, dsgn, m):

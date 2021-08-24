@@ -85,7 +85,8 @@ class sim_cache:
         cycles.
         """
 
-        stalls = 0
+        # Start with 1 stall cycle if cache enters FLUSH_HAZARD
+        stalls = int(self.is_data_hazard(0))
         for row_i in range(self.num_rows):
             for way_i in range(self.num_ways):
                 stalls += 1
