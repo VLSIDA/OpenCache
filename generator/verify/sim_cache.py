@@ -34,7 +34,7 @@ class sim_cache:
         self.valid_array = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.dirty_array = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.tag_array   = [[0] * self.num_ways for _ in range(self.num_rows)]
-        self.data_array  = [[[None] * self.words_per_line for _ in range(self.num_ways)] for _ in range(self.num_rows)]
+        self.data_array  = [[[0] * self.words_per_line for _ in range(self.num_ways)] for _ in range(self.num_rows)]
 
         # Previous request is used to detect data hazard
         self.prev_hit = False
@@ -66,7 +66,7 @@ class sim_cache:
         """ Reset the DRAM. """
 
         # DRAM list has a line in each row
-        self.dram = [[None] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
+        self.dram = [[0] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
 
         # Initialize DRAM with random data
         for line_i in range(2 ** (self.tag_size + self.set_size)):
