@@ -32,8 +32,8 @@ class verify:
 
         if OPTS.simulate:
             self.tb   = test_bench(cache_config, name)
-            self.data = test_data(cache_config, name)
-            self.dram = sim_dram(cache_config, name, self.data.sc.dram)
+            self.data = test_data(cache_config)
+            self.dram = sim_dram(cache_config, self.data.sc.dram)
 
         # Print subprocess outputs on the terminal if verbose debug is enabled
         self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL

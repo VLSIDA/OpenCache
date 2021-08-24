@@ -13,10 +13,9 @@ class sim_dram:
     Class to generate the DRAM module for simulation.
     """
 
-    def __init__(self, cache_config, name, data=None):
+    def __init__(self, cache_config, data=None):
 
         cache_config.set_local_config(self)
-        self.name = name
         self.make_initial_data(data)
 
 

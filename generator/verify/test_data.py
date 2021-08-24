@@ -14,10 +14,9 @@ class test_data:
     Class to generate the test data file for simulation.
     """
 
-    def __init__(self, cache_config, name):
+    def __init__(self, cache_config):
 
         cache_config.set_local_config(self)
-        self.name = name
         self.sc = sim_cache(cache_config)
 
 
