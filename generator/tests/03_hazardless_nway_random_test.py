@@ -7,10 +7,10 @@
 # All rights reserved.
 #
 import unittest
+from testutils import *
 import sys, os
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
-from testutils import *
 from base.policy import ReplacementPolicy as RP
 from globals import OPTS
 

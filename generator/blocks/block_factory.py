@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
 import sys
+import os
 import debug
 from globals import OPTS
 

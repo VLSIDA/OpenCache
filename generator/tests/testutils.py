@@ -6,10 +6,8 @@
 # All rights reserved.
 #
 import unittest
-import sys
-import os
+import sys, os, shutil
 import time
-import shutil
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 from globals import OPTS
 import debug

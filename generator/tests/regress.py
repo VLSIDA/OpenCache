@@ -6,9 +6,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import re
 import unittest
-import sys, os
+import sys, os, re
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
 from subunit import ProtocolTestCase, TestProtocolClient
