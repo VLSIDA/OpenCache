@@ -46,10 +46,8 @@ class verify:
         debug.print_raw("Initializing verification...")
 
         self.prepare_files()
-
         if OPTS.simulate:
             self.simulate()
-
         if OPTS.synthesize:
             self.synthesize()
 
@@ -61,7 +59,6 @@ class verify:
         Save required files and simulate the design by running an EDA tool's
         simulator.
         """
-
         debug.info(1, "Initializing simulation...")
         debug.info(1, "Writing simulation files...")
 
@@ -104,7 +101,6 @@ class verify:
         debug.info(1, "Converting OpenRAM modules to blackbox...")
         self.convert_to_blacbox(OPTS.temp_path + OPTS.tag_array_name + ".v")
         self.convert_to_blacbox(OPTS.temp_path + OPTS.data_array_name + ".v")
-
         if OPTS.replacement_policy.has_sram_array():
             self.convert_to_blacbox(OPTS.temp_path + OPTS.use_array_name + ".v")
 
@@ -173,9 +169,10 @@ class verify:
     def run_fusesoc(self, library_name, core_name, path, is_sim):
         """ Run FuseSoC for simulation or synthesis. """
 
-        fusesoc_library_command = "fusesoc library add {0} {1}".format(library_name, path)
-
-        fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "synth", core_name)
+        fusesoc_library_command = "fusesoc library add {0} {1}".format(library_name,
+                                                                       path)
+        fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "synth",
+                                                                                core_name)
 
         debug.info(1, "Adding {} core as library...".format("simulation" if is_sim else "synthesis"))
         debug.info(1, "Running the {}...".format("simulation" if is_sim else "synthesis"))
