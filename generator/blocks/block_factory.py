@@ -38,7 +38,7 @@ class block_factory:
             # sequential order and common folders (such as verify) with OpenRAM
             # can result in importing wrong source codes.
             if "__pycache__" not in full_path:
-                sys.path.insert(1, "{}".format(full_path))
+                sys.path.insert(1, full_path)
 
 
     def store_modules(self):
