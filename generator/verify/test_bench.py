@@ -118,7 +118,7 @@ class test_bench:
         self.tbf.write("    cache_csb   = 1;\n")
         self.tbf.write("    cache_web   = 1;\n")
         if self.num_masks:
-           self.tbf.write("    cache_wmask = 0;\n")
+            self.tbf.write("    cache_wmask = 0;\n")
         self.tbf.write("    error_count = 0;\n")
         self.tbf.write("  end\n\n")
 
