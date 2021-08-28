@@ -20,7 +20,7 @@ class test_bench:
         self.fail_message    = "Simulation failed."
 
 
-    def write(self, tb_path):
+    def test_bench_write(self, tb_path):
         """ Write the test bench file. """
 
         self.tbf = open(tb_path, "w")

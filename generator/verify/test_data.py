@@ -99,7 +99,7 @@ class test_data:
                     self.sc.write(self.addr[i], self.wmask[i], self.data[i])
 
 
-    def write(self, data_path):
+    def test_data_write(self, data_path):
         """ Write the test data file. """
 
         test_count = 0

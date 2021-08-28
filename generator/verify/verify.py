@@ -65,18 +65,18 @@ class verify:
         # Write the test bench file
         tb_path = OPTS.temp_path + "test_bench.v"
         debug.info(1, "Verilog (Test bench): Writing to {}".format(tb_path))
-        self.tb.write(tb_path)
+        self.tb.test_bench_write(tb_path)
 
         # Write the test data file
         data_path = OPTS.temp_path + "test_data.v"
         debug.info(1, "Verilog (Test data): Writing to {}".format(data_path))
         self.data.generate_data(OPTS.sim_size)
-        self.data.write(data_path)
+        self.data.test_data_write(data_path)
 
         # Write the DRAM file
         dram_path = OPTS.temp_path + "dram.v"
         debug.info(1, "Verilog (DRAM): Writing to {}".format(dram_path))
-        self.dram.write(dram_path)
+        self.dram.sim_dram_write(dram_path)
 
         # Run FuseSoc for simulation
         debug.info(1, "Running FuseSoC for simulation...")
@@ -121,7 +121,7 @@ class verify:
         # Write the CORE file
         core_path = OPTS.temp_path + "verify.core"
         debug.info(1, "CORE: Writing to {}".format(core_path))
-        self.core.write(core_path)
+        self.core.core_write(core_path)
 
         # Copy the generated cache Verilog file
         cache_path = OPTS.temp_path + self.name + ".v"

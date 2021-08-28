@@ -19,7 +19,7 @@ class sim_dram:
         self.make_initial_data(data)
 
 
-    def write(self, dram_path):
+    def sim_dram_write(self, dram_path):
         """ Write the DRAM file. """
 
         self.df = open(dram_path, "w")

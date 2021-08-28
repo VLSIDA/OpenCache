@@ -20,7 +20,7 @@ class core:
                                                           VERSION)
 
 
-    def write(self, core_path):
+    def core_write(self, core_path):
         """ Write the CORE file for simulation. """
 
         with open(core_path, "w") as file:
