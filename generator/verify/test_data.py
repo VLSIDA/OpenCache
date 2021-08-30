@@ -113,7 +113,7 @@ class test_data:
             # Check requests
             for i in range(len(self.op)):
                 file.write("// {0} operation (Test #{1})\n".format(self.op[i].capitalize(),
-                                                                    test_count))
+                                                                   test_count))
 
                 if self.op[i] == "reset" or self.op[i] == "flush":
                     file.write("assert_{}();\n".format(self.op[i]))
