@@ -29,7 +29,6 @@ class verify:
         self.name = name
 
         self.core = core()
-
         if OPTS.simulate:
             self.tb   = test_bench(cache_config, name)
             self.data = test_data(cache_config)
@@ -83,10 +82,7 @@ class verify:
         self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, True)
 
         # Check the result of the simulation
-        if self.check_sim_result(OPTS.temp_path, "icarus.log"):
-            debug.info(1, "Simulation successful")
-        else:
-            debug.error("Simulation failed!", 1)
+        self.check_sim_result(OPTS.temp_path, "icarus.log")
 
 
     def synthesize(self):
@@ -94,7 +90,6 @@ class verify:
         Save required files and synthesize the design by running an EDA tool's
         synthesizer.
         """
-
         debug.info(1, "Initializing synthesis...")
 
         # Convert SRAM modules to blackbox
@@ -109,10 +104,7 @@ class verify:
         self.run_fusesoc(self.name, self.core.core_name, OPTS.temp_path, False)
 
         # Check the result of the synthesis
-        if self.check_synth_result(OPTS.temp_path, "yosys.log"):
-            debug.info(1, "Synthesis successful")
-        else:
-            debug.error("Synthesis failed!", 1)
+        self.check_synth_result(OPTS.temp_path, "yosys.log")
 
 
     def prepare_files(self):
@@ -255,11 +247,11 @@ class verify:
                 # TODO: How to check whether the synthesis was successful?
                 # Check if error count is nonzero
                 if line.find(error_prefix) != -1 and int(findall(r"\d+", line)[0]) != 0:
-                    return False
+                    debug.error("Synthesis failed!", -1)
                 # Check if there is an "ERROR"
                 if line.find("ERROR") != -1:
-                    return False
-        return True
+                    debug.error("Synthesis failed!", -1)
+        debug.info(1, "Synthesis successful.")
 
 
     def check_sim_result(self, path, file_name):
@@ -271,4 +263,7 @@ class verify:
                                                        file_name)) as f:
             for line in f:
                 pass
-            return line.rstrip() == self.tb.success_message
+            if line.rstrip() == self.tb.success_message:
+                debug.info(1, "Simulation successful.")
+            else:
+                debug.error("Simulation failed!", -1)
