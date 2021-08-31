@@ -79,6 +79,9 @@ class options(optparse.Values):
     # OpenRAM needs to be run for verification. If the output of it has already
     # been generated, this can be set False for faster verification.
     run_openram = True
+    # OpenRAM creates many files that are not used for verification.
+    # Set this True to keep those files after OpenRAM runs.
+    keep_openram_files = False
 
     # Number of read/write operations in the simulation
     # Random data are written and read from random addresses
