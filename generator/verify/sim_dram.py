@@ -29,7 +29,7 @@ class sim_dram:
         self.write_io_ports()
         self.write_registers()
         self.write_logic_block()
-        self.write_initial_data()
+        self.write_initial_data(dram_path)
 
         self.df.write("endmodule\n")
         self.df.close()
@@ -84,21 +84,28 @@ class sim_dram:
         self.df.write("  end\n\n")
 
 
-    def write_initial_data(self):
+    def write_initial_data(self, dram_path):
         """ Write the initial data in the memory. """
 
         if self.data:
+            # Write data file
+            mem_path = dram_path[:-2] + "_mem.hex"
+            with open(mem_path, "w") as file:
+                for line in self.data:
+                    file.write("%x" % line + "\n")
+
+            # Read data file in the dram module
             self.df.write("  initial begin\n")
-            for i in range(len(self.data)):
-                self.df.write("    memory[{0}] <= {1}'d{2};\n".format(i, self.line_size, self.data[i]))
+            self.df.write("    $readmemh(\"dram_mem.hex\", memory);\n")
             self.df.write("  end\n\n")
 
 
     def make_initial_data(self, data):
         """ Prepare the intial data in the memory. """
 
-        self.data = []
-        for line in data:
-            self.data.append(0)
-            for i in range(len(line)):
-                self.data[-1] += line[i] << i * self.word_size
+        if data:
+            self.data = []
+            for line in data:
+                self.data.append(0)
+                for i in range(len(line)):
+                    self.data[-1] += line[i] << i * self.word_size

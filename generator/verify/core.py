@@ -32,6 +32,10 @@ class core:
             file.write("  sim_files:\n")
             file.write("    files:\n")
             file.write("      - dram.v\n")
+            file.write("      - dram_mem.hex:\n")
+            file.write("          is_include_file: true\n")
+            file.write("          copyto: dram_mem.hex\n")
+            file.write("          file_type: user\n")
             if OPTS.replacement_policy.has_sram_array():
                 file.write("      - {}.v\n".format(OPTS.use_array_name))
             file.write("      - {}.v\n".format(OPTS.tag_array_name))
