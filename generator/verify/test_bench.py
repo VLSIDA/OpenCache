@@ -17,7 +17,7 @@ class test_bench:
         self.name = name
 
         self.success_message = "Simulation successful."
-        self.fail_message    = "Simulation failed."
+        self.failure_message = "Simulation failed."
 
 
     def test_bench_write(self, tb_path):
@@ -215,7 +215,7 @@ class test_bench:
         self.tbf.write("      if (!error_count) begin\n")
         self.tbf.write("        $display(\"{}\");\n".format(self.success_message))
         self.tbf.write("      end else begin\n")
-        self.tbf.write("        $display(\"{} Error count: %0d\", error_count);\n".format(self.fail_message))
+        self.tbf.write("        $display(\"{} Error count: %0d\", error_count);\n".format(self.failure_message))
         self.tbf.write("      end\n")
         self.tbf.write("    end\n")
         self.tbf.write("  endtask\n\n")
