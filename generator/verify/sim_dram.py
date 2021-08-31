@@ -38,7 +38,7 @@ class sim_dram:
     def write_parameters(self):
         """ Write the parameters of the DRAM. """
 
-        self.df.write("  parameter  WORD_WIDTH  = {};\n".format(self.word_size * self.words_per_line))
+        self.df.write("  parameter  WORD_WIDTH  = {};\n".format(self.line_size))
         self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(self.tag_size + self.set_size))
         self.df.write("  localparam DRAM_DEPTH  = 1 << ADDR_WIDTH;\n\n")
         self.df.write("  // This delay is used to \"imitate\" DRAMs' low frequencies\n")
@@ -90,9 +90,7 @@ class sim_dram:
         if self.data:
             self.df.write("  initial begin\n")
             for i in range(len(self.data)):
-                self.df.write("    memory[{0}] <= {1}'d{2};\n".format(i,
-                                                                      self.word_size * self.words_per_line,
-                                                                      self.data[i]))
+                self.df.write("    memory[{0}] <= {1}'d{2};\n".format(i, self.line_size, self.data[i]))
             self.df.write("  end\n\n")
 
 
