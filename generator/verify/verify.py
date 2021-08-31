@@ -169,7 +169,7 @@ class verify:
 
         fusesoc_library_command = "fusesoc library add {0} {1}".format(library_name,
                                                                        path)
-        fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "synth",
+        fusesoc_run_command = "fusesoc run --target={0} --no-export {1}".format("sim" if is_sim else "syn",
                                                                                 core_name)
 
         debug.info(1, "Adding {} core as library...".format("simulation" if is_sim else "synthesis"))
@@ -246,9 +246,9 @@ class verify:
         error_prefix = "found and reported"
 
         # Check the error count lines
-        with open("{0}build/{1}/synth-yosys/{2}".format(path,
-                                                        self.core.core_name.replace(":", "_"),
-                                                        file_name)) as f:
+        with open("{0}build/{1}/syn-yosys/{2}".format(path,
+                                                      self.core.core_name.replace(":", "_"),
+                                                      file_name)) as f:
             for line in f:
                 # TODO: How to check whether the synthesis was successful?
                 # Check if error count is nonzero

@@ -42,7 +42,7 @@ class core:
             file.write("          is_include_file: true\n")
             file.write("    file_type: verilogSource\n\n")
 
-            file.write("  synth_files:\n")
+            file.write("  syn_files:\n")
             file.write("    files:\n")
             if OPTS.replacement_policy.has_sram_array():
                 file.write("      - {}_bb.v\n".format(OPTS.use_array_name))
@@ -67,11 +67,11 @@ class core:
             file.write("        timescale: 1ns/1ps\n")
             file.write("    toplevel: test_bench\n\n")
 
-            file.write("  synth:\n")
+            file.write("  syn:\n")
             file.write("    description: Synthesize the cache design\n")
             file.write("    default_tool: yosys\n")
             file.write("    filesets:\n")
-            file.write("      - synth_files\n")
+            file.write("      - syn_files\n")
             file.write("    tools:\n")
             file.write("      yosys:\n")
             file.write("        arch: xilinx\n")
