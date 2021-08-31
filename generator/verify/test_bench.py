@@ -30,6 +30,7 @@ class test_bench:
 
         self.write_parameters()
         self.write_registers()
+        self.write_dumps()
         self.write_clock_generator()
         self.write_reset_block()
         self.write_instances()
@@ -96,6 +97,15 @@ class test_bench:
 
         self.tbf.write("  // Test registers\n")
         self.tbf.write("  reg [MAX_TEST_SIZE-1:0] error_count;\n\n")
+
+
+    def write_dumps(self):
+        """ Write the $dumpfile and $dumpvars system functions for waveforms. """
+
+        self.tbf.write("  initial begin\n")
+        self.tbf.write("    $dumpfile(\"waves.vcd\");\n")
+        self.tbf.write("    $dumpvars;\n")
+        self.tbf.write("  end\n\n")
 
 
     def write_clock_generator(self):
