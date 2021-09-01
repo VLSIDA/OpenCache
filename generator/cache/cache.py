@@ -6,8 +6,9 @@
 # All rights reserved.
 #
 import debug
+import datetime
 from policy import Associativity as AS, ReplacementPolicy as RP
-from globals import OPTS
+from globals import OPTS, print_time
 
 
 class cache:
@@ -59,6 +60,7 @@ class cache:
         debug.print_raw("Saving output files...")
 
         # Write the config files
+        start_time = datetime.datetime.now()
         cpaths = {
             "data": OPTS.output_path + OPTS.data_array_name + "_config.py",
             "tag":  OPTS.output_path + OPTS.tag_array_name + "_config.py",
@@ -68,8 +70,11 @@ class cache:
         for k, cpath in cpaths.items():
             debug.print_raw("Config: Writing to {}".format(cpath))
         self.config_write(cpaths)
+        print_time("Config", datetime.datetime.now(), start_time)
 
         # Write the Verilog file
+        start_time = datetime.datetime.now()
         vpath = OPTS.output_path + self.c.name + ".v"
         debug.print_raw("Verilog: Writing to {}".format(vpath))
         self.verilog_write(vpath)
+        print_time("Verilog", datetime.datetime.now(), start_time)

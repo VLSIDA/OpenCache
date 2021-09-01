@@ -325,6 +325,20 @@ def init_paths():
             debug.error("Unable to make temp directory.", -1)
 
 
+def print_time(name, now_time, last_time=None, indentation=2):
+    """ Print a statement about the time delta. """
+
+    global OPTS
+
+    # Don't print during testing
+    if not OPTS.is_unit_test or OPTS.verbose_level > 0:
+        if last_time:
+            time = str(round((now_time - last_time).total_seconds(), 1)) + " seconds"
+        else:
+            time = now_time.strftime('%m/%d/%Y %H:%M:%S')
+        debug.print_raw("{0} {1}: {2}".format("*" * indentation, name, time))
+
+
 def report_status():
     """
     Check for valid arguments and report the info about the cache being

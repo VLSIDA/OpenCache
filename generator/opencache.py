@@ -14,6 +14,7 @@ a Verilog (.v) file for the cache logic
 """
 
 import sys
+import datetime
 import globals as g
 
 (OPTS, args) = g.parse_args()
@@ -29,6 +30,10 @@ g.init_opencache(config_file=args[0],
 
 # Only print banner here so it's not in unit tests
 g.print_banner()
+
+# Keep track of running stats
+start_time = datetime.datetime.now()
+g.print_time("Start", start_time)
 
 # Output info about this run
 g.report_status()
@@ -55,7 +60,8 @@ if OPTS.simulate or OPTS.synthesize:
     from verify import verify
     v = verify(cache_config=conf,
                name=OPTS.output_name)
-
     v.verify()
 
+# Delete temp files etc.
 g.end_opencache()
+g.print_time("End", datetime.datetime.now(), start_time)

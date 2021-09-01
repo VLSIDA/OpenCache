@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import os
+import datetime
 from shutil import copyfile
 from subprocess import call, DEVNULL, STDOUT
 from re import findall
@@ -14,7 +15,7 @@ from test_bench import test_bench
 from test_data import test_data
 from sim_dram import sim_dram
 import debug
-from globals import OPTS
+from globals import OPTS, print_time
 
 
 class verify:
@@ -61,6 +62,8 @@ class verify:
         debug.info(1, "Initializing simulation...")
         debug.info(1, "Writing simulation files...")
 
+        start_time = datetime.datetime.now()
+
         # Write the test bench file
         tb_path = OPTS.temp_path + "test_bench.v"
         debug.info(1, "Verilog (Test bench): Writing to {}".format(tb_path))
@@ -84,6 +87,8 @@ class verify:
         # Check the result of the simulation
         self.check_sim_result(OPTS.temp_path, "icarus.log")
 
+        print_time("Simulation", datetime.datetime.now(), start_time)
+
 
     def synthesize(self):
         """
@@ -91,6 +96,8 @@ class verify:
         synthesizer.
         """
         debug.info(1, "Initializing synthesis...")
+
+        start_time = datetime.datetime.now()
 
         # Convert SRAM modules to blackbox
         debug.info(1, "Converting OpenRAM modules to blackbox...")
@@ -105,6 +112,8 @@ class verify:
 
         # Check the result of the synthesis
         self.check_synth_result(OPTS.temp_path, "yosys.log")
+
+        print_time("Synthesis", datetime.datetime.now(), start_time)
 
 
     def prepare_files(self):
