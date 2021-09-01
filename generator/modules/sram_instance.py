@@ -126,7 +126,7 @@ class SramInstance:
 
 
     def write_input(self, way, offset, data, wmask=None):
-        """ Add inbput data to write request to SRAM. """
+        """ Add input data to write request to SRAM. """
 
         # NOTE: These switch statements are written manually (not only with
         # word_select) because word_select fails to generate correct case
