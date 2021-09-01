@@ -132,34 +132,30 @@ class SramInstance:
         # word_select) because word_select fails to generate correct case
         # statements if offset calculation is a bit complex.
 
-        # Write the word over the write mask
-        for i in range(SramInstance.num_masks):
-            with self.m.If(wmask[i]):
-                if isinstance(way, CacheSignal):
-                    with self.m.Switch(way):
-                        for j in range(SramInstance.num_ways):
-                            with self.m.Case(j):
-                                with self.m.Switch(offset):
-                                    for k in range(SramInstance.words_per_line):
-                                        with self.m.Case(k):
-                                            self.m.d.comb += self.write_din[j].mask(i, k).eq(data.mask(i))
-                else:
-                    with self.m.Switch(offset):
-                        for k in range(SramInstance.words_per_line):
-                            with self.m.Case(k):
-                                self.m.d.comb += self.write_din[way].mask(i, k).eq(data.mask(i))
-        # Write mask is not used
-        if not SramInstance.num_masks:
-            if isinstance(way, CacheSignal):
-                with self.m.Switch(way):
-                    for j in range(SramInstance.num_ways):
-                        with self.m.Case(j):
-                            with self.m.Switch(offset):
-                                for k in range(SramInstance.words_per_line):
-                                    with self.m.Case(k):
-                                        self.m.d.comb += self.write_din[j].word(k).eq(data)
-            else:
-                with self.m.Switch(offset):
-                    for k in range(SramInstance.words_per_line):
-                        with self.m.Case(k):
-                            self.m.d.comb += self.write_din[way].word(k).eq(data)
+        # If way is a signal, use case statements
+        if isinstance(way, CacheSignal):
+            with self.m.Switch(way):
+                for way_idx in range(SramInstance.num_ways):
+                    with self.m.Case(way_idx):
+                        # Offset is used to find the word
+                        with self.m.Switch(offset):
+                            for word_idx in range(SramInstance.words_per_line):
+                                with self.m.Case(word_idx):
+                                    # Write the word over the write mask
+                                    for mask_idx in range(SramInstance.num_masks):
+                                        with self.m.If(wmask[mask_idx]):
+                                            self.m.d.comb += self.write_din[way_idx].mask(mask_idx, word_idx).eq(data.mask(mask_idx))
+                                    if not SramInstance.num_masks:
+                                        self.m.d.comb += self.write_din[way_idx].word(word_idx).eq(data)
+        # If way is a constant, use it directly
+        else:
+            # Offset is used to find the word
+            with self.m.Switch(offset):
+                for word_idx in range(SramInstance.words_per_line):
+                    with self.m.Case(word_idx):
+                        # Write the word over the write mask
+                        for mask_idx in range(SramInstance.num_masks):
+                            with self.m.If(wmask[mask_idx]):
+                                self.m.d.comb += self.write_din[way].mask(mask_idx, word_idx).eq(data.mask(mask_idx))
+                        if not SramInstance.num_masks:
+                            self.m.d.comb += self.write_din[way].word(word_idx).eq(data)
