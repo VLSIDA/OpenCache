@@ -28,12 +28,6 @@ In this state, cache reads ``addr`` input and requests tag and data lines from i
 internal SRAMs. If ``csb`` input is high, cache waits in this state. Otherwise, cache
 switches to the **Compare** state.
 
----------------
-Wait for Hazard
----------------
-In this state, cache avoids data hazard by stalling itself for 1 cycle. Cache requests
-tag and data lines from its internal SRAMS, and switches to the **Compare** state.
-
 -------
 Compare
 -------
@@ -92,3 +86,18 @@ sends the new tag and data lines to internal SRAMs.
 
 * If ``csb`` is high, cache switches to the **Idle** state; otherwise, it switches to the
   **Compare** state.
+
+------------
+Flush Hazard
+------------
+When cache switches to the **Flush** state, data hazard might occur if there is a write
+to the first row of internal SRAMs.
+
+In this state, cache avoids data hazard by stalling itself for 1 cycle. Cache requests
+tag and data lines from its internal SRAMS, and switches to the **Flush** state.
+
+---------------
+Wait for Hazard
+---------------
+In this state, cache avoids data hazard by stalling itself for 1 cycle. Cache requests
+tag and data lines from its internal SRAMS, and switches to the **Compare** state.
