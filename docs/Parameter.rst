@@ -29,6 +29,13 @@ This is the bit size of address port of the cache.
 -------------------
 Optional Parameters
 -------------------
+**********
+write_size
+**********
+This is the bit size which corresponds to a write mask bit. Write masks are not used by default.
+If **write_size** is valid (**word_size** is divisible by it), write mask will be added to the CPU
+port.
+
 ********
 num_ways
 ********
@@ -108,6 +115,12 @@ run_openram
 This is whether to run OpenRAM for verification. If the output of it has already been
 generated, this can be set False for faster verification.
 
+******************
+keep_openram_files
+******************
+This is whether to keep OpenRAM files after running OpenRAM for verification. OpenRAM may generate
+large files; therefore, set this to False to delete unnecessary files.
+
 ********
 sim_size
 ********
@@ -117,3 +130,8 @@ This is the number of read/write operations performed during the simulation of t
 num_threads
 ***********
 This is the number of threads for regression testing.
+
+*************
+verbose_level
+*************
+This is the verbosity level of OpenCache.
