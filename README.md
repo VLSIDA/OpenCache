@@ -44,8 +44,6 @@ cd OpenCache/generator
 Create a Python configuration file. All configuration parameters can be found in [here](./docs/Parameter.rst).
 A simple configuration file is:
 ```python
-from policy import ReplacementPolicy, WritePolicy
-
 # data array size
 total_size = 1024
 
@@ -62,10 +60,10 @@ address_size = 11
 num_ways = 1
 
 # replacement policy
-replacement_policy = ReplacementPolicy.NONE
+replacement_policy = None
 
 # write policy
-write_policy = WritePolicy.WR_BACK
+write_policy = "write-back"
 
 # output file name
 output_name = "cache"

@@ -68,10 +68,14 @@ class ReplacementPolicy(IntEnum):
 
 
     @staticmethod
-    def get_default():
-        """ Get the default replacement policy. """
+    def get_value(name):
+        """ Get the replacement policy enum value. """
 
-        return ReplacementPolicy.NONE
+        if name is None:
+            return ReplacementPolicy.NONE
+        for k, v in ReplacementPolicy.__members__.items():
+            if name.upper() == k:
+                return v
 
 
 class WritePolicy(IntEnum):
@@ -99,7 +103,10 @@ class WritePolicy(IntEnum):
 
 
     @staticmethod
-    def get_default():
-        """ Get the default write policy. """
+    def get_value(name):
+        """ Get the write policy enum value. """
 
-        return WritePolicy.WR_BACK
+        if name is None or name == "write-back":
+            return WritePolicy.WR_BACK
+        if name == "write-through":
+            return WritePolicy.WR_THRU

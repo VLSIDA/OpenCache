@@ -201,13 +201,11 @@ def read_config(config_file, is_unit_test=True):
 def fix_config():
     """ Fix and update options from the config file. """
 
-    # Get default policies if not specified in the config file
-    if OPTS.replacement_policy is None:
-        from policy import ReplacementPolicy as RP
-        OPTS.replacement_policy = RP.get_default()
-    if OPTS.write_policy is None:
-        from policy import WritePolicy as WP
-        OPTS.write_policy = WP.get_default()
+    # Convert policy strings to enum values
+    from policy import ReplacementPolicy as RP
+    OPTS.replacement_policy = RP.get_value(OPTS.replacement_policy)
+    from policy import WritePolicy as WP
+    OPTS.write_policy = WP.get_value(OPTS.write_policy)
 
     # If config didn't set output name, make a reasonable default
     if OPTS.output_name == "":
