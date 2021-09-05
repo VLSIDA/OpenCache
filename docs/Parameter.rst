@@ -46,15 +46,17 @@ replacement_policy
 ******************
 This is the replacement (eviction) policy of the cache. Note that direct-mapped caches
 (1-way) do not have a replacement policy. Currently supported replacement policies are:
-* First In First Out (FIFO)
-* Least Recently Used (LRU)
-* Random
+
++ First In First Out (FIFO)
++ Least Recently Used (LRU)
++ Random
 
 ************
 write_policy
 ************
 This is the write policy of the cache. Currently supported write policies are:
-* Write-back
+
++ Write-back
 
 *************
 is_data_cache
@@ -66,7 +68,8 @@ CACHE IS NOT YET SUPPORTED!
 return_type
 ***********
 This is which data the cache returns. Currently supported return types are:
-* Word
+
++ Word
 
 ***********
 data_hazard
