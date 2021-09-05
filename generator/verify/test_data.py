@@ -24,79 +24,94 @@ class test_data:
         """  Generate random test data and expected outputs. """
 
         # Operation
-        self.op = ["reset"]
+        self.op = []
         # Write enable
-        self.web = [1]
+        self.web = []
         # Write mask
-        self.wmask = ["0" * self.num_masks]
+        self.wmask = []
         # Address
-        self.addr = [0]
+        self.addr = []
         # Data input/output
-        self.data = [0]
-        # Number of stall cycles after the request
-        self.stall = [0]
+        self.data = []
+        # Number of stall cycles during the request
+        self.stall = []
 
-        # TODO: How to create random data in a smart way?
+        self.add_operation("reset")
+
         # Write random data to random addresses initially
         for i in range(test_size):
+            self.add_operation("write")
+
+        self.add_operation("flush")
+
+        addresses = []
+        for i in range(len(self.op)):
+            if self.op[i] == "write":
+                addresses.append(self.addr[i])
+
+        # Read from random addresses which are written to in the first half
+        while len(addresses) > 0:
+            self.add_operation("read", addresses)
+            addresses.remove(self.addr[-1])
+
+        # Simulate the cache with sequence operations
+        for i in range(len(self.op)):
+            self.run_sim_cache(i)
+
+
+    def add_operation(self, op, addr_list=None):
+        """ Add a new operation with random address and data. """
+
+        # Operation
+        self.op.append(op)
+        # Write enable
+        self.web.append(int(op != "write"))
+
+        # Address
+        if addr_list is None:
             random_tag = randrange(2 ** self.tag_size)
             # Write to first two sets only so that we can test replacement
             random_set = randrange(2)
             random_offset = randrange(2 ** self.offset_size)
-            random_address = self.sc.merge_address(random_tag, random_set, random_offset)
+            self.addr.append(self.sc.merge_address(random_tag, random_set, random_offset))
+        else:
+            self.addr.append(choice(addr_list))
 
-            self.op.append("write")
-            self.web.append(0)
-            self.wmask.append("".join([choice(["1", "0"]) for _ in range(self.num_masks)]))
-            self.addr.append(random_address)
-            # Data written should not be 0 since cache output is 0 by default
+        if op == "write":
+            # Write mask
+            self.wmask.append("".join(
+                [choice(["1", "0"]) for _ in range(self.num_masks)]
+            ))
+            # Data input
             self.data.append(randrange(1, 2 ** self.word_size))
-            self.stall.append(0)
+        else:
+            # Write mask
+            self.wmask.append("0" * self.num_masks)
+            # Data output
+            # This will be overwritten when running the sim_cache
+            self.data.append(0)
 
-        # Flush the cache after writing is done
-        self.op.append("flush")
-        self.web.append(1)
-        self.wmask.append("0" * self.num_masks)
-        self.addr.append(0)
-        self.data.append(0)
+        # Number of stall cycles during the operation
+        # This will be overwritten when running the sim_cache
         self.stall.append(0)
 
-        indices = list(range(test_size))
 
-        # Read from random addresses which are written to in the first half
-        while len(indices) > 0:
-            index = choice(indices)
+    def run_sim_cache(self, op_idx):
+        """ Run the sim_cache for the operation in the given index. """
 
-            # Don't take reset and flush operations
-            if self.op[index] == "write":
-                self.op.append("read")
-                self.web.append(1)
-                self.wmask.append("0" * self.num_masks)
-                self.addr.append(self.addr[index])
-                # If the same address is written twice, this data may be old.
-                # Therefore, data values for read operations are going to be
-                # overwritten in the next for loop.
-                self.data.append(self.data[index])
-                self.stall.append(0)
-
-            indices.remove(index)
-
-        # Simulate the cache with sequence operations
-        for i in range(len(self.op)):
-            # Get the number of stall cycles
-            if self.op[i] == "reset":
-                self.stall[i] = self.sc.reset()
-            elif self.op[i] == "flush":
-                self.stall[i] = self.sc.flush()
-            else:
-                self.stall[i] = self.sc.stall_cycles(self.addr[i])
-                if self.web[i]:
-                    # Overwrite data for read to prevent bugs
-                    # NOTE: If the same address is written twice, this data
-                    # could be old.
-                    self.data[i] = self.sc.read(self.addr[i])
-                else:
-                    self.sc.write(self.addr[i], self.wmask[i], self.data[i])
+        if self.op[op_idx] == "reset":
+            self.stall[op_idx] = self.sc.reset()
+        elif self.op[op_idx] == "flush":
+            self.stall[op_idx] = self.sc.flush()
+        else:
+            self.stall[op_idx] = self.sc.stall_cycles(self.addr[op_idx])
+            if self.op[op_idx] == "read":
+                # Overwrite data for read to prevent bugs
+                # NOTE: If the same address is written twice, this data
+                # could be old.
+                self.data[op_idx] = self.sc.read(self.addr[op_idx])
+            elif self.op[op_idx] == "write":
+                self.sc.write(self.addr[op_idx], self.wmask[op_idx], self.data[op_idx])
 
 
     def test_data_write(self, data_path):
