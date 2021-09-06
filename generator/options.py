@@ -40,7 +40,7 @@ class options(optparse.Values):
     # Cache can be a data cache or an instruction cache
     #! Instruction cache is not yet supported
     is_data_cache = True
-    # Cache can return a word or a line of words 
+    # Cache can return a word or a line of words
     #! Returning line is not yet supported
     return_type = "word"
 
@@ -68,7 +68,7 @@ class options(optparse.Values):
 
     # Temp path for verification and unit testing
     temp_path = ""
-    # Keep verification 
+    # Keep verification
     keep_temp = False
 
     # Verify the design by simulating

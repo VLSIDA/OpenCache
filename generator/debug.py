@@ -120,7 +120,7 @@ def bp():
     2) Run "python3 -m pdb opencache.py config.py"
     3) When pdb starts, run "break debug.bp" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
     4) Then run "cont" to continue.
-    5) You can now set additional breakpoints or display commands 
+    5) You can now set additional breakpoints or display commands
     and whenever you encounter the debug.bp() they won't be "reset".
     """
     pass
