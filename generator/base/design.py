@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import debug
 from nmigen import Elaboratable, Module
 from nmigen import ClockSignal, ResetSignal
 from nmigen import Value
@@ -13,6 +14,7 @@ from cache_signal import CacheSignal
 from sram_instance import SramInstance
 from dram import Dram
 from state import State
+from block_factory import factory
 from globals import OPTS
 
 
@@ -152,3 +154,18 @@ class design(Elaboratable):
         for _, v in self.__dict__.items():
             if isinstance(v, CacheSignal) and v.is_flop:
                 m.d.comb += v.eq(v)
+
+
+    def add_logic_blocks(self, m):
+        """ Instantiate and add logic blocks. """
+        debug.info(1, "Adding logic blocks...")
+
+        blocks = []
+        blocks.append(factory.create("memory_block"))
+        blocks.append(factory.create("state_block"))
+        blocks.append(factory.create("request_block"))
+        blocks.append(factory.create("output_block"))
+        blocks.append(factory.create("replacement_block"))
+
+        for block in blocks:
+            block.add(self, m)
