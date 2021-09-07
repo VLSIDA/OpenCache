@@ -60,5 +60,12 @@ class configuration:
 
         for opts in config_opts:
             with open(opts["path"], "w") as c_file:
+                # Write calculated options
                 for k, v in opts["opts"].items():
                     c_file.write("{0} = {1}\n".format(k, v))
+
+                # Write user specified options
+                if OPTS.openram_options:
+                    c_file.write("# User specified OpenRAM options\n")
+                    for k, v in OPTS.openram_options.items():
+                        c_file.write("{0} = {1}\n".format(k, v))
