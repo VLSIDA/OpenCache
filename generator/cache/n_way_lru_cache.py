@@ -37,8 +37,8 @@ class n_way_lru_cache(cache_base):
         use_opts["opts"]["num_rw_ports"] = 0
         use_opts["opts"]["num_r_ports"]  = 1
         use_opts["opts"]["num_w_ports"]  = 1
-        use_opts["opts"]["output_path"]  = '"{}lru_array"'.format(OPTS.output_path)
-        use_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.use_array_name)
+        use_opts["opts"]["output_path"]  = "{}lru_array".format(OPTS.output_path)
+        use_opts["opts"]["output_name"]  = "{}".format(OPTS.use_array_name)
         config_opts.append(use_opts)
 
         return config_opts

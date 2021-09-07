@@ -33,8 +33,8 @@ class configuration:
         data_opts["opts"]["num_rw_ports"] = 0
         data_opts["opts"]["num_r_ports"]  = 1
         data_opts["opts"]["num_w_ports"]  = 1
-        data_opts["opts"]["output_path"]  = '"{}data_array"'.format(OPTS.output_path)
-        data_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.data_array_name)
+        data_opts["opts"]["output_path"]  = "{}data_array".format(OPTS.output_path)
+        data_opts["opts"]["output_name"]  = "{}".format(OPTS.data_array_name)
         config_opts.append(data_opts)
 
         # Tag array of the cache
@@ -46,8 +46,8 @@ class configuration:
         tag_opts["opts"]["num_rw_ports"] = 0
         tag_opts["opts"]["num_r_ports"]  = 1
         tag_opts["opts"]["num_w_ports"]  = 1
-        tag_opts["opts"]["output_path"]  = '"{}tag_array"'.format(OPTS.output_path)
-        tag_opts["opts"]["output_name"]  = '"{}"'.format(OPTS.tag_array_name)
+        tag_opts["opts"]["output_path"]  = "{}tag_array".format(OPTS.output_path)
+        tag_opts["opts"]["output_name"]  = "{}".format(OPTS.tag_array_name)
         config_opts.append(tag_opts)
 
         return config_opts
@@ -62,10 +62,16 @@ class configuration:
             with open(opts["path"], "w") as c_file:
                 # Write calculated options
                 for k, v in opts["opts"].items():
-                    c_file.write("{0} = {1}\n".format(k, v))
+                    if type(v) is str:
+                        c_file.write("{0} = \"{1}\"\n".format(k, v))
+                    else:
+                        c_file.write("{0} = {1}\n".format(k, v))
 
                 # Write user specified options
                 if OPTS.openram_options:
                     c_file.write("# User specified OpenRAM options\n")
                     for k, v in OPTS.openram_options.items():
-                        c_file.write("{0} = {1}\n".format(k, v))
+                        if type(v) is str:
+                            c_file.write("{0} = \"{1}\"\n".format(k, v))
+                        else:
+                            c_file.write("{0} = {1}\n".format(k, v))
