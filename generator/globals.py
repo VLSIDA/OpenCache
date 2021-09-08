@@ -222,8 +222,7 @@ def fix_config():
     if OPTS.data_array_name == "":
         OPTS.data_array_name = "{}_data_array".format(OPTS.output_name)
     if OPTS.use_array_name == "":
-        OPTS.use_array_name = "{0}_{1!s}_array".format(OPTS.output_name,
-                                                       OPTS.replacement_policy)
+        OPTS.use_array_name = "{}_use_array".format(OPTS.output_name)
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
