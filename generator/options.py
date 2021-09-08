@@ -10,9 +10,9 @@ import optparse
 
 class options(optparse.Values):
     """
-    Class for holding all of the OpenCache options. All
-    of these options can be over-riden in a configuration file
-    that is the sole required command-line positional argument for opencache.py.
+    Class for holding all of the OpenCache options.
+    All of these options can be over-riden in a configuration file that is the
+    sole required command-line positional argument for opencache.py.
     """
 
     #############################
@@ -67,6 +67,9 @@ class options(optparse.Values):
     #     "tech_name": "freepdk45"
     # }
     openram_options = None
+
+    # Print the banner at startup
+    print_banner = True
 
     #############################
     #     Unit test options     #

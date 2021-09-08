@@ -80,7 +80,7 @@ def print_banner():
     """ Conditionally print the banner to stdout """
     global OPTS
 
-    if OPTS.is_unit_test:
+    if OPTS.is_unit_test or not OPTS.print_banner:
         return
 
     debug.print_raw("|==============================================================================|")
