@@ -35,9 +35,7 @@ class opencache_test(unittest.TestCase):
         s = inspect.stack()
 
         base_filename = os.path.splitext(os.path.basename(s[2].filename))[0]
-        zip_file = os.path.normpath("{0}../{1}_{2}".format(OPTS.output_path,
-                                                           base_filename,
-                                                           os.getpid()))
+        zip_file = "{0}../{1}_{2}".format(OPTS.output_path, base_filename, os.getpid())
 
         debug.info(0, "Archiving failed test's files to {}".format(zip_file))
         shutil.make_archive(zip_file, 'zip', OPTS.output_path)
