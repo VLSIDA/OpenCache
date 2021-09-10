@@ -25,14 +25,7 @@ class cache:
         if OPTS.associativity == AS.DIRECT:
             from direct_cache import direct_cache as cache
         elif OPTS.associativity == AS.N_WAY:
-            if OPTS.replacement_policy == RP.FIFO:
-                from n_way_fifo_cache import n_way_fifo_cache as cache
-            elif OPTS.replacement_policy == RP.LRU:
-                from n_way_lru_cache import n_way_lru_cache as cache
-            elif OPTS.replacement_policy == RP.RANDOM:
-                from n_way_random_cache import n_way_random_cache as cache
-            else:
-                debug.error("Invalid replacement policy.", -1)
+            from n_way_cache import n_way_cache as cache
         elif OPTS.associativity == AS.FULLY:
             # TODO: from full_cache import full_cache as cache
             debug.error("Fully associative cache is not supported at the moment.", -1)
