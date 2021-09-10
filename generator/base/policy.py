@@ -81,8 +81,8 @@ class ReplacementPolicy(IntEnum):
 class WritePolicy(IntEnum):
     """ Enum class to represent write policies. """
 
-    WRITE_BACK = 0
-    WRITE_THRU = 1
+    WRITE_BACK    = 0
+    WRITE_THROUGH = 1
 
 
     def __str__(self):
@@ -98,7 +98,7 @@ class WritePolicy(IntEnum):
 
         if self == WritePolicy.WRITE_BACK:
             return "Write-back"
-        if self == WritePolicy.WRITE_THRU:
+        if self == WritePolicy.WRITE_THROUGH:
             return "Write-through"
 
 
@@ -109,4 +109,4 @@ class WritePolicy(IntEnum):
         if name is None or name == "write-back":
             return WritePolicy.WRITE_BACK
         if name == "write-through":
-            return WritePolicy.WRITE_THRU
+            return WritePolicy.WRITE_THROUGH
