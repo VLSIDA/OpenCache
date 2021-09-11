@@ -29,7 +29,7 @@ CHECKPOINT_OPTS = None
 
 
 def parse_args():
-    """ Parse the optional arguments for OpenCache """
+    """ Parse the optional arguments for OpenCache. """
 
     global OPTS
 
@@ -77,7 +77,7 @@ def parse_args():
 
 
 def print_banner():
-    """ Conditionally print the banner to stdout """
+    """ Conditionally print the banner to stdout. """
     global OPTS
 
     if OPTS.is_unit_test or not OPTS.print_banner:
@@ -233,7 +233,7 @@ def fix_config():
     # Create a new folder for each process of unit tests
     if OPTS.is_unit_test:
         OPTS.output_path += "opencache_{0}_{1}/".format(getpass.getuser(),
-                                                             os.getpid())
+                                                        os.getpid())
     # Create a new folder for this run if not unit test
     else:
         OPTS.output_path += OPTS.output_name + "/"
@@ -253,9 +253,7 @@ def end_opencache():
 
 
 def cleanup_paths():
-    """
-    We should clean up the temp directory after execution.
-    """
+    """ We should clean up the temp directory after execution. """
     global OPTS
 
     if OPTS.keep_temp:
@@ -297,7 +295,7 @@ def setup_paths():
 
 
 def init_paths():
-    """ Create the output directory if it doesn't exist """
+    """ Create the output directory if it doesn't exist. """
 
     # Make the output directory
     make_dir(OPTS.output_path, "output")
