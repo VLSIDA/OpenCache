@@ -299,27 +299,27 @@ def setup_paths():
 def init_paths():
     """ Create the output directory if it doesn't exist """
 
-    # Don't delete the output dir, it may have other files!
+    # Make the output directory
+    make_dir(OPTS.output_path, "output")
+
+    # Make the temp directory if only needed
+    if OPTS.simulate or OPTS.synthesize or OPTS.is_unit_test:
+        make_dir(OPTS.temp_path, "temp")
+
+
+def make_dir(path, name="a"):
+    """ Make a directory. """
+
+    # Don't delete the dir, it may have other files!
     # Make the directory if it doesn't exist
     try:
-        debug.info(1, "Creating output directory: {}".format(OPTS.output_path))
-        os.makedirs(OPTS.output_path, 0o750)
+        debug.info(1, "Creating {0} directory: {1}".format(name, path))
+        os.makedirs(path, 0o750)
     except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.output_path, 0o750)
+        if e.errno == 17: # errno.EEXIST
+            os.chmod(path, 0o750)
     except:
-        debug.error("Unable to make output directory.", -1)
-
-    # Make the temp folder if only needed
-    if OPTS.simulate or OPTS.synthesize or OPTS.is_unit_test:
-        try:
-            debug.info(1, "Creating temp directory: {}".format(OPTS.temp_path))
-            os.makedirs(OPTS.temp_path, 0o750)
-        except OSError as e:
-            if e.errno == 17:  # errno.EEXIST
-                os.chmod(OPTS.temp_path, 0o750)
-        except:
-            debug.error("Unable to make temp directory.", -1)
+        debug.error("Unable to make {} directory.".format(name), -1)
 
 
 def print_time(name, now_time, last_time=None, indentation=2):
