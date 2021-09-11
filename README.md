@@ -73,6 +73,17 @@ Run the generator.
 python3 opencache.py config_file
 ```
 
+## OpenRAM Options
+The `openram_options` option of OpenCache allows you to override configuration files for OpenRAM to generate SRAMs that you desire. An example is:
+```python
+# add this to OpenCache config file
+openram_options = {
+    "tech_name": "scn4m_subm",
+    "nominal_corner_only": True,
+    "analytical_delay": False,
+}
+```
+
 ## Verification
 In order to run verification, you need to add the following lines to your configuration file.
 ```python
