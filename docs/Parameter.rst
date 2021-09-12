@@ -74,10 +74,25 @@ This is which data the cache returns. Currently supported return types are:
 ***********
 data_hazard
 ***********
-This is whether data hazard may occur in the internal SRAM arrays. Currently OpenRAM SRAM
-arrays are not read-after-write. However, this parameter can be set `False` if the user
-can guarantee that SRAM arrays are going to be *"data hazard proof"* or OpenRAM SRAM arrays
-are read-after-write in the future.
+This is whether data hazard may occur in the internal SRAM arrays. Some technologies don't have
+read-after-write bitcells which might cause data hazard in the cache. If `data_hazard` is True,
+generated caches will avoid causing this kind of data hazard. However, this parameter can be set
+`False` if the user can guarantee that SRAM arrays are going to be *"data hazard proof"*.
+
+***************
+openram_options
+***************
+OpenRAM has many options for configuration which are not specified by OpenCache generated configuration
+files. If you want to generate configuration files with specific options, you can use ``openram_options``
+like the following:
+
+.. code-block:: python
+
+    openram_options = {
+        "tech_name": "scn4m_subm",
+        "nominal_corner_only": True,
+        "analytical_delay": False,
+    }
 
 ***********
 output_path
