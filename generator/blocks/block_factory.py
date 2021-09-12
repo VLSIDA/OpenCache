@@ -51,7 +51,7 @@ class block_factory:
         for _, _, modules in os.walk(BLOCK_DIR):
             for module in modules:
                 if module.endswith(".py"):
-                    self.modules.append(module.split(".")[0])
+                    self.modules.append(module.rsplit(".", 1)[0])
 
         self.modules_ready = True
 
