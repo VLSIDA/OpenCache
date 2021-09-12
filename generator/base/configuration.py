@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import debug
 from globals import OPTS
 
 
@@ -66,6 +67,12 @@ class configuration:
                         c_file.write("{0} = \"{1}\"\n".format(k, v))
                     else:
                         c_file.write("{0} = {1}\n".format(k, v))
+
+                    # Don't override options calculated by OpenCache
+                    if OPTS.openram_options and k in OPTS.openram_options.keys():
+                        del OPTS.openram_options[k]
+                        debug.warning("{} option of OpenRAM will be ignored since it "
+                                      "is already specified by OpenCache.".format(k))
 
                 # Write user specified options
                 if OPTS.openram_options:
