@@ -66,10 +66,10 @@ class sim_cache:
         """ Reset the DRAM. """
 
         # DRAM list has a line in each row
-        self.dram = [[0] * self.words_per_line for _ in range((2 ** (self.tag_size + self.set_size)))]
+        self.dram = [[0] * self.words_per_line for _ in range((2 ** self.dram_address_size))]
 
         # Initialize DRAM with random data
-        for line_i in range(2 ** (self.tag_size + self.set_size)):
+        for line_i in range(2 ** self.dram_address_size):
             for word_i in range(self.words_per_line):
                 self.dram[line_i][word_i] = randrange(1 << self.word_size)
 

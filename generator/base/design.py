@@ -98,7 +98,7 @@ class design(Elaboratable):
         self.stall = CacheSignal(reset=1)
 
         # Create a DRAM module
-        self.dram = Dram(self.m, self.address_size - self.offset_size, self.line_size)
+        self.dram = Dram(self.m, self.dram_address_size, self.line_size)
 
         # Return all port signals
         ports = self.dram.get_pins()

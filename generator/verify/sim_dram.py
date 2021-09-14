@@ -39,7 +39,7 @@ class sim_dram:
         """ Write the parameters of the DRAM. """
 
         self.df.write("  parameter  WORD_WIDTH  = {};\n".format(self.line_size))
-        self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(self.tag_size + self.set_size))
+        self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(self.dram_address_size))
         self.df.write("  localparam DRAM_DEPTH  = 1 << ADDR_WIDTH;\n\n")
         self.df.write("  // This delay is used to \"imitate\" DRAMs' low frequencies\n")
         self.df.write("  parameter  CYCLE_DELAY = {};\n".format(DRAM_DELAY))
