@@ -12,7 +12,7 @@ OpenCache is an open-source Python generator to create a cache design using Open
 The OpenCache has the following dependencies:
 + Python 3.6 or higher
 + [nMigen] 0.2 or higher
-+ [yosys] 0.9+4081 or higher
++ [Yosys] 0.9+4081 or higher
 
 If you want to verify the design via simulation and/or synthesis, you will need:
 + [OpenRAM]
@@ -44,28 +44,28 @@ cd OpenCache/generator
 Create a Python configuration file. All configuration parameters can be found in [here](./docs/Parameter.rst).
 A simple configuration file is:
 ```python
-# data array size
+# Data array size
 total_size = 1024
 
-# data word bit size
+# Data word bit size
 word_size = 8
 
-# number of words per line
+# Number of words per line
 words_per_line = 4
 
-# address port size
+# Address port size
 address_size = 11
 
-# number of ways
+# Number of ways
 num_ways = 1
 
-# replacement policy
+# Replacement policy
 replacement_policy = None
 
-# write policy
+# Write policy
 write_policy = "write-back"
 
-# output file name
+# Output file name
 output_name = "cache"
 ```
 Run the generator.
@@ -76,7 +76,7 @@ python3 opencache.py config_file
 ## OpenRAM Options
 The `openram_options` option of OpenCache allows you to override configuration files for OpenRAM to generate SRAMs that you desire. An example is:
 ```python
-# add this to OpenCache config file
+# Add this to OpenCache config file
 openram_options = {
     "tech_name": "scn4m_subm",
     "nominal_corner_only": True,
@@ -87,13 +87,13 @@ openram_options = {
 ## Verification
 In order to run verification, you need to add the following lines to your configuration file.
 ```python
-# for simulation
+# For simulation
 simulate = True
 
-# for synthesis
+# For synthesis
 synthesize = True
 
-# to keep the results
+# To keep the results
 keep_temp = True
 ```
 
