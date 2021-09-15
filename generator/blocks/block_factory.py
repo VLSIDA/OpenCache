@@ -35,11 +35,8 @@ class block_factory:
         subdir_list = [item for item in os.listdir(BLOCK_DIR) if os.path.isdir(os.path.join(BLOCK_DIR, item))]
         for subdir in subdir_list:
             full_path = "{0}/{1}".format(BLOCK_DIR, subdir)
-            # Use sys.path.insert instead of sys.path.append Python searches in
-            # sequential order and common folders (such as verify) with OpenRAM
-            # can result in importing wrong source codes.
             if "__pycache__" not in full_path:
-                sys.path.insert(1, full_path)
+                sys.path.append(full_path)
 
 
     def store_modules(self):

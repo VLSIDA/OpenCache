@@ -283,15 +283,21 @@ def setup_paths():
     debug.check(os.path.isdir(OPENCACHE_HOME),
                 "$OPENCACHE_HOME does not exist: {0}".format(OPENCACHE_HOME))
 
+    # If OPENRAM_HOME is added to PYTHONPATH, remove it for this program since
+    # it can cause OpenCache to import wrong source codes.
+    try:
+        OPENRAM_HOME = os.getenv("OPENRAM_HOME")
+        if OPENRAM_HOME in sys.path:
+            sys.path.remove(OPENRAM_HOME)
+    except:
+        debug.warning("$OPENRAM_HOME is not properly defined.")
+
     # Add all of the subdirs to the Python path
     subdir_list = [item for item in os.listdir(OPENCACHE_HOME) if os.path.isdir(os.path.join(OPENCACHE_HOME, item))]
     for subdir in subdir_list:
         full_path = "{0}/{1}".format(OPENCACHE_HOME, subdir)
-        # Use sys.path.insert instead of sys.path.append Python searches in
-        # sequential order and common folders (such as verify) with OpenRAM
-        # can result in importing wrong source codes.
         if "__pycache__" not in full_path:
-            sys.path.insert(1, full_path)
+            sys.path.append(full_path)
 
 
 def init_paths():
