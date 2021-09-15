@@ -70,7 +70,7 @@ def setup_sim_cache():
 
     conf = make_config()
 
-    from sim_cache import sim_cache
+    from verify import sim_cache
     sc = sim_cache(cache_config=conf)
 
     return sc

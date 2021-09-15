@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from random import randrange, choice
-from sim_cache import sim_cache
+from .sim_cache import sim_cache
 
 
 class test_data:

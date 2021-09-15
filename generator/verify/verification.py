@@ -10,15 +10,15 @@ import datetime
 from shutil import copyfile
 from subprocess import call, DEVNULL, STDOUT
 from re import findall
-from core import core
-from test_bench import test_bench
-from test_data import test_data
-from sim_dram import sim_dram
+from .core import core
+from .test_bench import test_bench
+from .test_data import test_data
+from .sim_dram import sim_dram
 import debug
 from globals import OPTS, print_time
 
 
-class verify:
+class verification:
     """
     Class to generate files for verification and verify the design by running
     EDA tools.

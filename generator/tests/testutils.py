@@ -61,12 +61,13 @@ class opencache_test(unittest.TestCase):
         self.fail("{0} is not True.".format(res))
 
 
-    def check_verification(self, ver):
+    def check_verification(self, cache_config, name):
         """ Check if given verification passes. """
 
         # Program gives error if verification fails
         try:
-            ver.verify()
+            import verify
+            verify.run(cache_config, name)
         except:
             self.fail("Verification failed.")
 

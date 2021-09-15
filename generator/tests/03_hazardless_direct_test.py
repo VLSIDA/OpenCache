@@ -35,10 +35,7 @@ class hazardless_test(opencache_test):
                   name=OPTS.output_name)
         c.save()
 
-        from verify import verify
-        v = verify(cache_config=conf,
-                   name=OPTS.output_name)
-        self.check_verification(v)
+        self.check_verification(conf, OPTS.output_name)
 
         globals.end_opencache()
 

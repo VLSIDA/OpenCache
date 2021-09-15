@@ -7,7 +7,7 @@
 #
 from random import randrange
 from policy import ReplacementPolicy as RP
-from sim_dram import DRAM_DELAY
+from .sim_dram import DRAM_DELAY
 from globals import OPTS
 
 

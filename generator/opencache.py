@@ -57,10 +57,8 @@ c.save()
 
 # Run verification
 if OPTS.simulate or OPTS.synthesize:
-    from verify import verify
-    v = verify(cache_config=conf,
-               name=OPTS.output_name)
-    v.verify()
+    import verify
+    verify.run(cache_config=conf, name=OPTS.output_name)
 
 # Delete temp files etc.
 g.end_opencache()
