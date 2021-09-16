@@ -326,6 +326,23 @@ def make_dir(path, name="a"):
         debug.error("Unable to make {} directory.".format(name), -1)
 
 
+def is_exe(fpath):
+    """ Return true if the given is an executable file that exists. """
+
+    return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+
+
+def find_exe(check_exe):
+    """ Check if the binary exists in any path dir and return the full path. """
+
+    # Check if the executable exists in the path
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe = os.path.join(path, check_exe)
+        if is_exe(exe):
+            return exe
+    return None
+
+
 def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """
     global OPTS
