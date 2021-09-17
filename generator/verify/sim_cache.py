@@ -7,6 +7,7 @@
 #
 from random import randrange
 from policy import ReplacementPolicy as RP
+from .sim_sram import sim_sram
 from .sim_dram import DRAM_DELAY
 from globals import OPTS
 
@@ -19,7 +20,7 @@ class sim_cache:
     def __init__(self, cache_config):
 
         cache_config.set_local_config(self)
-
+        self.sram = sim_sram(self.words_per_line, self.num_ways, self.num_rows)
         self.reset()
         self.reset_dram()
 
@@ -27,25 +28,12 @@ class sim_cache:
     def reset(self):
         """ Reset the cache and return the number of stall cycles. """
 
-        # These arrays are multi-dimensional.
-        # First dimension is for sets.
-        # Second dimension is for ways.
-        # Third dimension is for words (for data array).
-        self.valid_array = [[0] * self.num_ways for _ in range(self.num_rows)]
-        self.dirty_array = [[0] * self.num_ways for _ in range(self.num_rows)]
-        self.tag_array   = [[0] * self.num_ways for _ in range(self.num_rows)]
-        self.data_array  = [[[0] * self.words_per_line for _ in range(self.num_ways)] for _ in range(self.num_rows)]
+        self.sram.reset()
 
         # Previous request is used to detect data hazard
         self.prev_hit = False
         self.prev_web = 1
         self.prev_set = None
-
-        if OPTS.replacement_policy == RP.FIFO:
-            self.fifo_array = [0] * self.num_rows
-
-        if OPTS.replacement_policy == RP.LRU:
-            self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
 
         if OPTS.replacement_policy == RP.RANDOM:
             # Random register is reset when rst is high.
@@ -91,11 +79,11 @@ class sim_cache:
             for way_i in range(self.num_ways):
                 stalls += 1
                 self.dram_stalls = max(self.dram_stalls - 1, 0)
-                if self.valid_array[row_i][way_i] and self.dirty_array[row_i][way_i]:
-                    tag  = self.tag_array[row_i][way_i]
-                    data = self.data_array[row_i][way_i].copy()
-                    self.dirty_array[row_i][way_i] = 0
+                if self.sram.read_valid(row_i, way_i) and self.sram.read_dirty(row_i, way_i):
+                    tag = self.sram.read_tag(row_i, way_i)
+                    data = self.sram.read_line(row_i, way_i)
                     self.dram[(tag << self.set_size) + row_i] = data
+                    self.sram.write_dirty(row_i, way_i, 0)
 
                     # Cache will wait in the FLUSH state if DRAM hasn't completed
                     # the last write request.
@@ -149,13 +137,9 @@ class sim_cache:
         """ Find the way which has the given address' data. """
 
         tag_decimal, set_decimal, _ = self.parse_address(address)
-
         for way in range(self.num_ways):
-            if self.valid_array[set_decimal][way] and self.tag_array[set_decimal][way] == tag_decimal:
+            if self.sram.read_valid(set_decimal, way) and self.sram.read_tag(set_decimal, way) == tag_decimal:
                 return way
-
-        # Return None if not found
-        return None
 
 
     def is_dirty(self, address):
@@ -163,12 +147,8 @@ class sim_cache:
 
         _, set_decimal, _ = self.parse_address(address)
         way = self.find_way(address)
-
         if way is not None:
-            return self.dirty_array[set_decimal][way]
-
-        # Return None if not found
-        return None
+            return self.sram.read_dirty(set_decimal, way)
 
 
     def way_to_evict(self, set_decimal):
@@ -178,19 +158,19 @@ class sim_cache:
             return 0
 
         if OPTS.replacement_policy == RP.FIFO:
-            return self.fifo_array[set_decimal]
+            return self.sram.read_fifo(set_decimal)
 
         if OPTS.replacement_policy == RP.LRU:
             way = None
             for i in range(self.num_ways):
-                if not self.lru_array[set_decimal][i]:
+                if not self.sram.read_lru(set_decimal, i):
                     way = i
             return way
 
         if OPTS.replacement_policy == RP.RANDOM:
             way = None
             for i in range(self.num_ways):
-                if not self.valid_array[set_decimal][i]:
+                if not self.sram.read_valid(set_decimal, i):
                     way = i
             if way is None:
                 way = self.random
@@ -214,17 +194,17 @@ class sim_cache:
             way_evict = self.way_to_evict(set_decimal)
 
             # Write-back
-            if self.dirty_array[set_decimal][way_evict]:
-                old_tag  = self.tag_array[set_decimal][way_evict]
-                old_data = self.data_array[set_decimal][way_evict].copy()
+            if self.sram.read_dirty(set_decimal, way_evict):
+                old_tag = self.sram.read_tag(set_decimal, way_evict)
+                old_data = self.sram.read_line(set_decimal, way_evict)
                 self.dram[(old_tag << self.set_size) + set_decimal] = old_data
                 self.update_random(DRAM_DELAY + 1)
 
             # Bring data line from DRAM
-            self.valid_array[set_decimal][way_evict] = 1
-            self.dirty_array[set_decimal][way_evict] = 0
-            self.tag_array[set_decimal][way_evict]   = tag_decimal
-            self.data_array[set_decimal][way_evict]  = self.dram[(tag_decimal << self.set_size) + set_decimal].copy()
+            self.sram.write_valid(set_decimal, way_evict, 1)
+            self.sram.write_dirty(set_decimal, way_evict, 0)
+            self.sram.write_tag(set_decimal, way_evict, tag_decimal)
+            self.sram.write_line(set_decimal, way_evict, self.dram[(tag_decimal << self.set_size) + set_decimal].copy())
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, way_evict)
@@ -246,7 +226,7 @@ class sim_cache:
 
         _, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
-        return self.data_array[set_decimal][way][offset_decimal]
+        return self.sram.read_word(set_decimal, way, offset_decimal)
 
 
     def write(self, address, mask, data_input):
@@ -254,10 +234,10 @@ class sim_cache:
 
         _, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
-        self.dirty_array[set_decimal][way] = 1
+        self.sram.write_dirty(set_decimal, way, 1)
 
         # Write input data over the write mask
-        orig_data = self.data_array[set_decimal][way][offset_decimal]
+        orig_data = self.sram.read_word(set_decimal, way, offset_decimal)
         wr_data = 0 if self.num_masks else data_input
 
         for i in range(self.num_masks):
@@ -265,7 +245,7 @@ class sim_cache:
             part = (part >> (i * self.write_size)) % (1 << self.write_size)
             wr_data += part << (i * self.write_size)
 
-        self.data_array[set_decimal][way][offset_decimal] = wr_data
+        self.sram.write_word(set_decimal, way, offset_decimal, wr_data)
 
         # Update previous write enable
         self.prev_web = 0
@@ -296,7 +276,7 @@ class sim_cache:
             # Find the evicted address
             _, set_decimal, _ = self.parse_address(address)
             evicted_way = self.way_to_evict(set_decimal)
-            is_dirty    = self.dirty_array[set_decimal][evicted_way]
+            is_dirty    = self.sram.read_dirty(set_decimal, evicted_way)
 
             # If a way is written back before being replaced, cache stalls for
             # 2n+1 cycles in total:
@@ -346,8 +326,7 @@ class sim_cache:
             # Starting from 0, increase the FIFO number every time a new data
             # is brought from DRAM.
             # When it reaches the max value, go back to 0 and proceed.
-            self.fifo_array[set_decimal] += 1
-            self.fifo_array[set_decimal] %= self.num_ways
+            self.sram.write_fifo(set_decimal, self.sram.read_fifo(set_decimal) + 1)
 
 
     def update_lru(self, set_decimal, way):
@@ -361,9 +340,9 @@ class sim_cache:
             # of the order (highest possible number) and numbers which are more
             # than its previous value are decreased by one.
             for i in range(self.num_ways):
-                if self.lru_array[set_decimal][i] > self.lru_array[set_decimal][way]:
-                    self.lru_array[set_decimal][i] -= 1
-            self.lru_array[set_decimal][way] = self.num_ways - 1
+                if self.sram.read_lru(set_decimal, i) > self.sram.read_lru(set_decimal, way):
+                    self.sram.write_lru(set_decimal, i, self.sram.read_lru(set_decimal, i) - 1)
+            self.sram.write_lru(set_decimal, way, self.num_ways - 1)
 
 
     def update_random(self, cycles):
