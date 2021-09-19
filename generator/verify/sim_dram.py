@@ -5,18 +5,48 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from random import randrange
+from math import ceil, log2
+
 DRAM_DELAY = 4
 
 
 class sim_dram:
     """
-    Class to generate the DRAM module for simulation.
+    This is a simulation module for DRAM.
+    It is used to generate the DRAM module for simulation and used in sim_cache
+    to read and write data.
     """
 
-    def __init__(self, cache_config, data=None):
+    def __init__(self, word_size, num_words, num_rows):
 
-        cache_config.set_local_config(self)
-        self.make_initial_data(data)
+        self.word_size = word_size
+        self.num_words = num_words
+        self.num_rows = num_rows
+
+        self.make_initial_data()
+
+
+    def make_initial_data(self):
+        """ Prepare the intial data in the memory. """
+
+        self.data_array = []
+        for _ in range(self.num_rows):
+            self.data_array.append([])
+            for _ in range(self.num_words):
+                self.data_array[-1].append(randrange(1 << self.word_size))
+
+
+    def read_line(self, address):
+        """ Return the data line of given address. """
+
+        return self.data_array[address].copy()
+
+
+    def write_line(self, address, data):
+        """ Write the data line to given address. """
+
+        self.data_array[address] = data
 
 
     def sim_dram_write(self, dram_path):
@@ -38,8 +68,8 @@ class sim_dram:
     def write_parameters(self):
         """ Write the parameters of the DRAM. """
 
-        self.df.write("  parameter  WORD_WIDTH  = {};\n".format(self.line_size))
-        self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(self.dram_address_size))
+        self.df.write("  parameter  WORD_WIDTH  = {};\n".format(self.word_size * self.num_words))
+        self.df.write("  parameter  ADDR_WIDTH  = {};\n".format(ceil(log2(self.num_rows))))
         self.df.write("  localparam DRAM_DEPTH  = 1 << ADDR_WIDTH;\n\n")
         self.df.write("  // This delay is used to \"imitate\" DRAMs' low frequencies\n")
         self.df.write("  parameter  CYCLE_DELAY = {};\n".format(DRAM_DELAY))
@@ -87,25 +117,16 @@ class sim_dram:
     def write_initial_data(self, dram_path):
         """ Write the initial data in the memory. """
 
-        if self.data:
-            # Write data file
-            mem_path = dram_path[:-2] + "_mem.hex"
-            with open(mem_path, "w") as file:
-                for line in self.data:
-                    file.write("%x" % line + "\n")
-
-            # Read data file in the dram module
-            self.df.write("  initial begin\n")
-            self.df.write("    $readmemh(\"dram_mem.hex\", memory);\n")
-            self.df.write("  end\n\n")
-
-
-    def make_initial_data(self, data):
-        """ Prepare the intial data in the memory. """
-
-        if data:
-            self.data = []
-            for line in data:
-                self.data.append(0)
+        # Write data file
+        mem_path = dram_path[:-2] + "_mem.hex"
+        with open(mem_path, "w") as file:
+            for line in self.data_array:
+                data = 0
                 for i in range(len(line)):
-                    self.data[-1] += line[i] << i * self.word_size
+                    data += line[i] << (i * self.word_size)
+                file.write("%x" % data + "\n")
+
+        # Read data file in the dram module
+        self.df.write("  initial begin\n")
+        self.df.write("    $readmemh(\"dram_mem.hex\", memory);\n")
+        self.df.write("  end\n\n")

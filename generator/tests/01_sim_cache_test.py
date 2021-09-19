@@ -51,7 +51,6 @@ class sim_cache_test(opencache_test):
     def run_all_tests(self):
 
         sc = setup_sim_cache()
-
         self.check_true(check_reset(sc))
         self.check_true(check_flush(sc))
         self.check_true(check_hit(sc))
@@ -69,18 +68,9 @@ def setup_sim_cache():
     """ Setup a sim_cache instance. """
 
     conf = make_config()
-
     from verify import sim_cache
     sc = sim_cache(cache_config=conf)
-
     return sc
-
-
-def reset(sc):
-    """ Reset a sim_cache instance. """
-
-    sc.reset()
-    sc.reset_dram()
 
 
 def check_reset(sc):
@@ -112,7 +102,7 @@ def check_reset(sc):
 def check_flush(sc):
     """ Check if flush() functions properly. """
 
-    reset(sc)
+    sc.reset()
 
     # Write 1 to address 0
     sc.write(0, "1111", 1)
@@ -131,7 +121,7 @@ def check_flush(sc):
 def check_hit(sc):
     """ Check if find_way() functions properly. """
 
-    reset(sc)
+    sc.reset()
 
     # Address 0 is miss
     if sc.find_way(0) is not None:
@@ -150,7 +140,7 @@ def check_hit(sc):
 def check_dirty(sc):
     """ Check if is_dirty() functions properly. """
 
-    reset(sc)
+    sc.reset()
 
     # Read from address 0
     sc.read(0)
@@ -172,7 +162,7 @@ def check_dirty(sc):
 def check_read_write(sc):
     """ Check if read() and write() function properly. """
 
-    reset(sc)
+    sc.reset()
 
     # Read data from address 0
     data = sc.read(0)
@@ -193,7 +183,7 @@ def check_read_write(sc):
 def check_fifo(sc):
     """ Check FIFO replacement of sim_cache. """
 
-    reset(sc)
+    sc.reset()
 
     # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]
@@ -215,7 +205,7 @@ def check_fifo(sc):
 def check_lru(sc):
     """ Check LRU replacement of sim_cache. """
 
-    reset(sc)
+    sc.reset()
 
     # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]
@@ -241,7 +231,7 @@ def check_lru(sc):
 def check_random(sc):
     """ Check random replacement of sim_cache. """
 
-    reset(sc)
+    sc.reset()
 
     # Setup 5 addresses with different tags but in the same set
     address = [sc.merge_address(i, 0, 0) for i in range(5)]

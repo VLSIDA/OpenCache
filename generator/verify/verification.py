@@ -13,7 +13,7 @@ from re import findall
 from .core import core
 from .test_bench import test_bench
 from .test_data import test_data
-from .sim_dram import sim_dram
+from .sim_cache import sim_cache
 import debug
 from globals import OPTS, print_time
 
@@ -31,9 +31,9 @@ class verification:
 
         self.core = core()
         if OPTS.simulate:
-            self.tb   = test_bench(cache_config, name)
-            self.data = test_data(cache_config)
-            self.dram = sim_dram(cache_config, self.data.sc.dram)
+            self.tb = test_bench(cache_config, name)
+            self.sim_cache = sim_cache(cache_config)
+            self.data = test_data(self.sim_cache, cache_config)
 
         # Print subprocess outputs on the terminal if verbose debug is enabled
         self.stdout = None if OPTS.verbose_level >= 2 else DEVNULL
@@ -64,6 +64,11 @@ class verification:
 
         start_time = datetime.datetime.now()
 
+        # Write the DRAM file
+        dram_path = OPTS.temp_path + "dram.v"
+        debug.info(1, "Verilog (DRAM): Writing to {}".format(dram_path))
+        self.sim_cache.dram.sim_dram_write(dram_path)
+
         # Write the test bench file
         tb_path = OPTS.temp_path + "test_bench.v"
         debug.info(1, "Verilog (Test bench): Writing to {}".format(tb_path))
@@ -74,11 +79,6 @@ class verification:
         debug.info(1, "Verilog (Test data): Writing to {}".format(data_path))
         self.data.generate_data(OPTS.sim_size)
         self.data.test_data_write(data_path)
-
-        # Write the DRAM file
-        dram_path = OPTS.temp_path + "dram.v"
-        debug.info(1, "Verilog (DRAM): Writing to {}".format(dram_path))
-        self.dram.sim_dram_write(dram_path)
 
         # Run FuseSoc for simulation
         debug.info(1, "Running FuseSoC for simulation...")

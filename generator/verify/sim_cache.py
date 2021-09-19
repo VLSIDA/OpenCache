@@ -5,9 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from random import randrange
 from policy import ReplacementPolicy as RP
 from .sim_sram import sim_sram
+from .sim_dram import sim_dram
 from .sim_dram import DRAM_DELAY
 from globals import OPTS
 
@@ -20,9 +20,13 @@ class sim_cache:
     def __init__(self, cache_config):
 
         cache_config.set_local_config(self)
-        self.sram = sim_sram(self.words_per_line, self.num_ways, self.num_rows)
+        self.sram = sim_sram(num_words=self.words_per_line,
+                             num_ways=self.num_ways,
+                             num_rows=self.num_rows)
+        self.dram = sim_dram(word_size=self.word_size,
+                             num_words=self.words_per_line,
+                             num_rows=1 << self.dram_address_size)
         self.reset()
-        self.reset_dram()
 
 
     def reset(self):
@@ -34,6 +38,11 @@ class sim_cache:
         self.prev_hit = False
         self.prev_web = 1
         self.prev_set = None
+
+        # Remaining DRAM stall cycles
+        # This is used to calculate how many cycles are needed to calculate
+        # the stall after a flush is completed (maybe other cases as well?).
+        self.dram_stalls = 0
 
         if OPTS.replacement_policy == RP.RANDOM:
             # Random register is reset when rst is high.
@@ -48,23 +57,6 @@ class sim_cache:
         # for 1 cycle in order to submit the request. However, cache spends 1
         # more cycle when switching to the RESET state.
         return self.num_rows + 1 - 1
-
-
-    def reset_dram(self):
-        """ Reset the DRAM. """
-
-        # DRAM list has a line in each row
-        self.dram = [[0] * self.words_per_line for _ in range((2 ** self.dram_address_size))]
-
-        # Initialize DRAM with random data
-        for line_i in range(2 ** self.dram_address_size):
-            for word_i in range(self.words_per_line):
-                self.dram[line_i][word_i] = randrange(1 << self.word_size)
-
-        # Remaining DRAM stall cycles.
-        # This is used to calculate how many cycles are needed to calculate
-        # the stall after a flush is completed (maybe other cases as well?).
-        self.dram_stalls = 0
 
 
     def flush(self):
@@ -82,7 +74,7 @@ class sim_cache:
                 if self.sram.read_valid(row_i, way_i) and self.sram.read_dirty(row_i, way_i):
                     tag = self.sram.read_tag(row_i, way_i)
                     data = self.sram.read_line(row_i, way_i)
-                    self.dram[(tag << self.set_size) + row_i] = data
+                    self.dram.write_line((tag << self.set_size) + row_i, data)
                     self.sram.write_dirty(row_i, way_i, 0)
 
                     # Cache will wait in the FLUSH state if DRAM hasn't completed
@@ -197,14 +189,14 @@ class sim_cache:
             if self.sram.read_dirty(set_decimal, way_evict):
                 old_tag = self.sram.read_tag(set_decimal, way_evict)
                 old_data = self.sram.read_line(set_decimal, way_evict)
-                self.dram[(old_tag << self.set_size) + set_decimal] = old_data
+                self.dram.write_line((old_tag << self.set_size) + set_decimal, old_data)
                 self.update_random(DRAM_DELAY + 1)
 
             # Bring data line from DRAM
             self.sram.write_valid(set_decimal, way_evict, 1)
             self.sram.write_dirty(set_decimal, way_evict, 0)
             self.sram.write_tag(set_decimal, way_evict, tag_decimal)
-            self.sram.write_line(set_decimal, way_evict, self.dram[(tag_decimal << self.set_size) + set_decimal].copy())
+            self.sram.write_line(set_decimal, way_evict, self.dram.read_line((tag_decimal << self.set_size) + set_decimal))
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, way_evict)

@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 from random import randrange, choice
-from .sim_cache import sim_cache
 
 
 class test_data:
@@ -14,10 +13,10 @@ class test_data:
     Class to generate the test data file for simulation.
     """
 
-    def __init__(self, cache_config):
+    def __init__(self, sim_cache, cache_config):
 
         cache_config.set_local_config(self)
-        self.sc = sim_cache(cache_config)
+        self.sc = sim_cache
 
 
     def generate_data(self, test_size=16):
