@@ -2,10 +2,11 @@
 An open-source cache generator using [OpenRAM] SRAM arrays.
 
 # What is OpenCache?
-OpenCache is an open-source Python generator to create a cache design using OpenRAM's SRAM arrays.
+OpenCache is an open-source Python generator to create custom cache designs using OpenRAM's SRAM arrays.
+It generates a synthesizable Verilog file for cache logic and configuration files for internal SRAM arrays.
 
 # Documentation
-[This](./docs/Overview.rst) serves as the documentation of OpenCache that explains how generated caches work.
+[This](./docs/Overview.rst) serves as the documentation of OpenCache that explains parameters, architecture, etc.
 
 # Basic Setup
 ## Dependencies
