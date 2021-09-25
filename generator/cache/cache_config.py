@@ -68,6 +68,8 @@ class cache_config:
 
         # Address pin size of DRAM
         self.dram_address_size = self.address_size - self.offset_size
+        # Number of rows in DRAM
+        self.dram_num_rows = 1 << self.dram_address_size
 
         # Tag word bit-width of a way
         self.tag_word_size = self.tag_size + 2

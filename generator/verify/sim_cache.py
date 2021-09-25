@@ -25,7 +25,7 @@ class sim_cache:
                              num_rows=self.num_rows)
         self.dram = sim_dram(word_size=self.word_size,
                              num_words=self.words_per_line,
-                             num_rows=1 << self.dram_address_size)
+                             num_rows=self.dram_num_rows)
         self.reset()
 
 
