@@ -148,7 +148,7 @@ class verification:
 
             # Random replacement policy doesn't need a separate SRAM array
             if OPTS.replacement_policy.has_sram_array():
-                debug.info(1, "Running OpenRAM for the use array")
+                debug.info(1, "Running OpenRAM for the use array...")
                 self.run_openram("{}_config.py".format(OPTS.temp_path + OPTS.use_array_name))
         else:
             debug.info(1, "Skipping to run OpenRAM")
