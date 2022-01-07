@@ -167,10 +167,10 @@ class verification:
             debug.error("OpenRAM failed!", -1)
 
         if not OPTS.keep_openram_files:
-            file_list = [item for item in os.listdir(OPTS.temp_path) if not os.path.isdir(item)]
-            for file in file_list:
-                if all([x not in file for x in [".v", ".py", ".core"]]):
-                    os.remove(OPTS.temp_path + file)
+            for file in os.listdir(OPTS.temp_path):
+                file_path = OPTS.temp_path + file
+                if not os.path.isdir(file_path) and all([x not in file for x in [".v", ".py", ".core"]]):
+                    os.remove(file_path)
 
 
     def run_fusesoc(self, library_name, core_name, path, is_sim):
