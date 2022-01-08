@@ -374,7 +374,7 @@ def report_status():
         debug.error("{} is not an integer in config file.".format(OPTS.address_size))
     if type(OPTS.num_ways) is not int:
         debug.error("{} is not an integer in config file.".format(OPTS.num_ways))
-    if type(OPTS.openram_options) is not dict:
+    if OPTS.openram_options and type(OPTS.openram_options) is not dict:
         debug.error("{} is not a dictionary in config file.".format(OPTS.openram_options))
 
     # Data array's total size should match the word size
