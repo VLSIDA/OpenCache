@@ -7,7 +7,7 @@
 #
 import debug
 import datetime
-from policy import associativity, replacement_policy as RP
+from policy import associativity
 from globals import OPTS, print_time
 
 
