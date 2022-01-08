@@ -8,7 +8,7 @@
 from enum import IntEnum
 
 
-class State(IntEnum):
+class state(IntEnum):
     """ Enum class for internal states of a cache. """
 
     RESET        = 0

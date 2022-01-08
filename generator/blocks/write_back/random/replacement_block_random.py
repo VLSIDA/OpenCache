@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from replacement_block_base import replacement_block_base
-from state import State
+from state import state
 
 
 class replacement_block_random(replacement_block_base):
@@ -32,7 +32,7 @@ class replacement_block_random(replacement_block_base):
 
         # In the FLUSH state, way register is used to write all data lines back
         # to DRAM.
-        with m.Case(State.FLUSH):
+        with m.Case(state.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
             with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
@@ -43,7 +43,7 @@ class replacement_block_random(replacement_block_base):
 
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             m.d.comb += dsgn.way.eq(dsgn.random)
             # If there is an empty way, it must be filled before evicting the
             # random way.

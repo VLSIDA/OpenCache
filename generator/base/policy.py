@@ -11,7 +11,7 @@ Enum classes to represent cache policies are defined here.
 from enum import IntEnum
 
 
-class Associativity(IntEnum):
+class associativity(IntEnum):
     """ Enum class to represent associativity. """
 
     DIRECT = 0
@@ -20,15 +20,15 @@ class Associativity(IntEnum):
 
 
     def __str__(self):
-        if self == Associativity.DIRECT:
+        if self == associativity.DIRECT:
             return "Direct-mapped"
-        if self == Associativity.N_WAY:
+        if self == associativity.N_WAY:
             return "N-way Set Associative"
-        if self == Associativity.FULLY:
+        if self == associativity.FULLY:
             return "Fully Associative"
 
 
-class ReplacementPolicy(IntEnum):
+class replacement_policy(IntEnum):
     """ Enum class to represent replacement policies. """
 
     NONE   = 0
@@ -48,13 +48,13 @@ class ReplacementPolicy(IntEnum):
     def long_name(self):
         """ Get the long name of the replacement policy. """
 
-        if self == ReplacementPolicy.NONE:
+        if self == replacement_policy.NONE:
             return "None"
-        if self == ReplacementPolicy.FIFO:
+        if self == replacement_policy.FIFO:
             return "First In First Out"
-        if self == ReplacementPolicy.LRU:
+        if self == replacement_policy.LRU:
             return "Least Recently Used"
-        if self == ReplacementPolicy.RANDOM:
+        if self == replacement_policy.RANDOM:
             return "Random"
 
 
@@ -62,8 +62,8 @@ class ReplacementPolicy(IntEnum):
         """ Return True if the replacement policy needs a separate SRAM array. """
 
         return self not in [
-            ReplacementPolicy.NONE,
-            ReplacementPolicy.RANDOM
+            replacement_policy.NONE,
+            replacement_policy.RANDOM
         ]
 
 
@@ -72,13 +72,13 @@ class ReplacementPolicy(IntEnum):
         """ Get the replacement policy enum value. """
 
         if name is None:
-            return ReplacementPolicy.NONE
-        for k, v in ReplacementPolicy.__members__.items():
+            return replacement_policy.NONE
+        for k, v in replacement_policy.__members__.items():
             if name.upper() == k:
                 return v
 
 
-class WritePolicy(IntEnum):
+class write_policy(IntEnum):
     """ Enum class to represent write policies. """
 
     WRITE_BACK    = 0
@@ -96,9 +96,9 @@ class WritePolicy(IntEnum):
     def long_name(self):
         """ Get the long name of the write policy. """
 
-        if self == WritePolicy.WRITE_BACK:
+        if self == write_policy.WRITE_BACK:
             return "Write-back"
-        if self == WritePolicy.WRITE_THROUGH:
+        if self == write_policy.WRITE_THROUGH:
             return "Write-through"
 
 
@@ -107,6 +107,6 @@ class WritePolicy(IntEnum):
         """ Get the write policy enum value. """
 
         if name is None or name == "write-back":
-            return WritePolicy.WRITE_BACK
+            return write_policy.WRITE_BACK
         if name == "write-through":
-            return WritePolicy.WRITE_THROUGH
+            return write_policy.WRITE_THROUGH

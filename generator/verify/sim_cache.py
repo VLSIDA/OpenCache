@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from policy import ReplacementPolicy as RP
+from policy import replacement_policy as RP
 from .sim_sram import sim_sram
 from .sim_dram import sim_dram
 from .sim_dram import DRAM_DELAY

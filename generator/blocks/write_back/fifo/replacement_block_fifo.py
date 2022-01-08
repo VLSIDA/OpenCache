@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from replacement_block_base import replacement_block_base
-from state import State
+from state import state
 
 
 class replacement_block_fifo(replacement_block_base):
@@ -24,7 +24,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the RESET state, way register is used to reset all ways in tag and
         # use lines.
-        with m.Case(State.RESET):
+        with m.Case(state.RESET):
             dsgn.use_array.write(dsgn.set, 0)
 
 
@@ -33,7 +33,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the FLUSH state, way register is used to write all data lines back
         # to DRAM.
-        with m.Case(State.FLUSH):
+        with m.Case(state.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
             with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
@@ -44,7 +44,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the IDLE state, way is reset and the corresponding line from the
         # use array is requested.
-        with m.Case(State.IDLE):
+        with m.Case(state.IDLE):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
             dsgn.use_array.read(dsgn.addr.parse_set())
@@ -56,7 +56,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             m.d.comb += dsgn.way.eq(dsgn.use_array.output())
             # The corresponding use array line needs to be requested if current
             # request is hit.
@@ -71,7 +71,7 @@ class replacement_block_fifo(replacement_block_base):
         """ Add statements for the WAIT_READ state. """
 
         # In the WAIT_READ state, FIFO number are updated.
-        with m.Case(State.WAIT_READ):
+        with m.Case(state.WAIT_READ):
             with m.If(~dsgn.dram.stall()):
                 # Each set has its own FIFO number. These numbers start from 0 and
                 # always show the next way to be placed. When new data is placed on
@@ -87,7 +87,7 @@ class replacement_block_fifo(replacement_block_base):
 
         # In the WAIT_READ state, corresponding line from the use array is
         # requested.
-        with m.Case(State.WAIT_HAZARD):
+        with m.Case(state.WAIT_HAZARD):
             dsgn.use_array.read(dsgn.set)
 
 

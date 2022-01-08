@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from block_base import block_base
-from state import State
+from state import state
 
 
 class output_block_base(block_base):
@@ -30,7 +30,7 @@ class output_block_base(block_base):
         # In the IDLE state, stall is low while there is no request from the CPU.
         # When there is a request, state switches to COMPARE and stall becomes
         # high in the next cycle.
-        with m.Case(State.IDLE):
+        with m.Case(state.IDLE):
             m.d.comb += dsgn.stall.eq(0)
 
 
@@ -40,7 +40,7 @@ class output_block_base(block_base):
         # In the COMPARE state, stall is low if the current request is hit.
         # Data output is valid if the request is hit and even if the current
         # request is write since read is non-destructive.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             for i in range(dsgn.num_ways):
                 # Check if current request is hit
                 with dsgn.check_hit(m, i):
@@ -55,7 +55,7 @@ class output_block_base(block_base):
         # completes the read request.
         # Data output is valid even if the current request is write since read
         # is non-destructive.
-        with m.Case(State.WAIT_READ):
+        with m.Case(state.WAIT_READ):
             # Check if DRAM answers to the read request
             with m.If(~dsgn.dram.stall()):
                 m.d.comb += dsgn.stall.eq(0)

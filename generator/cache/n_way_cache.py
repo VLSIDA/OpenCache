@@ -6,9 +6,9 @@
 # All rights reserved.
 #
 from cache_base import cache_base
-from cache_signal import CacheSignal
-from sram_instance import SramInstance
-from policy import ReplacementPolicy as RP
+from cache_signal import cache_signal
+from sram_instance import sram_instance
+from policy import replacement_policy as RP
 from globals import OPTS
 
 
@@ -51,11 +51,11 @@ class n_way_cache(cache_base):
         super().add_internal_signals()
 
         # Keep way chosen to be evicted in a flop
-        self.way = CacheSignal(self.way_size, is_flop=True)
+        self.way = cache_signal(self.way_size, is_flop=True)
 
         if OPTS.replacement_policy == RP.RANDOM:
             # Random counter flop for replacement
-            self.random = CacheSignal(self.way_size, is_flop=True)
+            self.random = cache_signal(self.way_size, is_flop=True)
 
 
     def add_srams(self, m):
@@ -70,4 +70,4 @@ class n_way_cache(cache_base):
                 use_size = self.way_size * self.num_ways
 
             # Use array
-            self.use_array = SramInstance(OPTS.use_array_name, use_size, 1, self, m)
+            self.use_array = sram_instance(OPTS.use_array_name, use_size, 1, self, m)

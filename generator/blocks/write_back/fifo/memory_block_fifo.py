@@ -7,7 +7,7 @@
 #
 from memory_block_base import memory_block_base
 from nmigen import Cat
-from state import State
+from state import state
 
 
 class memory_block_fifo(memory_block_base):
@@ -26,7 +26,7 @@ class memory_block_fifo(memory_block_base):
 
         # In the COMPARE state, cache compares tags.
         # Stall and output are driven by the Output Block.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # Assuming that current request is miss, check if it is dirty miss

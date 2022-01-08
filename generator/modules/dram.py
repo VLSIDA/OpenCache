@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from cache_signal import CacheSignal
+from cache_signal import cache_signal
 
 
-class Dram:
+class dram_instance:
     """
     This class represents DRAM which OpenCache modules connect to.
     """
@@ -16,17 +16,17 @@ class Dram:
     def __init__(self, m, address_size, row_size):
 
         # Chip select
-        self.main_csb   = CacheSignal(reset_less=True, reset=1)
+        self.main_csb   = cache_signal(reset_less=True, reset=1)
         # Write enable
-        self.main_web   = CacheSignal(reset_less=True, reset=1)
+        self.main_web   = cache_signal(reset_less=True, reset=1)
         # Address
-        self.main_addr  = CacheSignal(address_size, reset_less=True)
+        self.main_addr  = cache_signal(address_size, reset_less=True)
         # Data input
-        self.main_din   = CacheSignal(row_size, reset_less=True)
+        self.main_din   = cache_signal(row_size, reset_less=True)
         # Data output
-        self.main_dout  = CacheSignal(row_size)
+        self.main_dout  = cache_signal(row_size)
         # Stall
-        self.main_stall = CacheSignal()
+        self.main_stall = cache_signal()
 
         # Keep the design module for later use
         self.m = m
@@ -37,7 +37,7 @@ class Dram:
 
         ports = []
         for _, v in self.__dict__.items():
-            if isinstance(v, CacheSignal):
+            if isinstance(v, cache_signal):
                 ports.append(v)
         return ports
 

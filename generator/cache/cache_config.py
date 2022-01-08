@@ -7,7 +7,7 @@
 #
 import debug
 from math import log2, ceil
-from policy import Associativity as AS
+from policy import associativity as AS
 from globals import OPTS
 
 

@@ -11,7 +11,7 @@ from testutils import *
 import sys, os
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
-from base.policy import ReplacementPolicy as RP
+from base.policy import replacement_policy as RP
 from globals import OPTS
 
 

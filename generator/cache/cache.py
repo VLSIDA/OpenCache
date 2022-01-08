@@ -7,7 +7,7 @@
 #
 import debug
 import datetime
-from policy import Associativity as AS, ReplacementPolicy as RP
+from policy import associativity, replacement_policy as RP
 from globals import OPTS, print_time
 
 
@@ -22,11 +22,11 @@ class cache:
         self.name = name
 
         # Import the design module of the cache
-        if OPTS.associativity == AS.DIRECT:
+        if OPTS.associativity == associativity.DIRECT:
             from direct_cache import direct_cache as cache
-        elif OPTS.associativity == AS.N_WAY:
+        elif OPTS.associativity == associativity.N_WAY:
             from n_way_cache import n_way_cache as cache
-        elif OPTS.associativity == AS.FULLY:
+        elif OPTS.associativity == associativity.FULLY:
             # TODO: from full_cache import full_cache as cache
             debug.error("Fully associative cache is not supported at the moment.", -1)
         else:

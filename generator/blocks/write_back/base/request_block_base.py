@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from block_base import block_base
-from state import State
+from state import state
 
 
 class request_block_base(block_base):
@@ -30,7 +30,7 @@ class request_block_base(block_base):
 
         # In the RESET state, set register is used to reset all lines in
         # the tag array.
-        with m.Case(State.RESET):
+        with m.Case(state.RESET):
             m.d.comb += dsgn.set.eq(dsgn.set + 1)
 
 
@@ -39,7 +39,7 @@ class request_block_base(block_base):
 
         # In the FLUSH state, set register is used to write all dirty lines
         # back to DRAM.
-        with m.Case(State.FLUSH):
+        with m.Case(state.FLUSH):
             # If current set is clean or DRAM is available, increment the set
             # register when all ways in the set are checked
             with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall()) & (dsgn.way == dsgn.num_ways - 1)):
@@ -50,7 +50,7 @@ class request_block_base(block_base):
         """ Add statements for the IDLE state. """
 
         # In the IDLE state, the request is decoded.
-        with m.Case(State.IDLE):
+        with m.Case(state.IDLE):
             self.store_request(dsgn, m)
 
 
@@ -58,7 +58,7 @@ class request_block_base(block_base):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, the request is decoded if current request is hit.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             for i in range(dsgn.num_ways):
                 with dsgn.check_hit(m, i):
                     self.store_request(dsgn, m)
@@ -68,7 +68,7 @@ class request_block_base(block_base):
         """ Add statements for the WAIT_READ state. """
 
         # In the COMPARE state, the request is decoded if DRAM completed read request
-        with m.Case(State.WAIT_READ):
+        with m.Case(state.WAIT_READ):
             with m.If(~dsgn.dram.stall()):
                 self.store_request(dsgn, m)
 

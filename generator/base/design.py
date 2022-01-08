@@ -10,10 +10,10 @@ from nmigen import Elaboratable, Module
 from nmigen import ClockSignal, ResetSignal
 from nmigen import Value
 from nmigen.back import verilog
-from cache_signal import CacheSignal
-from sram_instance import SramInstance
-from dram import Dram
-from state import State
+from cache_signal import cache_signal
+from sram_instance import sram_instance
+from dram import dram_instance
+from state import state
 from block_factory import factory
 from globals import OPTS
 
@@ -87,18 +87,18 @@ class design(Elaboratable):
         # CPU interface
         self.clk   = ClockSignal()
         self.rst   = ResetSignal()
-        self.flush = CacheSignal()
-        self.csb   = CacheSignal()
-        self.web   = CacheSignal()
+        self.flush = cache_signal()
+        self.csb   = cache_signal()
+        self.web   = cache_signal()
         if self.num_masks:
-            self.wmask = CacheSignal(self.num_masks)
-        self.addr  = CacheSignal(self.address_size)
-        self.din   = CacheSignal(self.word_size)
-        self.dout  = CacheSignal(self.word_size)
-        self.stall = CacheSignal(reset=1)
+            self.wmask = cache_signal(self.num_masks)
+        self.addr  = cache_signal(self.address_size)
+        self.din   = cache_signal(self.word_size)
+        self.dout  = cache_signal(self.word_size)
+        self.stall = cache_signal(reset=1)
 
         # Create a DRAM module
-        self.dram = Dram(self.m, self.dram_address_size, self.line_size)
+        self.dram = dram_instance(self.m, self.dram_address_size, self.line_size)
 
         # Return all port signals
         ports = self.dram.get_pins()
@@ -112,15 +112,15 @@ class design(Elaboratable):
         """ Add internal registers and wires to cache design. """
 
         # Keep inputs in flops
-        self.tag       = CacheSignal(self.tag_size, is_flop=True)
-        self.set       = CacheSignal(self.set_size, is_flop=True)
-        self.offset    = CacheSignal(self.offset_size, is_flop=True)
-        self.web_reg   = CacheSignal(is_flop=True)
+        self.tag       = cache_signal(self.tag_size, is_flop=True)
+        self.set       = cache_signal(self.set_size, is_flop=True)
+        self.offset    = cache_signal(self.offset_size, is_flop=True)
+        self.web_reg   = cache_signal(is_flop=True)
         if self.num_masks:
-            self.wmask_reg = CacheSignal(self.num_masks, is_flop=True)
-        self.din_reg   = CacheSignal(self.word_size, is_flop=True)
+            self.wmask_reg = cache_signal(self.num_masks, is_flop=True)
+        self.din_reg   = cache_signal(self.word_size, is_flop=True)
         # State flop
-        self.state     = CacheSignal(State, is_flop=True)
+        self.state     = cache_signal(state, is_flop=True)
 
 
     def add_srams(self, m):
@@ -128,11 +128,11 @@ class design(Elaboratable):
 
         # Tag array
         word_size = self.tag_word_size * self.num_ways
-        self.tag_array = SramInstance(OPTS.tag_array_name, word_size, 1, self, m)
+        self.tag_array = sram_instance(OPTS.tag_array_name, word_size, 1, self, m)
 
         # Data array
         word_size = self.line_size * self.num_ways
-        self.data_array = SramInstance(OPTS.data_array_name, word_size, OPTS.num_ways, self, m)
+        self.data_array = sram_instance(OPTS.data_array_name, word_size, OPTS.num_ways, self, m)
 
 
     def add_flop_block(self, m):
@@ -141,7 +141,7 @@ class design(Elaboratable):
         # In this block, flip-flop registers are updated at every positive edge
         # of the clock.
         for _, v in self.__dict__.items():
-            if isinstance(v, CacheSignal) and v.is_flop:
+            if isinstance(v, cache_signal) and v.is_flop:
                 m.d.sync += v.eq(v.next, sync=True)
 
 
@@ -152,7 +152,7 @@ class design(Elaboratable):
         # Default statements of other registers are automatically added by
         # nMigen library.
         for _, v in self.__dict__.items():
-            if isinstance(v, CacheSignal) and v.is_flop:
+            if isinstance(v, cache_signal) and v.is_flop:
                 m.d.comb += v.eq(v)
 
 

@@ -202,9 +202,9 @@ def fix_config():
     """ Fix and update options from the config file. """
 
     # Convert policy strings to enum values
-    from policy import ReplacementPolicy as RP
+    from policy import replacement_policy as RP
     OPTS.replacement_policy = RP.get_value(OPTS.replacement_policy)
-    from policy import WritePolicy as WP
+    from policy import write_policy as WP
     OPTS.write_policy = WP.get_value(OPTS.write_policy)
 
     # If config didn't set output name, make a reasonable default
@@ -385,7 +385,7 @@ def report_status():
     if OPTS.write_size is not None and OPTS.word_size % OPTS.write_size:
         debug.error("Word size is not divisible by write size.", -1)
 
-    from policy import ReplacementPolicy as RP
+    from policy import replacement_policy as RP
     # Direct-mapped cache doesn't have a replacement policy
     if OPTS.num_ways == 1 and OPTS.replacement_policy != RP.NONE:
         debug.error("Direct-mapped cache cannot have a replacement policy.", -1)
@@ -396,7 +396,7 @@ def report_status():
     # Options below are not implemented yet
     if not OPTS.is_data_cache:
         debug.error("Instruction cache is not yet supported.", -1)
-    from policy import WritePolicy as WP
+    from policy import write_policy as WP
     if OPTS.write_policy != WP.WRITE_BACK:
         debug.error("Only write-back policy is supported at the moment.", -1)
     if OPTS.return_type != "word":

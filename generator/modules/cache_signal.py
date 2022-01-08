@@ -9,7 +9,7 @@ from nmigen import Signal
 from nmigen import tracer
 
 
-class CacheSignal(Signal):
+class cache_signal(Signal):
     """
     This class inherits from the Signal class of nMigen library.
     Common bit calculations are implemented here.
@@ -28,7 +28,7 @@ class CacheSignal(Signal):
         # If the signal is a flop, add a "_next" signal to deal with flop
         # operations internally
         if is_flop:
-            self.next = CacheSignal(shape=shape, reset_less=True)
+            self.next = cache_signal(shape=shape, reset_less=True)
             # Update the name of "_next" signal
             self.next.name = self.name + "_next"
 
@@ -47,13 +47,13 @@ class CacheSignal(Signal):
     def way(self, way=0):
         """ Return bits allocated for a way. """
 
-        return self.word_select(way, self.width // CacheSignal.num_ways)
+        return self.word_select(way, self.width // cache_signal.num_ways)
 
 
     def parse_tag(self):
         """ Return tag bits of an address signal. """
 
-        return self[-CacheSignal.tag_size:]
+        return self[-cache_signal.tag_size:]
 
 
     def parse_set(self):
@@ -65,25 +65,25 @@ class CacheSignal(Signal):
     def parse_offset(self):
         """ Return offset bits of an address signal. """
 
-        return self[:CacheSignal.offset_size]
+        return self[:cache_signal.offset_size]
 
 
     def valid(self, way=0):
         """ Return valid bit of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_word_size) + (CacheSignal.tag_word_size - 1), 1)
+        return self.bit_select(way * (cache_signal.tag_word_size) + (cache_signal.tag_word_size - 1), 1)
 
 
     def dirty(self, way=0):
         """ Return dirty bit of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_word_size) + (CacheSignal.tag_word_size - 2), 1)
+        return self.bit_select(way * (cache_signal.tag_word_size) + (cache_signal.tag_word_size - 2), 1)
 
 
     def tag(self, way=0):
         """ Return tag bits of a tag signal. """
 
-        return self.bit_select(way * (CacheSignal.tag_word_size), CacheSignal.tag_size)
+        return self.bit_select(way * (cache_signal.tag_word_size), cache_signal.tag_size)
 
 
     def tag_word(self, way=0):
@@ -95,13 +95,13 @@ class CacheSignal(Signal):
     def mask(self, mask_offset, word_offset=0, way=0):
         """ Return a mask part of a data signal. """
 
-        return self.word_select((way * CacheSignal.words_per_line + word_offset) * CacheSignal.num_masks + mask_offset, CacheSignal.write_size)
+        return self.word_select((way * cache_signal.words_per_line + word_offset) * cache_signal.num_masks + mask_offset, cache_signal.write_size)
 
 
     def word(self, offset, way=0):
         """ Return a data word of a data signal. """
 
-        return self.word_select(way * CacheSignal.words_per_line + offset, CacheSignal.word_size)
+        return self.word_select(way * cache_signal.words_per_line + offset, cache_signal.word_size)
 
 
     def line(self, way=0):

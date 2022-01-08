@@ -7,10 +7,10 @@
 #
 from nmigen import Instance
 from nmigen import tracer
-from cache_signal import CacheSignal
+from cache_signal import cache_signal
 
 
-class SramInstance:
+class sram_instance:
     """
     This class instantiates Instance class of nMigen library and holds OpenRAM
     SRAM modules instances.
@@ -35,17 +35,17 @@ class SramInstance:
 
         for i in range(num_arrays):
             # Write enable
-            self.write_csb.append(CacheSignal(reset_less=True, reset=1, name="{0}_write_csb{1}".format(short_name, i)))
+            self.write_csb.append(cache_signal(reset_less=True, reset=1, name="{0}_write_csb{1}".format(short_name, i)))
             # Write address
-            self.write_addr.append(CacheSignal(self.set_size, reset_less=True, name="{0}_write_addr{1}".format(short_name, i)))
+            self.write_addr.append(cache_signal(self.set_size, reset_less=True, name="{0}_write_addr{1}".format(short_name, i)))
             # Write data
-            self.write_din.append(CacheSignal(real_row_size, reset_less=True, name="{0}_write_din{1}".format(short_name, i)))
+            self.write_din.append(cache_signal(real_row_size, reset_less=True, name="{0}_write_din{1}".format(short_name, i)))
             # Read enable
-            self.read_csb.append(CacheSignal(reset_less=True, name="{0}_read_csb{1}".format(short_name, i)))
+            self.read_csb.append(cache_signal(reset_less=True, name="{0}_read_csb{1}".format(short_name, i)))
             # Read address
-            self.read_addr.append(CacheSignal(self.set_size, reset_less=True, name="{0}_read_addr{1}".format(short_name, i)))
+            self.read_addr.append(cache_signal(self.set_size, reset_less=True, name="{0}_read_addr{1}".format(short_name, i)))
             # Read data
-            self.read_dout.append(CacheSignal(real_row_size, name="{0}_read_dout{1}".format(short_name, i)))
+            self.read_dout.append(cache_signal(real_row_size, name="{0}_read_dout{1}".format(short_name, i)))
 
             # Add this instance to the design module
             m.submodules += Instance(module_name,
@@ -97,7 +97,7 @@ class SramInstance:
                 self.m.d.comb += self.write_din[i].eq(self.read_dout[i])
                 self.m.d.comb += self.write_din[i].eq(data)
         # If way is a signal, wrap it with case statements
-        elif isinstance(way, CacheSignal):
+        elif isinstance(way, cache_signal):
             with self.m.Switch(way):
                 for i in range(1 << way.width):
                     with self.m.Case(i):
@@ -133,29 +133,29 @@ class SramInstance:
         # statements if offset calculation is a bit complex.
 
         # If way is a signal, use case statements
-        if isinstance(way, CacheSignal):
+        if isinstance(way, cache_signal):
             with self.m.Switch(way):
-                for way_idx in range(SramInstance.num_ways):
+                for way_idx in range(sram_instance.num_ways):
                     with self.m.Case(way_idx):
                         # Offset is used to find the word
                         with self.m.Switch(offset):
-                            for word_idx in range(SramInstance.words_per_line):
+                            for word_idx in range(sram_instance.words_per_line):
                                 with self.m.Case(word_idx):
                                     # Write the word over the write mask
-                                    for mask_idx in range(SramInstance.num_masks):
+                                    for mask_idx in range(sram_instance.num_masks):
                                         with self.m.If(wmask[mask_idx]):
                                             self.m.d.comb += self.write_din[way_idx].mask(mask_idx, word_idx).eq(data.mask(mask_idx))
-                                    if not SramInstance.num_masks:
+                                    if not sram_instance.num_masks:
                                         self.m.d.comb += self.write_din[way_idx].word(word_idx).eq(data)
         # If way is a constant, use it directly
         else:
             # Offset is used to find the word
             with self.m.Switch(offset):
-                for word_idx in range(SramInstance.words_per_line):
+                for word_idx in range(sram_instance.words_per_line):
                     with self.m.Case(word_idx):
                         # Write the word over the write mask
-                        for mask_idx in range(SramInstance.num_masks):
+                        for mask_idx in range(sram_instance.num_masks):
                             with self.m.If(wmask[mask_idx]):
                                 self.m.d.comb += self.write_din[way].mask(mask_idx, word_idx).eq(data.mask(mask_idx))
-                        if not SramInstance.num_masks:
+                        if not sram_instance.num_masks:
                             self.m.d.comb += self.write_din[way].word(word_idx).eq(data)

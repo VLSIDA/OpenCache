@@ -7,7 +7,7 @@
 #
 from replacement_block_base import replacement_block_base
 from nmigen import Const
-from state import State
+from state import state
 
 
 class replacement_block_lru(replacement_block_base):
@@ -25,7 +25,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the RESET state, way register is used to reset all ways in tag
         # and use lines.
-        with m.Case(State.RESET):
+        with m.Case(state.RESET):
             dsgn.use_array.write(dsgn.set, self.get_reset_value(dsgn))
 
 
@@ -34,7 +34,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the FLUSH state, way register is used to write all data lines
         # back to DRAM.
-        with m.Case(State.FLUSH):
+        with m.Case(state.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
             with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
                 m.d.comb += dsgn.way.eq(dsgn.way + 1)
@@ -45,7 +45,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the IDLE state, way is reset and the corresponding line from the
         # use array is requested.
-        with m.Case(State.IDLE):
+        with m.Case(state.IDLE):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
             dsgn.use_array.read(dsgn.addr.parse_set())
@@ -57,7 +57,7 @@ class replacement_block_lru(replacement_block_base):
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
         # Also use numbers are updated if current request is hit.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             dsgn.use_array.read(dsgn.set)
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
@@ -88,7 +88,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the WAIT_WRITE and READ states, use line is read to update it
         # in the WAIT_READ state.
-        with m.Case(State.WAIT_WRITE):
+        with m.Case(state.WAIT_WRITE):
             dsgn.use_array.read(dsgn.set)
 
 
@@ -97,7 +97,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the WAIT_WRITE and READ states, use line is read to update it
         # in the WAIT_READ state.
-        with m.Case(State.READ):
+        with m.Case(state.READ):
             dsgn.use_array.read(dsgn.set)
 
 
@@ -105,7 +105,7 @@ class replacement_block_lru(replacement_block_base):
         """ Add statements for the WAIT_READ state. """
 
         # In the WAIT_READ state, use numbers are updated.
-        with m.Case(State.WAIT_READ):
+        with m.Case(state.WAIT_READ):
             dsgn.use_array.read(dsgn.set)
             with m.If(~dsgn.dram.stall()):
                 # Each way in a set has its own use numbers. These numbers
@@ -132,7 +132,7 @@ class replacement_block_lru(replacement_block_base):
 
         # In the WAIT_READ state, corresponding line from the use array is
         # requested.
-        with m.Case(State.WAIT_HAZARD):
+        with m.Case(state.WAIT_HAZARD):
             dsgn.use_array.read(dsgn.set)
 
 

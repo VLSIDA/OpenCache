@@ -7,7 +7,7 @@
 #
 from block_base import block_base
 from nmigen import Cat
-from state import State
+from state import state
 
 
 class memory_block_base(block_base):
@@ -32,7 +32,7 @@ class memory_block_base(block_base):
         # the current set.
         # set register is incremented by the Request Block.
         # When set register reaches the end, state switches to IDLE.
-        with m.Case(State.RESET):
+        with m.Case(state.RESET):
             dsgn.tag_array.write(dsgn.set, 0)
             dsgn.data_array.write(dsgn.set, 0)
 
@@ -44,7 +44,7 @@ class memory_block_base(block_base):
         # set register is incremented by the Request Block.
         # way register is incremented by the Replacement Block.
         # When set and way registers reach the end, state switches to IDLE.
-        with m.Case(State.FLUSH):
+        with m.Case(state.FLUSH):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             with m.Switch(dsgn.way):
@@ -73,7 +73,7 @@ class memory_block_base(block_base):
         # When there is a new request from the cache stall is asserted, request
         # is decoded and corresponding tag, data, and use array lines are read
         # from internal SRAMs.
-        with m.Case(State.IDLE):
+        with m.Case(state.IDLE):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
             dsgn.tag_array.read(dsgn.addr.parse_set())
@@ -84,7 +84,7 @@ class memory_block_base(block_base):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, cache compares tags.
-        with m.Case(State.COMPARE):
+        with m.Case(state.COMPARE):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # Assuming that current request is miss, check if it is dirty miss
@@ -122,7 +122,7 @@ class memory_block_base(block_base):
 
         # In the WRITE state, cache waits for DRAM to be available.
         # When DRAM is available, write request is sent.
-        with m.Case(State.WRITE):
+        with m.Case(state.WRITE):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # If DRAM is busy, wait in this state.
@@ -140,7 +140,7 @@ class memory_block_base(block_base):
 
         # In the WAIT_WRITE state, cache waits for DRAM to complete writing.
         # When DRAM completes writing, read request is sent.
-        with m.Case(State.WAIT_WRITE):
+        with m.Case(state.WAIT_WRITE):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # If DRAM is busy, wait in this state.
@@ -156,7 +156,7 @@ class memory_block_base(block_base):
         # In the READ state, cache waits for DRAM to be available.
         # When DRAM is available, read request is sent.
         # TODO: Is this state really necessary? WAIT_WRITE state may be used instead
-        with m.Case(State.READ):
+        with m.Case(state.READ):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # If DRAM is busy, wait in this state.
@@ -171,7 +171,7 @@ class memory_block_base(block_base):
 
         # In the WAIT_READ state, cache waits for DRAM to complete reading
         # When DRAM completes reading, request is completed.
-        with m.Case(State.WAIT_READ):
+        with m.Case(state.WAIT_READ):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
             # If DRAM is busy, cache waits in this state.
@@ -197,7 +197,7 @@ class memory_block_base(block_base):
 
         # In the FLUSH_HAZARD state, cache waits in this state for 1 cycle.
         # Read requests are sent to tag and data arrays.
-        with m.Case(State.FLUSH_HAZARD):
+        with m.Case(state.FLUSH_HAZARD):
             dsgn.tag_array.read(0)
             dsgn.data_array.read(0)
 
@@ -207,7 +207,7 @@ class memory_block_base(block_base):
 
         # In the WAIT_HAZARD state, cache waits in this state for 1 cycle.
         # Read requests are sent to tag and data arrays.
-        with m.Case(State.WAIT_HAZARD):
+        with m.Case(state.WAIT_HAZARD):
             dsgn.tag_array.read(dsgn.set)
             dsgn.data_array.read(dsgn.set)
 

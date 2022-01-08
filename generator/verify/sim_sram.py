@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from policy import ReplacementPolicy as RP
+from policy import replacement_policy as RP
 from globals import OPTS
 
 
