@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from memory_block_base import memory_block_base
-from amaranth import Cat
+from amaranth import Cat, C
 from state import state
 
 
@@ -64,7 +64,7 @@ class memory_block_random(memory_block_base):
                     # Perform the write request
                     with m.If(~dsgn.web_reg):
                         # Update dirty bit
-                        dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b11), i)
+                        dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), C(3, 2)), i)
                         # Perform write request
                         dsgn.data_array.write(dsgn.set, dsgn.data_array.output(i), i)
                         dsgn.data_array.write_input(i, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)

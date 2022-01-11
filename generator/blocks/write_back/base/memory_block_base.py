@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from block_base import block_base
-from amaranth import Cat
+from amaranth import Cat, C
 from state import state
 
 
@@ -60,7 +60,7 @@ class memory_block_base(block_base):
                         # Check if current set is dirty and DRAM is available
                         with m.If(dsgn.tag_array.output().dirty(i) & ~dsgn.dram.stall()):
                             # Update dirty bits in the tag line
-                            dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), 0b10), i)
+                            dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), C(2, 2)), i)
                             # Send the write request to DRAM
                             dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(i)), dsgn.data_array.output(i))
 
@@ -107,7 +107,7 @@ class memory_block_base(block_base):
                 # Perform the write request
                 with m.If(~dsgn.web_reg):
                     # Update dirty bit
-                    dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, 0b11))
+                    dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, C(3, 2)))
                     # Perform write request
                     dsgn.data_array.write(dsgn.set, dsgn.data_array.output())
                     dsgn.data_array.write_input(0, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)
@@ -180,7 +180,7 @@ class memory_block_base(block_base):
             #   COMPARE if CPU is sending a new request
             with m.If(~dsgn.dram.stall()):
                 # Update tag line
-                dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, ~dsgn.web_reg, 0b1), dsgn.way)
+                dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag, ~dsgn.web_reg, C(1, 1)), dsgn.way)
                 # Update data line
                 dsgn.data_array.write(dsgn.set, dsgn.dram.output(), dsgn.way)
                 # Perform the write request
