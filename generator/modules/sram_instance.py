@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from nmigen import Instance
-from nmigen import tracer
+from amaranth import Instance
+from amaranth import tracer
 from cache_signal import cache_signal
 
 
 class sram_instance:
     """
-    This class instantiates Instance class of nMigen library and holds OpenRAM
+    This class instantiates Instance class of Amaranth library and holds OpenRAM
     SRAM modules instances.
     """
 

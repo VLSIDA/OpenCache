@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from block_base import block_base
-from nmigen import Cat
+from amaranth import Cat
 from state import state
 
 

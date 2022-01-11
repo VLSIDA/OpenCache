@@ -102,7 +102,7 @@ def check_versions():
     """ Run some checks of required software versions. """
 
     # FIXME: Which version is required?
-    # NOTE: nMigen needs at least Python 3.6
+    # NOTE: Amaranth needs at least Python 3.6
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
     major_required = 3

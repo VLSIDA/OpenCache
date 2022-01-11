@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from nmigen import Signal
-from nmigen import tracer
+from amaranth import Signal
+from amaranth import tracer
 
 
 class cache_signal(Signal):
     """
-    This class inherits from the Signal class of nMigen library.
+    This class inherits from the Signal class of Amaranth library.
     Common bit calculations are implemented here.
     """
 

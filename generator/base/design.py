@@ -6,10 +6,10 @@
 # All rights reserved.
 #
 import debug
-from nmigen import Elaboratable, Module
-from nmigen import ClockSignal, ResetSignal
-from nmigen import Value
-from nmigen.back import verilog
+from amaranth import Elaboratable, Module
+from amaranth import ClockSignal, ResetSignal
+from amaranth import Value
+from amaranth.back import verilog
 from cache_signal import cache_signal
 from sram_instance import sram_instance
 from dram_instance import dram_instance
@@ -64,9 +64,9 @@ class design(Elaboratable):
 
 
     def elaborate(self, platform):
-        """ Elaborate the design. Called by nMigen library. """
+        """ Elaborate the design. Called by Amaranth library. """
 
-        # NOTE: IO signals must be added before elaborating. Otherwise, nMigen
+        # NOTE: IO signals must be added before elaborating. Otherwise, Amaranth
         # fails to detect port signals and their directions.
 
         self.add_internal_signals()
@@ -150,7 +150,7 @@ class design(Elaboratable):
 
         # Add default statements for flip-flops only.
         # Default statements of other registers are automatically added by
-        # nMigen library.
+        # Amaranth library.
         for _, v in self.__dict__.items():
             if isinstance(v, cache_signal) and v.is_flop:
                 m.d.comb += v.eq(v)

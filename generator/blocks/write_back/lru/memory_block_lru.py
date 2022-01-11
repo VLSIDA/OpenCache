@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from memory_block_base import memory_block_base
-from nmigen import Cat, Const
+from amaranth import Cat, Const
 from state import state
 
 
