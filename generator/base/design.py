@@ -12,7 +12,7 @@ from nmigen import Value
 from nmigen.back import verilog
 from cache_signal import cache_signal
 from sram_instance import sram_instance
-from dram import dram_instance
+from dram_instance import dram_instance
 from state import state
 from block_factory import factory
 from globals import OPTS
