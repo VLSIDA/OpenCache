@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import re
 import debug
 from amaranth import Elaboratable, Module
 from amaranth import ClockSignal, ResetSignal
@@ -52,11 +53,21 @@ class design(Elaboratable):
         lines = code.splitlines(True)
 
         for i in range(len(lines)):
+            # Don't delete the first line
+            if i == 0:
+                continue
             # Delete \initial register
             if "\\initial" in lines[i]:
                 lines[i] = ""
             # Delete auto-generated flops
             if "$next" in lines[i]:
+                lines[i] = ""
+            # Delete attributes from lines
+            lines[i] = re.sub(r"\(\*.*\*\)", "", lines[i])
+            # Delete comments from lines
+            lines[i] = re.sub(r"\/\*.*\*\/", "", lines[i])
+            # Check if line is whitespace only
+            if re.match(r'.*[ \t]$', lines[i]):
                 lines[i] = ""
 
         code = "".join(lines)
