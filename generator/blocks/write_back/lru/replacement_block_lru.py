@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from replacement_block_base import replacement_block_base
-from amaranth import Const
+from amaranth import C
 from state import state
 
 
@@ -61,7 +61,7 @@ class replacement_block_lru(replacement_block_base):
             dsgn.use_array.read(dsgn.set)
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
-                with m.If(dsgn.use_array.output().use(i) == Const(0, dsgn.way_size)):
+                with m.If(dsgn.use_array.output().use(i) == C(0, dsgn.way_size)):
                     # Check if current request is clean miss
                     m.d.comb += dsgn.way.eq(i)
             # Check if current request is a hit

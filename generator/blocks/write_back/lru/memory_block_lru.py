@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from memory_block_base import memory_block_base
-from amaranth import Cat, Const, C
+from amaranth import Cat, C
 from state import state
 
 
@@ -31,7 +31,7 @@ class memory_block_lru(memory_block_base):
             dsgn.data_array.read(dsgn.set)
             for i in range(dsgn.num_ways):
                 # Find the least recently used way (the way having 0 use number)
-                with m.If(dsgn.use_array.output().use(i) == Const(0, dsgn.way_size)):
+                with m.If(dsgn.use_array.output().use(i) == C(0, dsgn.way_size)):
                     # Assuming that current request is miss, check if it is dirty miss
                     with dsgn.check_dirty_miss(m, i):
                         # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
