@@ -21,54 +21,54 @@ class memory_block_random(memory_block_base):
         super().__init__()
 
 
-    def add_compare(self, dsgn, m):
+    def add_compare(self, c, m):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, cache compares tags.
         # Stall and dout are driven by the Output Block.
         with m.Case(state.COMPARE):
-            dsgn.tag_array.read(dsgn.set)
-            dsgn.data_array.read(dsgn.set)
+            c.tag_array.read(c.set)
+            c.data_array.read(c.set)
             # Assuming that current request is miss, check if it is dirty miss
-            with dsgn.check_dirty_miss(m, dsgn.random):
+            with c.check_dirty_miss(m, c.random):
                 # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
                 # complete writing
-                with m.If(~dsgn.dram.stall()):
-                    with m.Switch(dsgn.random):
-                        for i in range(dsgn.num_ways):
+                with m.If(~c.dram.stall()):
+                    with m.Switch(c.random):
+                        for i in range(c.num_ways):
                             with m.Case(i):
-                                dsgn.dram.write(Cat(dsgn.set, dsgn.tag_array.output().tag(dsgn.random)), dsgn.data_array.output(i))
+                                c.dram.write(Cat(c.set, c.tag_array.output().tag(c.random)), c.data_array.output(i))
             # Else, assume that current request is clean miss
-            with dsgn.check_clean_miss(m):
+            with c.check_clean_miss(m):
                 # If DRAM is busy, switch to READ and wait for DRAM to be available
                 # If DRAM is available, switch to WAIT_READ and wait for DRAM to
                 # complete reading
-                with m.If(~dsgn.dram.stall()):
-                    dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
+                with m.If(~c.dram.stall()):
+                    c.dram.read(Cat(c.set, c.tag))
             # Check if there is an empty way. All empty ways need to be filled
             # before evicting a random way.
-            for i in range(dsgn.num_ways):
-                with m.If(~dsgn.tag_array.output().valid(i)):
+            for i in range(c.num_ways):
+                with m.If(~c.tag_array.output().valid(i)):
                     # If DRAM is busy, switch to READ and wait for DRAM to be available
                     # If DRAM is available, switch to WAIT_READ and wait for DRAM to
                     # complete reading
-                    with m.If(~dsgn.dram.stall()):
-                        dsgn.dram.read(Cat(dsgn.set, dsgn.tag))
+                    with m.If(~c.dram.stall()):
+                        c.dram.read(Cat(c.set, c.tag))
             # Check if current request is hit
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
-            for i in range(dsgn.num_ways):
-                with dsgn.check_hit(m, i):
+            for i in range(c.num_ways):
+                with c.check_hit(m, i):
                     # Disable DRAM since a request could be sent above
-                    dsgn.dram.disable()
+                    c.dram.disable()
                     # Perform the write request
-                    with m.If(~dsgn.web_reg):
+                    with m.If(~c.web_reg):
                         # Update dirty bit
-                        dsgn.tag_array.write(dsgn.set, Cat(dsgn.tag_array.output().tag(i), C(3, 2)), i)
+                        c.tag_array.write(c.set, Cat(c.tag_array.output().tag(i), C(3, 2)), i)
                         # Perform write request
-                        dsgn.data_array.write(dsgn.set, dsgn.data_array.output(i), i)
-                        dsgn.data_array.write_input(i, dsgn.offset, dsgn.din_reg, dsgn.wmask_reg if dsgn.num_masks else None)
+                        c.data_array.write(c.set, c.data_array.output(i), i)
+                        c.data_array.write_input(i, c.offset, c.din_reg, c.wmask_reg if c.num_masks else None)
                     # Read next lines from SRAMs even though CPU is not
                     # sending a new request since read is non-destructive.
-                    dsgn.tag_array.read(dsgn.addr.parse_set())
-                    dsgn.data_array.read(dsgn.addr.parse_set())
+                    c.tag_array.read(c.addr.parse_set())
+                    c.data_array.read(c.addr.parse_set())

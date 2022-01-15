@@ -19,55 +19,55 @@ class replacement_block_random(replacement_block_base):
         super().__init__()
 
 
-    def add(self, dsgn, m):
+    def add(self, c, m):
         """ Add all sections of the always block code. """
 
-        m.d.comb += dsgn.random.eq(dsgn.random + 1)
+        m.d.comb += c.random.eq(c.random + 1)
 
-        super().add(dsgn, m)
+        super().add(c, m)
 
 
-    def add_flush(self, dsgn, m):
+    def add_flush(self, c, m):
         """ Add statements for the FLUSH state. """
 
         # In the FLUSH state, way register is used to write all data lines back
         # to DRAM.
         with m.Case(state.FLUSH):
             # If current set is clean or DRAM is available, increment the way register
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall())):
-                m.d.comb += dsgn.way.eq(dsgn.way + 1)
+            with m.If((~c.tag_array.output().dirty(c.way) | ~c.dram.stall())):
+                m.d.comb += c.way.eq(c.way + 1)
 
 
-    def add_compare(self, dsgn, m):
+    def add_compare(self, c, m):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
         with m.Case(state.COMPARE):
-            m.d.comb += dsgn.way.eq(dsgn.random)
+            m.d.comb += c.way.eq(c.random)
             # If there is an empty way, it must be filled before evicting the
             # random way.
-            for i in range(dsgn.num_ways):
-                with m.If(~dsgn.tag_array.output().valid(i)):
-                    m.d.comb += dsgn.way.eq(i)
+            for i in range(c.num_ways):
+                with m.If(~c.tag_array.output().valid(i)):
+                    m.d.comb += c.way.eq(i)
 
 
-    def add_flush_sig(self, dsgn, m):
+    def add_flush_sig(self, c, m):
         """ Add flush signal control. """
 
         # If flush is high, way is reset.
         # way register becomes 0 since it is going to be used to write all data
         # lines back to DRAM.
-        with m.If(dsgn.flush):
-            m.d.comb += dsgn.way.eq(0)
+        with m.If(c.flush):
+            m.d.comb += c.way.eq(0)
 
 
-    def add_reset_sig(self, dsgn, m):
+    def add_reset_sig(self, c, m):
         """ Add reset signal control. """
 
         # If rst is high, way and random are reset.
         # way register becomes 0 since it is going to be used to reset all ways
         # tag lines.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.way.eq(0)
-            m.d.comb += dsgn.random.eq(0)
+        with m.If(c.rst):
+            m.d.comb += c.way.eq(0)
+            m.d.comb += c.random.eq(0)

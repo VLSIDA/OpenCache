@@ -16,7 +16,7 @@ class sram_instance:
     SRAM modules instances.
     """
 
-    def __init__(self, module_name, row_size, num_arrays, dsgn, m):
+    def __init__(self, module_name, row_size, num_arrays, c, m):
 
         # Find the declared name of this instance
         array_name = tracer.get_var_name()
@@ -49,11 +49,11 @@ class sram_instance:
 
             # Add this instance to the design module
             m.submodules += Instance(module_name,
-                ("i", "clk0", dsgn.clk),
+                ("i", "clk0", c.clk),
                 ("i", "csb0", self.write_csb[i]),
                 ("i", "addr0", self.write_addr[i]),
                 ("i", "din0", self.write_din[i]),
-                ("i", "clk1", dsgn.clk),
+                ("i", "clk1", c.clk),
                 ("i", "csb1", self.read_csb[i]),
                 ("i", "addr1", self.read_addr[i]),
                 ("o", "dout1", self.read_dout[i]),

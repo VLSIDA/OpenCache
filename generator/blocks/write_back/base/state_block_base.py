@@ -25,18 +25,18 @@ class state_block_base(block_base):
         super().__init__()
 
 
-    def add_reset(self, dsgn, m):
+    def add_reset(self, c, m):
         """ Add statements for the RESET state. """
 
         # In the RESET state, state switches to IDLE if reset is completed.
         with m.Case(state.RESET):
             # When set reaches the limit, the last write request is sent to the
             # tag array.
-            with m.If(dsgn.set == dsgn.num_rows - 1):
-                m.d.comb += dsgn.state.eq(state.IDLE)
+            with m.If(c.set == c.num_rows - 1):
+                m.d.comb += c.state.eq(state.IDLE)
 
 
-    def add_flush(self, dsgn, m):
+    def add_flush(self, c, m):
         """ Add statements for the FLUSH state. """
 
         # In the FLUSH state, state switches to IDLE if flush is completed.
@@ -47,21 +47,21 @@ class state_block_base(block_base):
             # the last data line. This may cause a simulation mismatch.
             # This is the behavior that we probably want, so fix sim_cache
             # instead.
-            with m.If((~dsgn.tag_array.output().dirty(dsgn.way) | ~dsgn.dram.stall()) & (dsgn.way == dsgn.num_ways - 1) & (dsgn.set == dsgn.num_rows - 1)):
-                m.d.comb += dsgn.state.eq(state.IDLE)
+            with m.If((~c.tag_array.output().dirty(c.way) | ~c.dram.stall()) & (c.way == c.num_ways - 1) & (c.set == c.num_rows - 1)):
+                m.d.comb += c.state.eq(state.IDLE)
 
 
-    def add_idle(self, dsgn, m):
+    def add_idle(self, c, m):
         """ Add statements for the IDLE state. """
 
         # In the IDLE state, state switches to COMPARE if CPU is sending a new
         # request.
         with m.Case(state.IDLE):
-            with m.If(~dsgn.csb):
-                m.d.comb += dsgn.state.eq(state.COMPARE)
+            with m.If(~c.csb):
+                m.d.comb += c.state.eq(state.COMPARE)
 
 
-    def add_compare(self, dsgn, m):
+    def add_compare(self, c, m):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, state switches to:
@@ -74,66 +74,66 @@ class state_block_base(block_base):
         #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(state.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
-            with dsgn.check_dirty_miss(m):
-                with m.If(dsgn.dram.stall()):
-                    m.d.comb += dsgn.state.eq(state.WRITE)
+            with c.check_dirty_miss(m):
+                with m.If(c.dram.stall()):
+                    m.d.comb += c.state.eq(state.WRITE)
                 with m.Else():
-                    m.d.comb += dsgn.state.eq(state.WAIT_WRITE)
+                    m.d.comb += c.state.eq(state.WAIT_WRITE)
             # Else, assume that current request is clean miss
-            with dsgn.check_clean_miss(m):
-                with m.If(dsgn.dram.stall()):
-                    m.d.comb += dsgn.state.eq(state.READ)
+            with c.check_clean_miss(m):
+                with m.If(c.dram.stall()):
+                    m.d.comb += c.state.eq(state.READ)
                 with m.Else():
-                    m.d.comb += dsgn.state.eq(state.WAIT_READ)
+                    m.d.comb += c.state.eq(state.WAIT_READ)
             # Check if current request is hit
-            with dsgn.check_hit(m):
-                with m.If(dsgn.csb):
-                    m.d.comb += dsgn.state.eq(state.IDLE)
+            with c.check_hit(m):
+                with m.If(c.csb):
+                    m.d.comb += c.state.eq(state.IDLE)
                 with m.Else():
                     # Don't use WAIT_HAZARD if data_hazard is disabled
                     if OPTS.data_hazard:
-                        with m.If(~dsgn.web_reg & (dsgn.set == dsgn.addr.parse_set())):
-                            m.d.comb += dsgn.state.eq(state.WAIT_HAZARD)
+                        with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
+                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
                         with m.Else():
-                            m.d.comb += dsgn.state.eq(state.COMPARE)
+                            m.d.comb += c.state.eq(state.COMPARE)
                     else:
-                        m.d.comb += dsgn.state.eq(state.COMPARE)
+                        m.d.comb += c.state.eq(state.COMPARE)
 
 
-    def add_write(self, dsgn, m):
+    def add_write(self, c, m):
         """ Add statements for the WRITE state. """
 
         # In the WRITE state, state switches to:
         #   WRITE      if DRAM didn't respond yet
         #   WAIT_WRITE if DRAM responded
         with m.Case(state.WRITE):
-            with m.If(~dsgn.dram.stall()):
-                m.d.comb += dsgn.state.eq(state.WAIT_WRITE)
+            with m.If(~c.dram.stall()):
+                m.d.comb += c.state.eq(state.WAIT_WRITE)
 
 
-    def add_wait_write(self, dsgn, m):
+    def add_wait_write(self, c, m):
         """ Add statements for the WAIT_WRITE state. """
 
         # In the WAIT_WRITE state, state switches to:
         #   WAIT_WRITE if DRAM didn't respond yet
         #   WAIT_READ  if DRAM responded
         with m.Case(state.WAIT_WRITE):
-            with m.If(~dsgn.dram.stall()):
-                m.d.comb += dsgn.state.eq(state.WAIT_READ)
+            with m.If(~c.dram.stall()):
+                m.d.comb += c.state.eq(state.WAIT_READ)
 
 
-    def add_read(self, dsgn, m):
+    def add_read(self, c, m):
         """ Add statements for the READ state. """
 
         # In the READ state, state switches to:
         #   READ      if DRAM didn't respond yet
         #   WAIT_READ if DRAM responded
         with m.Case(state.READ):
-            with m.If(~dsgn.dram.stall()):
-                m.d.comb += dsgn.state.eq(state.WAIT_READ)
+            with m.If(~c.dram.stall()):
+                m.d.comb += c.state.eq(state.WAIT_READ)
 
 
-    def add_wait_read(self, dsgn, m):
+    def add_wait_read(self, c, m):
         """ Add statements for the WAIT_READ state. """
 
         # In the WAIT_READ state, state switches to:
@@ -141,21 +141,21 @@ class state_block_base(block_base):
         #   WAIT_HAZARD if data hazard is possible
         #   COMPARE     if CPU is sending a new request
         with m.Case(state.WAIT_READ):
-            with m.If(~dsgn.dram.stall()):
-                with m.If(dsgn.csb):
-                    m.d.comb += dsgn.state.eq(state.IDLE)
+            with m.If(~c.dram.stall()):
+                with m.If(c.csb):
+                    m.d.comb += c.state.eq(state.IDLE)
                 with m.Else():
                     # Don't use WAIT_HAZARD if data_hazard is disabled
                     if OPTS.data_hazard:
-                        with m.If(dsgn.set == dsgn.addr.parse_set()):
-                            m.d.comb += dsgn.state.eq(state.WAIT_HAZARD)
+                        with m.If(c.set == c.addr.parse_set()):
+                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
                         with m.Else():
-                            m.d.comb += dsgn.state.eq(state.COMPARE)
+                            m.d.comb += c.state.eq(state.COMPARE)
                     else:
-                        m.d.comb += dsgn.state.eq(state.COMPARE)
+                        m.d.comb += c.state.eq(state.COMPARE)
 
 
-    def add_flush_hazard(self, dsgn, m):
+    def add_flush_hazard(self, c, m):
         """ Add statements for the FLUSH_HAZARD state. """
 
         # In the FLUSH_HAZARD state, state switches to FLUSH.
@@ -165,10 +165,10 @@ class state_block_base(block_base):
         # This state delays the cache request 1 cycle so that read requests
         # will be performed after write is completed.
         with m.Case(state.FLUSH_HAZARD):
-            m.d.comb += dsgn.state.eq(state.FLUSH)
+            m.d.comb += c.state.eq(state.FLUSH)
 
 
-    def add_wait_hazard(self, dsgn, m):
+    def add_wait_hazard(self, c, m):
         """ Add statements for the WAIT_HAZARD state. """
 
         # In the WAIT_HAZARD state, state switches to COMPARE.
@@ -178,29 +178,29 @@ class state_block_base(block_base):
         # This state delays the cache request 1 cycle so that read requests
         # will be performed after write is completed.
         with m.Case(state.WAIT_HAZARD):
-            m.d.comb += dsgn.state.eq(state.COMPARE)
+            m.d.comb += c.state.eq(state.COMPARE)
 
 
-    def add_flush_sig(self, dsgn, m):
+    def add_flush_sig(self, c, m):
         """ Add flush signal control. """
 
         # If flush is high, state switches to FLUSH.
-        with m.If(dsgn.flush):
+        with m.If(c.flush):
             # Don't use FLUSH_HAZARD if data_hazard is disabled
             if OPTS.data_hazard:
                 # If set register is 0, data hazard might occur. In order to
                 # prevent this, cache will switch to FLUSH_HAZARD state.
-                with m.If(dsgn.set):
-                    m.d.comb += dsgn.state.eq(state.FLUSH)
+                with m.If(c.set):
+                    m.d.comb += c.state.eq(state.FLUSH)
                 with m.Else():
-                    m.d.comb += dsgn.state.eq(state.FLUSH_HAZARD)
+                    m.d.comb += c.state.eq(state.FLUSH_HAZARD)
             else:
-                m.d.comb += dsgn.state.eq(state.FLUSH)
+                m.d.comb += c.state.eq(state.FLUSH)
 
 
-    def add_reset_sig(self, dsgn, m):
+    def add_reset_sig(self, c, m):
         """ Add reset signal control. """
 
         # If rst is high, state switches to RESET.
-        with m.If(dsgn.rst):
-            m.d.comb += dsgn.state.eq(state.RESET)
+        with m.If(c.rst):
+            m.d.comb += c.state.eq(state.RESET)

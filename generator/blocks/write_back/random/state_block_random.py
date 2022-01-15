@@ -21,7 +21,7 @@ class state_block_random(state_block_base):
         super().__init__()
 
 
-    def add_compare(self, dsgn, m):
+    def add_compare(self, c, m):
         """ Add statements for the COMPARE state. """
 
         # In the COMPARE state, state switches to:
@@ -34,36 +34,36 @@ class state_block_random(state_block_base):
         #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(state.COMPARE):
             # Assuming that current request is miss, check if it is dirty miss
-            with dsgn.check_dirty_miss(m, dsgn.random):
-                with m.If(dsgn.dram.stall()):
-                    m.d.comb += dsgn.state.eq(state.WRITE)
+            with c.check_dirty_miss(m, c.random):
+                with m.If(c.dram.stall()):
+                    m.d.comb += c.state.eq(state.WRITE)
                 with m.Else():
-                    m.d.comb += dsgn.state.eq(state.WAIT_WRITE)
+                    m.d.comb += c.state.eq(state.WAIT_WRITE)
             # Else, assume that current request is clean miss
-            with dsgn.check_clean_miss(m):
-                with m.If(dsgn.dram.stall()):
-                    m.d.comb += dsgn.state.eq(state.READ)
+            with c.check_clean_miss(m):
+                with m.If(c.dram.stall()):
+                    m.d.comb += c.state.eq(state.READ)
                 with m.Else():
-                    m.d.comb += dsgn.state.eq(state.WAIT_READ)
-            for i in range(dsgn.num_ways):
-                with m.If(~dsgn.tag_array.output().valid(i)):
-                    with m.If(dsgn.dram.stall()):
-                        m.d.comb += dsgn.state.eq(state.READ)
+                    m.d.comb += c.state.eq(state.WAIT_READ)
+            for i in range(c.num_ways):
+                with m.If(~c.tag_array.output().valid(i)):
+                    with m.If(c.dram.stall()):
+                        m.d.comb += c.state.eq(state.READ)
                     with m.Else():
-                        m.d.comb += dsgn.state.eq(state.WAIT_READ)
+                        m.d.comb += c.state.eq(state.WAIT_READ)
             # Check if current request is hit.
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
-            for i in range(dsgn.num_ways):
-                with dsgn.check_hit(m, i):
-                    with m.If(dsgn.csb):
-                        m.d.comb += dsgn.state.eq(state.IDLE)
+            for i in range(c.num_ways):
+                with c.check_hit(m, i):
+                    with m.If(c.csb):
+                        m.d.comb += c.state.eq(state.IDLE)
                     with m.Else():
                         # Don't use WAIT_HAZARD if data_hazard is disabled
                         if OPTS.data_hazard:
-                            with m.If(~dsgn.web_reg & (dsgn.set == dsgn.addr.parse_set())):
-                                m.d.comb += dsgn.state.eq(state.WAIT_HAZARD)
+                            with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
+                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
                             with m.Else():
-                                m.d.comb += dsgn.state.eq(state.COMPARE)
+                                m.d.comb += c.state.eq(state.COMPARE)
                         else:
-                            m.d.comb += dsgn.state.eq(state.COMPARE)
+                            m.d.comb += c.state.eq(state.COMPARE)
