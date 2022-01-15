@@ -20,7 +20,7 @@ class test_data:
 
 
     def generate_data(self, test_size=16):
-        """  Generate random test data and expected outputs. """
+        """ Generate random test data and expected outputs. """
 
         # Operation
         self.op = []

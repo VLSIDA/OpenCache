@@ -15,8 +15,8 @@ class associativity(IntEnum):
     """ Enum class to represent associativity. """
 
     DIRECT = 0
-    N_WAY  = 1
-    FULLY  = 2
+    N_WAY = 1
+    FULLY = 2
 
 
     def __str__(self):
@@ -31,9 +31,9 @@ class associativity(IntEnum):
 class replacement_policy(IntEnum):
     """ Enum class to represent replacement policies. """
 
-    NONE   = 0
-    FIFO   = 1
-    LRU    = 2
+    NONE = 0
+    FIFO = 1
+    LRU = 2
     RANDOM = 3
 
 
@@ -81,7 +81,7 @@ class replacement_policy(IntEnum):
 class write_policy(IntEnum):
     """ Enum class to represent write policies. """
 
-    WRITE_BACK    = 0
+    WRITE_BACK = 0
     WRITE_THROUGH = 1
 
 

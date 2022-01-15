@@ -156,7 +156,7 @@ def read_config(config_file, is_unit_test=True):
 
     # it is already not an abs path, make it one
     if not os.path.isabs(config_file):
-        config_file = os.getcwd() + "/" +  config_file
+        config_file = os.getcwd() + "/" + config_file
 
     # Make it a python file if the base name was only given
     config_file = re.sub(r'\.py$', "", config_file)

@@ -26,12 +26,12 @@ class sram_instance:
         real_row_size = row_size // num_arrays
 
         # Append signals to these lists
-        self.write_csb  = []
+        self.write_csb = []
         self.write_addr = []
-        self.write_din  = []
-        self.read_csb   = []
-        self.read_addr  = []
-        self.read_dout  = []
+        self.write_din = []
+        self.read_csb = []
+        self.read_addr = []
+        self.read_dout = []
 
         for i in range(num_arrays):
             # Write enable
@@ -49,12 +49,12 @@ class sram_instance:
 
             # Add this instance to the design module
             m.submodules += Instance(module_name,
-                ("i", "clk0",  dsgn.clk),
-                ("i", "csb0",  self.write_csb[i]),
+                ("i", "clk0", dsgn.clk),
+                ("i", "csb0", self.write_csb[i]),
                 ("i", "addr0", self.write_addr[i]),
-                ("i", "din0",  self.write_din[i]),
-                ("i", "clk1",  dsgn.clk),
-                ("i", "csb1",  self.read_csb[i]),
+                ("i", "din0", self.write_din[i]),
+                ("i", "clk1", dsgn.clk),
+                ("i", "csb1", self.read_csb[i]),
                 ("i", "addr1", self.read_addr[i]),
                 ("o", "dout1", self.read_dout[i]),
             )

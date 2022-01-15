@@ -100,11 +100,11 @@ class sim_cache:
     def merge_address(self, tag_decimal, set_decimal, offset_decimal):
         """ Create the address consists of given tag, set, and offset values. """
 
-        tag_binary    = "{0:0{1}b}".format(tag_decimal, self.tag_size)
-        set_binary    = "{0:0{1}b}".format(set_decimal, self.set_size)
+        tag_binary = "{0:0{1}b}".format(tag_decimal, self.tag_size)
+        set_binary = "{0:0{1}b}".format(set_decimal, self.set_size)
         offset_binary = "{0:0{1}b}".format(offset_decimal, self.offset_size)
 
-        address_binary  = tag_binary + set_binary + offset_binary
+        address_binary = tag_binary + set_binary + offset_binary
         address_decimal = int(address_binary, 2)
 
         return address_decimal
@@ -114,12 +114,12 @@ class sim_cache:
         """ Parse the given address into tag, set, and offset values. """
 
         address_binary = "{0:0{1}b}".format(address, self.address_size)
-        tag_binary     = address_binary[:self.tag_size]
-        set_binary     = address_binary[self.tag_size:self.tag_size + self.set_size]
-        offset_binary  = address_binary[-self.offset_size:]
+        tag_binary = address_binary[:self.tag_size]
+        set_binary = address_binary[self.tag_size:self.tag_size + self.set_size]
+        offset_binary = address_binary[-self.offset_size:]
 
-        tag_decimal    = int(tag_binary, 2)
-        set_decimal    = int(set_binary, 2)
+        tag_decimal = int(tag_binary, 2)
+        set_decimal = int(set_binary, 2)
         offset_decimal = int(offset_binary, 2)
 
         return (tag_decimal, set_decimal, offset_decimal)
@@ -268,7 +268,7 @@ class sim_cache:
             # Find the evicted address
             _, set_decimal, _ = self.parse_address(address)
             evicted_way = self.way_to_evict(set_decimal)
-            is_dirty    = self.sram.read_dirty(set_decimal, evicted_way)
+            is_dirty = self.sram.read_dirty(set_decimal, evicted_way)
 
             # If a way is written back before being replaced, cache stalls for
             # 2n+1 cycles in total:

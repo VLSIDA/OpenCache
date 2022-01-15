@@ -16,15 +16,15 @@ class dram_instance:
     def __init__(self, m, address_size, row_size):
 
         # Chip select
-        self.main_csb   = cache_signal(reset_less=True, reset=1)
+        self.main_csb = cache_signal(reset_less=True, reset=1)
         # Write enable
-        self.main_web   = cache_signal(reset_less=True, reset=1)
+        self.main_web = cache_signal(reset_less=True, reset=1)
         # Address
-        self.main_addr  = cache_signal(address_size, reset_less=True)
+        self.main_addr = cache_signal(address_size, reset_less=True)
         # Data input
-        self.main_din   = cache_signal(row_size, reset_less=True)
+        self.main_din = cache_signal(row_size, reset_less=True)
         # Data output
-        self.main_dout  = cache_signal(row_size)
+        self.main_dout = cache_signal(row_size)
         # Stall
         self.main_stall = cache_signal()
 

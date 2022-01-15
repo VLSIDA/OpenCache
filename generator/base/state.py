@@ -11,13 +11,13 @@ from enum import IntEnum
 class state(IntEnum):
     """ Enum class for internal states of a cache. """
 
-    RESET        = 0
-    FLUSH        = 1
-    IDLE         = 2
-    COMPARE      = 3
-    WRITE        = 4
-    WAIT_WRITE   = 5
-    READ         = 6
-    WAIT_READ    = 7
+    RESET = 0
+    FLUSH = 1
+    IDLE = 2
+    COMPARE = 3
+    WRITE = 4
+    WAIT_WRITE = 5
+    READ = 6
+    WAIT_READ = 7
     FLUSH_HAZARD = 8
-    WAIT_HAZARD  = 9
+    WAIT_HAZARD = 9

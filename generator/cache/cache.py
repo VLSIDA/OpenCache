@@ -56,8 +56,8 @@ class cache:
         start_time = datetime.datetime.now()
         cpaths = {
             "data": OPTS.output_path + OPTS.data_array_name + "_config.py",
-            "tag":  OPTS.output_path + OPTS.tag_array_name + "_config.py",
-            "use":  OPTS.output_path + OPTS.use_array_name + "_config.py"
+            "tag": OPTS.output_path + OPTS.tag_array_name + "_config.py",
+            "use": OPTS.output_path + OPTS.use_array_name + "_config.py"
         }
         if not OPTS.replacement_policy.has_sram_array(): del cpaths["use"]
         for k, cpath in cpaths.items():

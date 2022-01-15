@@ -29,26 +29,26 @@ class configuration:
         data_opts = {}
         data_opts["path"] = paths["data"]
         data_opts["opts"] = {}
-        data_opts["opts"]["word_size"]    = self.row_size // self.num_ways
-        data_opts["opts"]["num_words"]    = self.num_rows
+        data_opts["opts"]["word_size"] = self.row_size // self.num_ways
+        data_opts["opts"]["num_words"] = self.num_rows
         data_opts["opts"]["num_rw_ports"] = 0
-        data_opts["opts"]["num_r_ports"]  = 1
-        data_opts["opts"]["num_w_ports"]  = 1
-        data_opts["opts"]["output_path"]  = "{}data_array".format(OPTS.output_path)
-        data_opts["opts"]["output_name"]  = "{}".format(OPTS.data_array_name)
+        data_opts["opts"]["num_r_ports"] = 1
+        data_opts["opts"]["num_w_ports"] = 1
+        data_opts["opts"]["output_path"] = "{}data_array".format(OPTS.output_path)
+        data_opts["opts"]["output_name"] = "{}".format(OPTS.data_array_name)
         config_opts.append(data_opts)
 
         # Tag array of the cache
         tag_opts = {}
         tag_opts["path"] = paths["tag"]
         tag_opts["opts"] = {}
-        tag_opts["opts"]["word_size"]    = self.tag_word_size * self.num_ways
-        tag_opts["opts"]["num_words"]    = self.num_rows
+        tag_opts["opts"]["word_size"] = self.tag_word_size * self.num_ways
+        tag_opts["opts"]["num_words"] = self.num_rows
         tag_opts["opts"]["num_rw_ports"] = 0
-        tag_opts["opts"]["num_r_ports"]  = 1
-        tag_opts["opts"]["num_w_ports"]  = 1
-        tag_opts["opts"]["output_path"]  = "{}tag_array".format(OPTS.output_path)
-        tag_opts["opts"]["output_name"]  = "{}".format(OPTS.tag_array_name)
+        tag_opts["opts"]["num_r_ports"] = 1
+        tag_opts["opts"]["num_w_ports"] = 1
+        tag_opts["opts"]["output_path"] = "{}tag_array".format(OPTS.output_path)
+        tag_opts["opts"]["output_name"] = "{}".format(OPTS.tag_array_name)
         config_opts.append(tag_opts)
 
         return config_opts

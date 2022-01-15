@@ -96,16 +96,16 @@ class design(Elaboratable):
         self.m = Module()
 
         # CPU interface
-        self.clk   = ClockSignal()
-        self.rst   = ResetSignal()
+        self.clk = ClockSignal()
+        self.rst = ResetSignal()
         self.flush = cache_signal()
-        self.csb   = cache_signal()
-        self.web   = cache_signal()
+        self.csb = cache_signal()
+        self.web = cache_signal()
         if self.num_masks:
             self.wmask = cache_signal(self.num_masks)
-        self.addr  = cache_signal(self.address_size)
-        self.din   = cache_signal(self.word_size)
-        self.dout  = cache_signal(self.word_size)
+        self.addr = cache_signal(self.address_size)
+        self.din = cache_signal(self.word_size)
+        self.dout = cache_signal(self.word_size)
         self.stall = cache_signal(reset=1)
 
         # Create a DRAM module
@@ -123,15 +123,15 @@ class design(Elaboratable):
         """ Add internal registers and wires to cache design. """
 
         # Keep inputs in flops
-        self.tag       = cache_signal(self.tag_size, is_flop=True)
-        self.set       = cache_signal(self.set_size, is_flop=True)
-        self.offset    = cache_signal(self.offset_size, is_flop=True)
-        self.web_reg   = cache_signal(is_flop=True)
+        self.tag = cache_signal(self.tag_size, is_flop=True)
+        self.set = cache_signal(self.set_size, is_flop=True)
+        self.offset = cache_signal(self.offset_size, is_flop=True)
+        self.web_reg = cache_signal(is_flop=True)
         if self.num_masks:
             self.wmask_reg = cache_signal(self.num_masks, is_flop=True)
-        self.din_reg   = cache_signal(self.word_size, is_flop=True)
+        self.din_reg = cache_signal(self.word_size, is_flop=True)
         # State flop
-        self.state     = cache_signal(state, is_flop=True)
+        self.state = cache_signal(state, is_flop=True)
 
 
     def add_srams(self, m):
