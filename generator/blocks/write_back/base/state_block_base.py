@@ -8,6 +8,7 @@
 from block_base import block_base
 from state import state
 from globals import OPTS
+from debug import print_raw
 
 
 class state_block_base(block_base):
@@ -86,17 +87,36 @@ class state_block_base(block_base):
                         m.d.comb += c.state.eq(state.READ)
                     with m.Else():
                         m.d.comb += c.state.eq(state.WAIT_READ)
-            # Check if current request is hit
+            # Check if there is an empty way. All empty ways need to be filled
+            # before evicting a random way.
+            # NOTE: The line below should only work for some replacement policies where
+            # the lines above may miss an empty way (such as random replacement).
+            for _ in c.hit_detector.find_empty():
+                with m.If(c.dram.stall()):
+                    m.d.comb += c.state.eq(state.READ)
+                with m.Else():
+                    m.d.comb += c.state.eq(state.WAIT_READ)
+            # Check if current request is hit.
+            # Compare all ways' tags to find a hit. Since each way has a different
+            # tag, only one of them can match at most.
             for _ in c.hit_detector.find_hit():
                 with m.If(c.csb):
                     m.d.comb += c.state.eq(state.IDLE)
                 with m.Else():
                     # Don't use WAIT_HAZARD if data_hazard is disabled
                     if OPTS.data_hazard:
-                        with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
-                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                        with m.Else():
-                            m.d.comb += c.state.eq(state.COMPARE)
+                        # If SRAMs are also updated after read
+                        if OPTS.replacement_policy.updated_after_read():
+                            with m.If(c.set == c.addr.parse_set()):
+                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += c.state.eq(state.COMPARE)
+                        # If SRAMs are only updated after write
+                        else:
+                            with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
+                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += c.state.eq(state.COMPARE)
                     else:
                         m.d.comb += c.state.eq(state.COMPARE)
 

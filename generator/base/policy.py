@@ -67,6 +67,12 @@ class replacement_policy(IntEnum):
         ]
 
 
+    def updated_after_read(self):
+        """ Return True if the replacement policy updated its SRAM array after a read. """
+
+        return self == replacement_policy.LRU
+
+
     @staticmethod
     def get_value(name):
         """ Get the replacement policy enum value. """
