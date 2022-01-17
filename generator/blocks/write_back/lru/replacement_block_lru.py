@@ -59,28 +59,24 @@ class replacement_block_lru(replacement_block_base):
         # Also use numbers are updated if current request is hit.
         with m.Case(state.COMPARE):
             c.use_array.read(c.set)
-            for i in range(c.num_ways):
-                # Find the least recently used way (the way having 0 use number)
-                with m.If(c.use_array.output().use(i) == C(0, c.way_size)):
-                    # Check if current request is clean miss
-                    m.d.comb += c.way.eq(i)
+            for is_dirty, i in c.hit_detector.find_miss():
+                m.d.comb += c.way.eq(i)
             # Check if current request is a hit
-            for i in range(c.num_ways):
-                with c.check_hit(m, i):
-                    c.use_array.write(c.set, c.use_array.output())
-                    # Each way in a set has its own use numbers. These numbers
-                    # start from 0. Every time a way is needed to be evicted,
-                    # the way having 0 use number is chosen.
-                    # Every time a way is accessed (read or write), its corresponding
-                    # use number is increased to the maximum value and other ways which
-                    # have use numbers more than accessed way's use number are decremented
-                    # by 1.
-                    for j in range(c.num_ways):
-                        m.d.comb += c.use_array.input().use(j).eq(c.use_array.output().use(j) - (c.use_array.output().use(j) > c.use_array.output().use(i)))
-                    m.d.comb += c.use_array.input().use(i).eq(c.num_ways - 1)
-                    # Read next lines from SRAMs even though CPU is not
-                    # sending a new request since read is non-destructive.
-                    c.use_array.read(c.addr.parse_set())
+            for i in c.hit_detector.find_hit():
+                c.use_array.write(c.set, c.use_array.output())
+                # Each way in a set has its own use numbers. These numbers
+                # start from 0. Every time a way is needed to be evicted,
+                # the way having 0 use number is chosen.
+                # Every time a way is accessed (read or write), its corresponding
+                # use number is increased to the maximum value and other ways which
+                # have use numbers more than accessed way's use number are decremented
+                # by 1.
+                for j in range(c.num_ways):
+                    m.d.comb += c.use_array.input().use(j).eq(c.use_array.output().use(j) - (c.use_array.output().use(j) > c.use_array.output().use(i)))
+                m.d.comb += c.use_array.input().use(i).eq(c.num_ways - 1)
+                # Read next lines from SRAMs even though CPU is not
+                # sending a new request since read is non-destructive.
+                c.use_array.read(c.addr.parse_set())
 
 
     def add_wait_write(self, c, m):

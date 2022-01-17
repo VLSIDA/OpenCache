@@ -15,6 +15,7 @@ from cache_signal import cache_signal
 from sram_instance import sram_instance
 from dram_instance import dram_instance
 from state import state
+from hit_detector import hit_detector
 from block_factory import factory
 from globals import OPTS
 
@@ -170,6 +171,9 @@ class design(Elaboratable):
     def add_logic_blocks(self, m):
         """ Instantiate and add logic blocks. """
         debug.info(1, "Adding logic blocks...")
+
+        # Add helper modules here
+        self.hit_detector = hit_detector(self, m)
 
         blocks = []
         blocks.append(factory.create("memory_block"))

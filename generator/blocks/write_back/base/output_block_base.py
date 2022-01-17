@@ -41,11 +41,9 @@ class output_block_base(block_base):
         # Data output is valid if the request is hit and even if the current
         # request is write since read is non-destructive.
         with m.Case(state.COMPARE):
-            for i in range(c.num_ways):
-                # Check if current request is hit
-                with c.check_hit(m, i):
-                    m.d.comb += c.stall.eq(0)
-                    m.d.comb += c.dout.eq(c.data_array.output(i).word(c.offset))
+            for i in c.hit_detector.find_hit():
+                m.d.comb += c.stall.eq(0)
+                m.d.comb += c.dout.eq(c.data_array.output(i).word(c.offset))
 
 
     def add_wait_read(self, c, m):

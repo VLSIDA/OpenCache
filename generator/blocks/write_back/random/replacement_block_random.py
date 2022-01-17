@@ -47,9 +47,8 @@ class replacement_block_random(replacement_block_base):
             m.d.comb += c.way.eq(c.random)
             # If there is an empty way, it must be filled before evicting the
             # random way.
-            for i in range(c.num_ways):
-                with m.If(~c.tag_array.output().valid(i)):
-                    m.d.comb += c.way.eq(i)
+            for i in c.hit_detector.find_empty():
+                m.d.comb += c.way.eq(i)
 
 
     def add_flush_sig(self, c, m):

@@ -34,37 +34,34 @@ class state_block_lru(state_block_base):
         #   READ        if current request is clean miss and DRAM is busy
         #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(state.COMPARE):
-            for i in range(c.num_ways):
-                # Find the least recently used way (the way having 0 use number)
-                with m.If(c.use_array.output().use(i) == C(0, c.way_size)):
-                    # Assuming that current request is miss, check if it is dirty miss
-                    with c.check_dirty_miss(m, i):
-                        with m.If(c.dram.stall()):
-                            m.d.comb += c.state.eq(state.WRITE)
-                        with m.Else():
-                            m.d.comb += c.state.eq(state.WAIT_WRITE)
-                    # Else, current request is clean miss
-                    with c.check_clean_miss(m):
-                        with m.If(c.dram.stall()):
-                            m.d.comb += c.state.eq(state.READ)
-                        with m.Else():
-                            m.d.comb += c.state.eq(state.WAIT_READ)
+            for is_dirty, i in c.hit_detector.find_miss():
+                # Assuming that current request is miss, check if it is dirty miss
+                if is_dirty:
+                    with m.If(c.dram.stall()):
+                        m.d.comb += c.state.eq(state.WRITE)
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WAIT_WRITE)
+                # Else, current request is clean miss
+                else:
+                    with m.If(c.dram.stall()):
+                        m.d.comb += c.state.eq(state.READ)
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WAIT_READ)
             # Find the least recently used way (the way having 0 use number)
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
             # NOTE: This for loop should not be merged with the one above since hit
             # should be checked after all miss assumptions are done.
             # TODO: This should be optimized.
-            for i in range(c.num_ways):
-                with c.check_hit(m, i):
-                    with m.If(c.csb):
-                        m.d.comb += c.state.eq(state.IDLE)
-                    with m.Else():
-                        # Don't use WAIT_HAZARD if data_hazard is disabled
-                        if OPTS.data_hazard:
-                            with m.If(c.set == c.addr.parse_set()):
-                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                            with m.Else():
-                                m.d.comb += c.state.eq(state.COMPARE)
-                        else:
+            for i in c.hit_detector.find_hit():
+                with m.If(c.csb):
+                    m.d.comb += c.state.eq(state.IDLE)
+                with m.Else():
+                    # Don't use WAIT_HAZARD if data_hazard is disabled
+                    if OPTS.data_hazard:
+                        with m.If(c.set == c.addr.parse_set()):
+                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                        with m.Else():
                             m.d.comb += c.state.eq(state.COMPARE)
+                    else:
+                        m.d.comb += c.state.eq(state.COMPARE)

@@ -62,9 +62,8 @@ class replacement_block_fifo(replacement_block_base):
             # request is hit.
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
-            for i in range(c.num_ways):
-                with c.check_hit(m, i):
-                    c.use_array.read(c.addr.parse_set())
+            for i in c.hit_detector.find_hit():
+                c.use_array.read(c.addr.parse_set())
 
 
     def add_wait_read(self, c, m):

@@ -87,21 +87,22 @@ class memory_block_base(block_base):
         with m.Case(state.COMPARE):
             c.tag_array.read(c.set)
             c.data_array.read(c.set)
-            # Assuming that current request is miss, check if it is dirty miss
-            with c.check_dirty_miss(m):
-                # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
-                # complete writing
-                with m.If(~c.dram.stall()):
-                    c.dram.write(Cat(c.set, c.tag_array.output().tag()), c.data_array.output())
-            # Else, assume that current request is clean miss
-            with c.check_clean_miss(m):
-                # If DRAM is busy, switch to READ and wait for DRAM to be available
-                # If DRAM is available, switch to WAIT_READ and wait for DRAM to
-                # complete reading
-                with m.If(~c.dram.stall()):
-                    c.dram.read(Cat(c.set, c.tag))
+            for is_dirty, i in c.hit_detector.find_miss():
+                # Assuming that current request is miss, check if it is dirty miss
+                if is_dirty:
+                    # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                    # complete writing
+                    with m.If(~c.dram.stall()):
+                        c.dram.write(Cat(c.set, c.tag_array.output().tag()), c.data_array.output())
+                # Else, assume that current request is clean miss
+                else:
+                    # If DRAM is busy, switch to READ and wait for DRAM to be available
+                    # If DRAM is available, switch to WAIT_READ and wait for DRAM to
+                    # complete reading
+                    with m.If(~c.dram.stall()):
+                        c.dram.read(Cat(c.set, c.tag))
             # Check if current request is hit
-            with c.check_hit(m):
+            for i in c.hit_detector.find_hit():
                 # Set DRAM's csb to 1 again since it could be set 0 above
                 c.dram.disable()
                 # Perform the write request

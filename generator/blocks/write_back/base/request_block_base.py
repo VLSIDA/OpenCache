@@ -59,9 +59,8 @@ class request_block_base(block_base):
 
         # In the COMPARE state, the request is decoded if current request is hit.
         with m.Case(state.COMPARE):
-            for i in range(c.num_ways):
-                with c.check_hit(m, i):
-                    self.store_request(c, m)
+            for _ in c.hit_detector.find_hit():
+                self.store_request(c, m)
 
 
     def add_wait_read(self, c, m):

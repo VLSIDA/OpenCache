@@ -29,39 +29,36 @@ class memory_block_lru(memory_block_base):
         with m.Case(state.COMPARE):
             c.tag_array.read(c.set)
             c.data_array.read(c.set)
-            for i in range(c.num_ways):
-                # Find the least recently used way (the way having 0 use number)
-                with m.If(c.use_array.output().use(i) == C(0, c.way_size)):
-                    # Assuming that current request is miss, check if it is dirty miss
-                    with c.check_dirty_miss(m, i):
-                        # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
-                        # complete writing.
-                        with m.If(~c.dram.stall()):
-                            c.dram.write(Cat(c.set, c.tag_array.output().tag(i)), c.data_array.output(i))
-                    # Else, assume that current request is clean miss
-                    with c.check_clean_miss(m):
-                        # If DRAM is busy, switch to READ and wait for DRAM to be available
-                        # If DRAM is available, switch to WAIT_READ and wait for DRAM to
-                        # complete reading
-                        with m.If(~c.dram.stall()):
-                            c.dram.read(Cat(c.set, c.tag))
+            for is_dirty, i in c.hit_detector.find_miss():
+                # Assuming that current request is miss, check if it is dirty miss
+                if is_dirty:
+                    # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                    # complete writing.
+                    with m.If(~c.dram.stall()):
+                        c.dram.write(Cat(c.set, c.tag_array.output().tag(i)), c.data_array.output(i))
+                # Else, assume that current request is clean miss
+                else:
+                    # If DRAM is busy, switch to READ and wait for DRAM to be available
+                    # If DRAM is available, switch to WAIT_READ and wait for DRAM to
+                    # complete reading
+                    with m.If(~c.dram.stall()):
+                        c.dram.read(Cat(c.set, c.tag))
             # Check if current request is hit
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
             # NOTE: This for loop should not be merged with the one above since hit
             # should be checked after all miss assumptions are done.
-            for i in range(c.num_ways):
-                with c.check_hit(m, i):
-                    # Disable DRAM since a request could be sent above
-                    c.dram.disable()
-                    # Perform the write request
-                    with m.If(~c.web_reg):
-                        # Update dirty bit
-                        c.tag_array.write(c.set, Cat(c.tag_array.output().tag(i), C(3, 2)), i)
-                        # Perform write request
-                        c.data_array.write(c.set, c.data_array.output(i), i)
-                        c.data_array.write_input(i, c.offset, c.din_reg, c.wmask_reg if c.num_masks else None)
-                    # Read next lines from SRAMs even though CPU is not
-                    # sending a new request since read is non-destructive.
-                    c.tag_array.read(c.addr.parse_set())
-                    c.data_array.read(c.addr.parse_set())
+            for i in c.hit_detector.find_hit():
+                # Disable DRAM since a request could be sent above
+                c.dram.disable()
+                # Perform the write request
+                with m.If(~c.web_reg):
+                    # Update dirty bit
+                    c.tag_array.write(c.set, Cat(c.tag_array.output().tag(i), C(3, 2)), i)
+                    # Perform write request
+                    c.data_array.write(c.set, c.data_array.output(i), i)
+                    c.data_array.write_input(i, c.offset, c.din_reg, c.wmask_reg if c.num_masks else None)
+                # Read next lines from SRAMs even though CPU is not
+                # sending a new request since read is non-destructive.
+                c.tag_array.read(c.addr.parse_set())
+                c.data_array.read(c.addr.parse_set())

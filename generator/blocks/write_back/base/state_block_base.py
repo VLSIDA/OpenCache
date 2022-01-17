@@ -73,20 +73,21 @@ class state_block_base(block_base):
         #   READ        if current request is clean miss and DRAM is busy
         #   WAIT_READ   if current request is clean miss and DRAM is available
         with m.Case(state.COMPARE):
-            # Assuming that current request is miss, check if it is dirty miss
-            with c.check_dirty_miss(m):
-                with m.If(c.dram.stall()):
-                    m.d.comb += c.state.eq(state.WRITE)
-                with m.Else():
-                    m.d.comb += c.state.eq(state.WAIT_WRITE)
-            # Else, assume that current request is clean miss
-            with c.check_clean_miss(m):
-                with m.If(c.dram.stall()):
-                    m.d.comb += c.state.eq(state.READ)
-                with m.Else():
-                    m.d.comb += c.state.eq(state.WAIT_READ)
+            for is_dirty, _ in c.hit_detector.find_miss():
+                # Assuming that current request is miss, check if it is dirty miss
+                if is_dirty:
+                    with m.If(c.dram.stall()):
+                        m.d.comb += c.state.eq(state.WRITE)
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WAIT_WRITE)
+                # Else, assume that current request is clean miss
+                else:
+                    with m.If(c.dram.stall()):
+                        m.d.comb += c.state.eq(state.READ)
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WAIT_READ)
             # Check if current request is hit
-            with c.check_hit(m):
+            for _ in c.hit_detector.find_hit():
                 with m.If(c.csb):
                     m.d.comb += c.state.eq(state.IDLE)
                 with m.Else():
