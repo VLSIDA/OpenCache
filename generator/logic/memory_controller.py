@@ -5,16 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from block_base import block_base
+from logic_base import logic_base
 from amaranth import Cat, C
 from state import state
 
 
-class memory_block_base(block_base):
+class memory_controller(logic_base):
     """
-    This is the base class of memory controller always block modules.
-    Methods of this class can be overridden for specific implementation of
-    different cache designs.
+    This is the class of memory controller always block modules.
 
     In this block, cache communicates with memory components such as tag array,
     data array, use array, and DRAM.

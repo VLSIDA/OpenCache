@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from replacement_block_base import replacement_block_base
+from logic_base import logic_base
 from state import state
 
 
-class replacement_block_fifo(replacement_block_base):
+class fifo_replacer(logic_base):
     """
-    This class extends base replacement module for FIFO replacement policy.
+    This class extends base logic module for FIFO replacement policy.
     """
 
     def __init__(self):

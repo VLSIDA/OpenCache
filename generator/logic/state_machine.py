@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from block_base import block_base
+from logic_base import logic_base
 from state import state
 from globals import OPTS
 from debug import print_raw
 
 
-class state_block_base(block_base):
+class state_machine(logic_base):
     """
     This is the base class of state controller always block modules.
     Methods of this class can be overridden for specific implementation of

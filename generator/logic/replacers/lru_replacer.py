@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from replacement_block_base import replacement_block_base
+from logic_base import logic_base
 from amaranth import C
 from state import state
 
 
-class replacement_block_lru(replacement_block_base):
+class lru_replacer(logic_base):
     """
-    This class extends base replacement module for LRU replacement policy.
+    This class extends base logic module for LRU replacement policy.
     """
 
     def __init__(self):

@@ -16,7 +16,11 @@ from sram_instance import sram_instance
 from dram_instance import dram_instance
 from state import state
 from hit_detector import hit_detector
-from block_factory import factory
+from state_machine import state_machine
+from input_interface import input_interface
+from output_interface import output_interface
+from memory_controller import memory_controller
+from replacer import replacer
 from globals import OPTS
 
 
@@ -175,12 +179,13 @@ class design(Elaboratable):
         # Add helper modules here
         self.hit_detector = hit_detector(self, m)
 
-        blocks = []
-        blocks.append(factory.create("memory_block"))
-        blocks.append(factory.create("state_block"))
-        blocks.append(factory.create("request_block"))
-        blocks.append(factory.create("output_block"))
-        blocks.append(factory.create("replacement_block"))
+        # Add logic modules
+        logics = []
+        logics.append(state_machine())
+        logics.append(input_interface())
+        logics.append(output_interface())
+        logics.append(memory_controller())
+        logics.append(replacer())
 
-        for block in blocks:
-            block.add(self, m)
+        for logic in logics:
+            logic.add(self, m)

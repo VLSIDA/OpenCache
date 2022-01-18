@@ -8,11 +8,10 @@
 from globals import OPTS
 
 
-class block_base:
+class logic_base:
     """
-    This is the base class of always block modules.
-    Methods of this class can be overridden for specific implementation of each
-    always block.
+    This is the base class of logic modules.
+    Methods of this class can be overridden for specific implementation of each logic.
     """
 
     def __init__(self):

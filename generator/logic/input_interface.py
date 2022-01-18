@@ -5,15 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from block_base import block_base
+from logic_base import logic_base
 from state import state
 
 
-class request_block_base(block_base):
+class input_interface(logic_base):
     """
-    This is the base class of request decoder always block modules.
-    Methods of this class can be overridden for specific implementation of
-    different cache designs.
+    This is the class of request decoder always block modules.
 
     In this block, CPU's request is decoded. Address is parsed into tag, set
     and offset values, and write enable, write mask and data input are saved in
