@@ -204,8 +204,8 @@ def fix_config():
     # Convert policy strings to enum values
     from policy import replacement_policy as rp
     OPTS.replacement_policy = rp.get_value(OPTS.replacement_policy)
-    from policy import write_policy as WP
-    OPTS.write_policy = WP.get_value(OPTS.write_policy)
+    from policy import write_policy as wp
+    OPTS.write_policy = wp.get_value(OPTS.write_policy)
 
     # If config didn't set output name, make a reasonable default
     if OPTS.output_name == "":
@@ -396,8 +396,8 @@ def report_status():
     # Options below are not implemented yet
     if not OPTS.is_data_cache:
         debug.error("Instruction cache is not yet supported.", -1)
-    from policy import write_policy as WP
-    if OPTS.write_policy != WP.WRITE_BACK:
+    from policy import write_policy as wp
+    if OPTS.write_policy != wp.WRITE_BACK:
         debug.error("Only write-back policy is supported at the moment.", -1)
     if OPTS.return_type != "word":
         debug.error("Only returning word is supported at the moment.", -1)
