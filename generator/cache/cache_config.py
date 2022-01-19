@@ -7,7 +7,7 @@
 #
 import debug
 from math import log2, ceil
-from policy import associativity as AS
+from policy import associativity as asc
 from globals import OPTS
 
 
@@ -85,11 +85,11 @@ class cache_config:
 
         # Set the associativity of the cache
         if self.num_ways == 1:
-            self.associativity = AS.DIRECT
+            self.associativity = asc.DIRECT
         elif self.set_size > 0:
-            self.associativity = AS.N_WAY
+            self.associativity = asc.N_WAY
         else:
-            self.associativity = AS.FULLY
+            self.associativity = asc.FULLY
         # Add associativity to OPTS
         OPTS.associativity = self.associativity
 
