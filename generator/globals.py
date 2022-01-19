@@ -365,17 +365,17 @@ def report_status():
 
     # Check if argument types are correct
     if type(OPTS.total_size) is not int:
-        debug.error("{} is not an integer in config file.".format(OPTS.total_size))
+        debug.error("{} is not an integer in config file.".format(OPTS.total_size), -1)
     if type(OPTS.word_size) is not int:
-        debug.error("{} is not an integer in config file.".format(OPTS.word_size))
+        debug.error("{} is not an integer in config file.".format(OPTS.word_size), -1)
     if type(OPTS.words_per_line) is not int:
-        debug.error("{} is not an integer in config file.".format(OPTS.words_per_line))
+        debug.error("{} is not an integer in config file.".format(OPTS.words_per_line), -1)
     if type(OPTS.address_size) is not int:
-        debug.error("{} is not an integer in config file.".format(OPTS.address_size))
+        debug.error("{} is not an integer in config file.".format(OPTS.address_size), -1)
     if type(OPTS.num_ways) is not int:
-        debug.error("{} is not an integer in config file.".format(OPTS.num_ways))
+        debug.error("{} is not an integer in config file.".format(OPTS.num_ways), -1)
     if OPTS.openram_options and type(OPTS.openram_options) is not dict:
-        debug.error("{} is not a dictionary in config file.".format(OPTS.openram_options))
+        debug.error("{} is not a dictionary in config file.".format(OPTS.openram_options), -1)
 
     # Data array's total size should match the word size
     if OPTS.total_size % OPTS.word_size:
