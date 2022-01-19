@@ -117,7 +117,7 @@ class design(Elaboratable):
         self.dram = dram_instance(self.m, self.dram_address_size, self.line_size)
 
         # Return all port signals
-        ports = self.dram.get_pins()
+        ports = self.dram.get_signals()
         for _, v in self.__dict__.items():
             if isinstance(v, Value):
                 ports.append(v)

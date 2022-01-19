@@ -32,7 +32,7 @@ class dram_instance:
         self.m = m
 
 
-    def get_pins(self):
+    def get_signals(self):
         """ Return a list of all IO signals. """
 
         ports = []
