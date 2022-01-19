@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from policy import replacement_policy as rp
 from amaranth import C
+from policy import replacement_policy as rp
 from globals import OPTS
 
 

@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import unittest
 import sys, os, shutil
+import unittest
 import time
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 from globals import OPTS

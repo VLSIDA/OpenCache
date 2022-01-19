@@ -6,11 +6,11 @@
 # All rights reserved.
 #
 import re
-import debug
 from amaranth import Elaboratable, Module
 from amaranth import ClockSignal, ResetSignal
 from amaranth import Value
 from amaranth.back import verilog
+import debug
 from cache_signal import cache_signal
 from sram_instance import sram_instance
 from dram_instance import dram_instance

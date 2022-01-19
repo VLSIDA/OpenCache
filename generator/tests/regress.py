@@ -6,17 +6,17 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import unittest
 import sys, os, re
-sys.path.append(os.getenv("OPENCACHE_HOME"))
-import globals
+import unittest
 from subunit import ProtocolTestCase, TestProtocolClient
 from testtools import ConcurrentTestSuite
+sys.path.append(os.getenv("OPENCACHE_HOME"))
+from testutils import *
+import globals
 
 (OPTS, args) = globals.parse_args()
 del sys.argv[1:]
 
-from testutils import *
 header(__file__)
 
 # Get a list of all files in the tests directory

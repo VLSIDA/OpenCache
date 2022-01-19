@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from logic_base import logic_base
 from amaranth import Cat, C
+from logic_base import logic_base
 from state import state
 
 

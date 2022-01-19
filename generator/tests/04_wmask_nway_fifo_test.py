@@ -6,10 +6,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import unittest
-from testutils import *
 import sys, os
+import unittest
 sys.path.append(os.getenv("OPENCACHE_HOME"))
+from testutils import *
 import globals
 from base.policy import replacement_policy as rp
 from globals import OPTS

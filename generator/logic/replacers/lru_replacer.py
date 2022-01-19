@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 from logic_base import logic_base
-from amaranth import C
 from state import state
 
 

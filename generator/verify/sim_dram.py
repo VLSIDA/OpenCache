@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from random import randrange
 from math import ceil, log2
+from random import randrange
 
 DRAM_DELAY = 4
 

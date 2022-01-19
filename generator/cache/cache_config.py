@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from math import log2, ceil
+import debug
 from policy import associativity as asc
 from globals import OPTS
 
