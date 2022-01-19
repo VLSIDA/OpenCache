@@ -109,7 +109,7 @@ python3 {unit test}.py
 ```
 
 # License
-OpenCache is licensed under the [BSD 3-clause License](LICENSE).
+OpenCache is licensed under the [BSD 3-Clause License](LICENSE).
 
 * * *
 
