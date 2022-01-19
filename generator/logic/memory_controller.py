@@ -85,29 +85,28 @@ class memory_controller(logic_base):
         with m.Case(state.COMPARE):
             c.tag_array.read(c.set)
             c.data_array.read(c.set)
-            for is_dirty, i in c.hit_detector.find_miss():
-                # Assuming that current request is miss, check if it is dirty miss
-                if is_dirty:
-                    # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
-                    # complete writing.
-                    with m.If(~c.dram.stall()):
+            # Execute the lines below only if DRAM is available
+            with m.If(~c.dram.stall()):
+                for is_dirty, i in c.hit_detector.find_miss():
+                    # Assuming that current request is miss, check if it is dirty miss
+                    if is_dirty:
+                        # If DRAM is available, switch to WAIT_WRITE and wait for DRAM to
+                        # complete writing.
                         c.dram.write(Cat(c.set, c.tag_array.output().tag(i)), c.data_array.output(i))
-                # Else, assume that current request is clean miss
-                else:
+                    # Else, assume that current request is clean miss
+                    else:
+                        # If DRAM is busy, switch to READ and wait for DRAM to be available
+                        # If DRAM is available, switch to WAIT_READ and wait for DRAM to
+                        # complete reading
+                        c.dram.read(Cat(c.set, c.tag))
+                # Check if there is an empty way. All empty ways need to be filled
+                # before evicting a random way.
+                # NOTE: The line below should only work for some replacement policies where
+                # the lines above may miss an empty way (such as random replacement).
+                for i in c.hit_detector.find_empty():
                     # If DRAM is busy, switch to READ and wait for DRAM to be available
                     # If DRAM is available, switch to WAIT_READ and wait for DRAM to
                     # complete reading
-                    with m.If(~c.dram.stall()):
-                        c.dram.read(Cat(c.set, c.tag))
-            # Check if there is an empty way. All empty ways need to be filled
-            # before evicting a random way.
-            # NOTE: The line below should only work for some replacement policies where
-            # the lines above may miss an empty way (such as random replacement).
-            for i in c.hit_detector.find_empty():
-                # If DRAM is busy, switch to READ and wait for DRAM to be available
-                # If DRAM is available, switch to WAIT_READ and wait for DRAM to
-                # complete reading
-                with m.If(~c.dram.stall()):
                     c.dram.read(Cat(c.set, c.tag))
             # Check if current request is hit
             # Compare all ways' tags to find a hit. Since each way has a different
