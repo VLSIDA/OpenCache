@@ -8,7 +8,6 @@
 from logic_base import logic_base
 from state import state
 from globals import OPTS
-from debug import print_raw
 
 
 class state_machine(logic_base):
