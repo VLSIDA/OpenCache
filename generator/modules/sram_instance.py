@@ -20,7 +20,8 @@ class sram_instance:
 
         # Find the declared name of this instance
         array_name = tracer.get_var_name()
-        short_name = array_name.split("_array")[0]
+        # Get "{short_name}_array"
+        short_name = array_name[:-6]
 
         self.num_arrays = num_arrays
         real_row_size = row_size // num_arrays
