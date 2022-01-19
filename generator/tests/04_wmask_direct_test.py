@@ -11,7 +11,7 @@ from testutils import *
 import sys, os
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
-from base.policy import replacement_policy as RP
+from base.policy import replacement_policy as rp
 from globals import OPTS
 
 
@@ -25,7 +25,7 @@ class verify_test(opencache_test):
 
         OPTS.write_size = 8
         OPTS.num_ways = 1
-        OPTS.replacement_policy = RP.NONE
+        OPTS.replacement_policy = rp.NONE
         OPTS.simulate = True
         OPTS.synthesize = True
 

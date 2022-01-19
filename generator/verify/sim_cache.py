@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from policy import replacement_policy as RP
+from policy import replacement_policy as rp
 from .sim_sram import sim_sram
 from .sim_dram import sim_dram
 from .sim_dram import DRAM_DELAY
@@ -44,7 +44,7 @@ class sim_cache:
         # the stall after a flush is completed (maybe other cases as well?).
         self.dram_stalls = 0
 
-        if OPTS.replacement_policy == RP.RANDOM:
+        if OPTS.replacement_policy == rp.RANDOM:
             # Random register is reset when rst is high.
             # During the RESET state, it keeps getting incremented.
             # It starts with unknown. Cache sets it 0 first, then increments.
@@ -146,20 +146,20 @@ class sim_cache:
     def way_to_evict(self, set_decimal):
         """ Return the way to evict according to the replacement policy. """
 
-        if OPTS.replacement_policy == RP.NONE:
+        if OPTS.replacement_policy == rp.NONE:
             return 0
 
-        if OPTS.replacement_policy == RP.FIFO:
+        if OPTS.replacement_policy == rp.FIFO:
             return self.sram.read_fifo(set_decimal)
 
-        if OPTS.replacement_policy == RP.LRU:
+        if OPTS.replacement_policy == rp.LRU:
             way = None
             for i in range(self.num_ways):
                 if not self.sram.read_lru(set_decimal, i):
                     way = i
             return way
 
-        if OPTS.replacement_policy == RP.RANDOM:
+        if OPTS.replacement_policy == rp.RANDOM:
             way = None
             for i in range(self.num_ways):
                 if not self.sram.read_valid(set_decimal, i):
@@ -298,7 +298,7 @@ class sim_cache:
         if self.prev_set is None or set_decimal != self.prev_set:
             return False
 
-        if OPTS.replacement_policy == RP.LRU:
+        if OPTS.replacement_policy == rp.LRU:
             # In LRU cache, use bits are updated in each access.
             # Therefore, when there are two requests to the same set, data
             # hazard on LRU SRAM might occur.
@@ -314,7 +314,7 @@ class sim_cache:
         """ Update the FIFO number of the latest replaced set. """
 
         # Check if replacement policy matches
-        if OPTS.replacement_policy == RP.FIFO:
+        if OPTS.replacement_policy == rp.FIFO:
             # Starting from 0, increase the FIFO number every time a new data
             # is brought from DRAM.
             # When it reaches the max value, go back to 0 and proceed.
@@ -325,7 +325,7 @@ class sim_cache:
         """ Update the LRU numbers of the latest used way. """
 
         # Check if replacement policy matches
-        if OPTS.replacement_policy == RP.LRU:
+        if OPTS.replacement_policy == rp.LRU:
             # There is a number for each way in a set. They are ordered by their
             # access time relative to each other.
             # When a way is accessed (read or write), it is brought to the top
@@ -341,7 +341,7 @@ class sim_cache:
         """ Update the random counter for a number of cycles. """
 
         # Check if replacement policy matches
-        if OPTS.replacement_policy == RP.RANDOM:
+        if OPTS.replacement_policy == rp.RANDOM:
             # In the real hardware, random caches have a register acting like a
             # counter. This register is incremented at every posedge of the clock.
             # Since we cannot guarantee how many cycles a miss will take, this

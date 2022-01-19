@@ -8,7 +8,7 @@
 from cache_base import cache_base
 from cache_signal import cache_signal
 from sram_instance import sram_instance
-from policy import replacement_policy as RP
+from policy import replacement_policy as rp
 from globals import OPTS
 
 
@@ -24,9 +24,9 @@ class n_way_cache(cache_base):
         config_opts = super().calculate_configs(paths)
 
         if OPTS.replacement_policy.has_sram_array():
-            if OPTS.replacement_policy == RP.FIFO:
+            if OPTS.replacement_policy == rp.FIFO:
                 use_size = self.way_size
-            elif OPTS.replacement_policy == RP.LRU:
+            elif OPTS.replacement_policy == rp.LRU:
                 use_size = self.way_size * self.num_ways
 
             # Use array of the cache
@@ -53,7 +53,7 @@ class n_way_cache(cache_base):
         # Keep way chosen to be evicted in a flop
         self.way = cache_signal(self.way_size, is_flop=True)
 
-        if OPTS.replacement_policy == RP.RANDOM:
+        if OPTS.replacement_policy == rp.RANDOM:
             # Random counter flop for replacement
             self.random = cache_signal(self.way_size, is_flop=True)
 
@@ -64,9 +64,9 @@ class n_way_cache(cache_base):
         super().add_srams(m)
 
         if OPTS.replacement_policy.has_sram_array():
-            if OPTS.replacement_policy == RP.FIFO:
+            if OPTS.replacement_policy == rp.FIFO:
                 use_size = self.way_size
-            elif OPTS.replacement_policy == RP.LRU:
+            elif OPTS.replacement_policy == rp.LRU:
                 use_size = self.way_size * self.num_ways
 
             # Use array

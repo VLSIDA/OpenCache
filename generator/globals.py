@@ -202,8 +202,8 @@ def fix_config():
     """ Fix and update options from the config file. """
 
     # Convert policy strings to enum values
-    from policy import replacement_policy as RP
-    OPTS.replacement_policy = RP.get_value(OPTS.replacement_policy)
+    from policy import replacement_policy as rp
+    OPTS.replacement_policy = rp.get_value(OPTS.replacement_policy)
     from policy import write_policy as WP
     OPTS.write_policy = WP.get_value(OPTS.write_policy)
 
@@ -385,12 +385,12 @@ def report_status():
     if OPTS.write_size is not None and OPTS.word_size % OPTS.write_size:
         debug.error("Word size is not divisible by write size.", -1)
 
-    from policy import replacement_policy as RP
+    from policy import replacement_policy as rp
     # Direct-mapped cache doesn't have a replacement policy
-    if OPTS.num_ways == 1 and OPTS.replacement_policy != RP.NONE:
+    if OPTS.num_ways == 1 and OPTS.replacement_policy != rp.NONE:
         debug.error("Direct-mapped cache cannot have a replacement policy.", -1)
     # N-way or Fully Associative caches should have a replacement policy
-    if OPTS.num_ways > 1 and OPTS.replacement_policy == RP.NONE:
+    if OPTS.num_ways > 1 and OPTS.replacement_policy == rp.NONE:
         debug.error("N-way Set Associative and Fully Associative caches need replacement policy.", -1)
 
     # Options below are not implemented yet

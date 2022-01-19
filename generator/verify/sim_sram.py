@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from policy import replacement_policy as RP
+from policy import replacement_policy as rp
 from globals import OPTS
 
 
@@ -29,9 +29,9 @@ class sim_sram:
         self.dirty_array = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.tag_array = [[0] * self.num_ways for _ in range(self.num_rows)]
         self.data_array = [[[0] * self.num_words for _ in range(self.num_ways)] for _ in range(self.num_rows)]
-        if OPTS.replacement_policy == RP.FIFO:
+        if OPTS.replacement_policy == rp.FIFO:
             self.fifo_array = [0] * self.num_rows
-        if OPTS.replacement_policy == RP.LRU:
+        if OPTS.replacement_policy == rp.LRU:
             self.lru_array = [[0] * self.num_ways for _ in range(self.num_rows)]
 
 

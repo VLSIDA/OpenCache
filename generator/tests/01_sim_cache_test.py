@@ -11,7 +11,7 @@ from testutils import *
 import sys, os
 sys.path.append(os.getenv("OPENCACHE_HOME"))
 import globals
-from base.policy import replacement_policy as RP
+from base.policy import replacement_policy as rp
 from globals import OPTS
 
 
@@ -27,22 +27,22 @@ class sim_cache_test(opencache_test):
 
         # Run tests for direct-mapped
         OPTS.num_ways = 1
-        OPTS.replacement_policy = RP.NONE
+        OPTS.replacement_policy = rp.NONE
         self.run_all_tests()
 
         # Run tests for 4-way FIFO
         OPTS.num_ways = 4
-        OPTS.replacement_policy = RP.FIFO
+        OPTS.replacement_policy = rp.FIFO
         self.run_all_tests()
 
         # Run tests for 4-way LRU
         OPTS.num_ways = 4
-        OPTS.replacement_policy = RP.LRU
+        OPTS.replacement_policy = rp.LRU
         self.run_all_tests()
 
         # Run tests for 4-way random
         OPTS.num_ways = 4
-        OPTS.replacement_policy = RP.RANDOM
+        OPTS.replacement_policy = rp.RANDOM
         self.run_all_tests()
 
         globals.end_opencache()
@@ -56,11 +56,11 @@ class sim_cache_test(opencache_test):
         self.check_true(check_hit(sc))
         self.check_true(check_dirty(sc))
         self.check_true(check_read_write(sc))
-        if OPTS.replacement_policy == RP.FIFO:
+        if OPTS.replacement_policy == rp.FIFO:
             self.check_true(check_fifo(sc))
-        if OPTS.replacement_policy == RP.LRU:
+        if OPTS.replacement_policy == rp.LRU:
             self.check_true(check_lru(sc))
-        if OPTS.replacement_policy == RP.RANDOM:
+        if OPTS.replacement_policy == rp.RANDOM:
             self.check_true(check_random(sc))
 
 
