@@ -70,6 +70,7 @@ return_type
 This is which data the cache returns. Currently supported return types are:
 
 + Word
++ Line
 
 ***********
 data_hazard

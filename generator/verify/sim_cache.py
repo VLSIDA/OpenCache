@@ -102,7 +102,10 @@ class sim_cache:
 
         tag_binary = "{0:0{1}b}".format(tag_decimal, self.tag_size)
         set_binary = "{0:0{1}b}".format(set_decimal, self.set_size)
-        offset_binary = "{0:0{1}b}".format(offset_decimal, self.offset_size)
+        if self.offset_size:
+            offset_binary = "{0:0{1}b}".format(offset_decimal, self.offset_size)
+        else:
+            offset_binary = ""
 
         address_binary = tag_binary + set_binary + offset_binary
         address_decimal = int(address_binary, 2)
@@ -120,7 +123,10 @@ class sim_cache:
 
         tag_decimal = int(tag_binary, 2)
         set_decimal = int(set_binary, 2)
-        offset_decimal = int(offset_binary, 2)
+        if self.offset_size:
+            offset_decimal = int(offset_binary, 2)
+        else:
+            offset_decimal = None
 
         return (tag_decimal, set_decimal, offset_decimal)
 
@@ -218,7 +224,17 @@ class sim_cache:
 
         _, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
-        return self.sram.read_word(set_decimal, way, offset_decimal)
+        # If returning a data word
+        if self.offset_size:
+            return self.sram.read_word(set_decimal, way, offset_decimal)
+        # If returning a data line
+        else:
+            data = 0
+            idx = 0
+            for word in self.sram.read_line(set_decimal, way):
+                data += word << (idx * self.word_size)
+                idx += 1
+            return data
 
 
     def write(self, address, mask, data_input):
@@ -229,7 +245,16 @@ class sim_cache:
         self.sram.write_dirty(set_decimal, way, 1)
 
         # Write input data over the write mask
-        orig_data = self.sram.read_word(set_decimal, way, offset_decimal)
+        # If returning a data word
+        if self.offset_size:
+            orig_data = self.sram.read_word(set_decimal, way, offset_decimal)
+        # If returning a data line
+        else:
+            orig_data = 0
+            idx = 0
+            for word in self.sram.read_line(set_decimal, way):
+                orig_data += word << (idx * self.word_size)
+                idx += 1
         wr_data = 0 if self.num_masks else data_input
 
         for i in range(self.num_masks):
@@ -237,7 +262,16 @@ class sim_cache:
             part = (part >> (i * self.write_size)) % (1 << self.write_size)
             wr_data += part << (i * self.write_size)
 
-        self.sram.write_word(set_decimal, way, offset_decimal, wr_data)
+        # If returning a data word
+        if self.offset_size:
+            self.sram.write_word(set_decimal, way, offset_decimal, wr_data)
+        # If returning a data line
+        else:
+            line = []
+            for i in range(self.words_per_line):
+                word = (wr_data >> (i * self.word_size)) % (1 << self.word_size)
+                line.append(word)
+            self.sram.write_line(set_decimal, way, line)
 
         # Update previous write enable
         self.prev_web = 0

@@ -41,7 +41,10 @@ class output_interface(logic_base):
         with m.Case(state.COMPARE):
             for i in c.hit_detector.find_hit():
                 m.d.comb += c.stall.eq(0)
-                m.d.comb += c.dout.eq(c.data_array.output(i).word(c.offset))
+                if c.offset_size:
+                    m.d.comb += c.dout.eq(c.data_array.output(i).word(c.offset))
+                else:
+                    m.d.comb += c.dout.eq(c.data_array.output(i))
 
 
     def add_wait_read(self, c, m):
@@ -55,4 +58,7 @@ class output_interface(logic_base):
             # Check if DRAM answers to the read request
             with m.If(~c.dram.stall()):
                 m.d.comb += c.stall.eq(0)
-                m.d.comb += c.dout.eq(c.dram.output().word(c.offset))
+                if c.offset_size:
+                    m.d.comb += c.dout.eq(c.dram.output().word(c.offset))
+                else:
+                    m.d.comb += c.dout.eq(c.dram.output())

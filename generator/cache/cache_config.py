@@ -20,11 +20,7 @@ class cache_config:
         self.word_size      = word_size
         self.words_per_line = words_per_line
         self.address_size   = address_size
-        # Don't add a write mask if it is the same size as data word
-        if write_size and write_size == word_size:
-            self.write_size = None
-        else:
-            self.write_size = write_size
+        self.write_size     = write_size
         self.num_ways       = num_ways
 
         self.compute_configs()
@@ -55,7 +51,11 @@ class cache_config:
 
         self.num_rows = int(self.total_size / self.row_size)
 
-        self.offset_size = ceil(log2(self.words_per_line))
+        # If cache returns line, we shouldn't use offset
+        if OPTS.return_type == "word":
+            self.offset_size = ceil(log2(self.words_per_line))
+        else:
+            self.offset_size = 0
         self.set_size = ceil(log2(self.num_rows))
         self.tag_size = self.address_size - self.set_size - self.offset_size
 
@@ -77,9 +77,16 @@ class cache_config:
         # Way size is used in replacement policy
         self.way_size = ceil(log2(self.num_ways))
 
+        # Don't add a write mask if it is the same size as data word
+        if (OPTS.return_type == "word" and self.write_size == self.word_size) or self.write_size == self.line_size:
+            self.write_size = None
         # Number of write masks
         if self.write_size:
-            self.num_masks = self.word_size // self.write_size
+            # Write mask should be applied to input/output port size
+            if OPTS.return_type == "word":
+                self.num_masks = self.word_size // self.write_size
+            else:
+                self.num_masks = self.line_size // self.write_size
         else:
             self.num_masks = 0
 

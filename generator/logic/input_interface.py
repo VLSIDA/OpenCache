@@ -91,7 +91,8 @@ class input_interface(logic_base):
         with m.If(c.rst):
             m.d.comb += c.tag.eq(0)
             m.d.comb += c.set.eq(0)
-            m.d.comb += c.offset.eq(0)
+            if c.offset_size:
+                m.d.comb += c.offset.eq(0)
             m.d.comb += c.web_reg.eq(1)
             if c.num_masks:
                 m.d.comb += c.wmask_reg.eq(0)
@@ -103,7 +104,8 @@ class input_interface(logic_base):
 
         m.d.comb += c.tag.eq(c.addr.parse_tag())
         m.d.comb += c.set.eq(c.addr.parse_set())
-        m.d.comb += c.offset.eq(c.addr.parse_offset())
+        if c.offset_size:
+            m.d.comb += c.offset.eq(c.addr.parse_offset())
         m.d.comb += c.web_reg.eq(c.web)
         if c.num_masks:
             m.d.comb += c.wmask_reg.eq(c.wmask)

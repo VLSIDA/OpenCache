@@ -82,7 +82,7 @@ class test_data:
                 [choice(["1", "0"]) for _ in range(self.num_masks)]
             ))
             # Data input
-            self.data.append(randrange(1, 2 ** self.word_size))
+            self.data.append(randrange(1, 2 ** (self.word_size if self.offset_size else self.line_size)))
         else:
             # Write mask
             self.wmask.append("0" * self.num_masks)

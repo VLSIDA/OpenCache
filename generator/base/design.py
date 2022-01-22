@@ -109,8 +109,8 @@ class design(Elaboratable):
         if self.num_masks:
             self.wmask = cache_signal(self.num_masks)
         self.addr = cache_signal(self.address_size)
-        self.din = cache_signal(self.word_size)
-        self.dout = cache_signal(self.word_size)
+        self.din = cache_signal(self.word_size if self.offset_size else self.line_size)
+        self.dout = cache_signal(self.word_size if self.offset_size else self.line_size)
         self.stall = cache_signal(reset=1)
 
         # Create a DRAM module
@@ -130,11 +130,12 @@ class design(Elaboratable):
         # Keep inputs in flops
         self.tag = cache_signal(self.tag_size, is_flop=True)
         self.set = cache_signal(self.set_size, is_flop=True)
-        self.offset = cache_signal(self.offset_size, is_flop=True)
+        if self.offset_size:
+            self.offset = cache_signal(self.offset_size, is_flop=True)
         self.web_reg = cache_signal(is_flop=True)
         if self.num_masks:
             self.wmask_reg = cache_signal(self.num_masks, is_flop=True)
-        self.din_reg = cache_signal(self.word_size, is_flop=True)
+        self.din_reg = cache_signal(self.word_size if self.offset_size else self.line_size, is_flop=True)
         # State flop
         self.state = cache_signal(state, is_flop=True)
 

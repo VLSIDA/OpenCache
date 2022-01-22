@@ -41,7 +41,6 @@ class options(optparse.Values):
     #! Instruction cache is not yet supported
     is_data_cache = True
     # Cache can return a word or a line of words
-    #! Returning line is not yet supported
     return_type = "word"
 
     # Data hazard might occur when the same location is read and written at the

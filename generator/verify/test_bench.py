@@ -79,10 +79,10 @@ class test_bench:
         if self.num_masks:
             self.tbf.write("  reg [MASK_COUNT-1:0] cache_wmask;\n")
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
-        self.tbf.write("  reg [WORD_WIDTH-1:0] cache_din;\n\n")
+        self.tbf.write("  reg [{}-1:0] cache_din;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
 
         self.tbf.write("  // Cache output pins\n")
-        self.tbf.write("  wire [WORD_WIDTH-1:0] cache_dout;\n\n")
+        self.tbf.write("  wire [{}-1:0] cache_dout;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
         self.tbf.write("  wire cache_stall;\n")
 
         self.tbf.write("  // DRAM input pins\n")
@@ -209,7 +209,7 @@ class test_bench:
 
         self.tbf.write("  // Output of the cache must match the expected\n")
         self.tbf.write("  task check_dout;\n")
-        self.tbf.write("    input [WORD_WIDTH-1:0] dout_expected;\n")
+        self.tbf.write("    input [{}-1:0] dout_expected;\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
         self.tbf.write("    input [MAX_TEST_SIZE-1:0] test_count;\n")
         self.tbf.write("    begin\n")
         self.tbf.write("      if (cache_dout !== dout_expected) begin\n")

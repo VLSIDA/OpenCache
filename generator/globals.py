@@ -399,8 +399,6 @@ def report_status():
     from policy import write_policy as wp
     if OPTS.write_policy != wp.WRITE_BACK:
         debug.error("Only write-back policy is supported at the moment.", -1)
-    if OPTS.return_type != "word":
-        debug.error("Only returning word is supported at the moment.", -1)
 
     # Print cache info
     debug.print_raw("\nCache type: {}".format("Data" if OPTS.is_data_cache else "Instruction"))

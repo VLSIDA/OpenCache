@@ -122,7 +122,7 @@ class memory_controller(logic_base):
                     c.tag_array.write(c.set, Cat(c.tag, C(3, 2)), i)
                     # Perform write request
                     c.data_array.write(c.set, c.data_array.output(i), i)
-                    c.data_array.write_input(i, c.offset, c.din_reg, c.wmask_reg if c.num_masks else None)
+                    c.data_array.write_input(i, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive.
                 c.tag_array.read(c.addr.parse_set())
@@ -197,7 +197,7 @@ class memory_controller(logic_base):
                 c.data_array.write(c.set, c.dram.output(), c.way)
                 # Perform the write request
                 with m.If(~c.web_reg):
-                    c.data_array.write_input(c.way, c.offset, c.din_reg, c.wmask_reg if c.num_masks else None)
+                    c.data_array.write_input(c.way, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive
                 c.tag_array.read(c.addr.parse_set())
