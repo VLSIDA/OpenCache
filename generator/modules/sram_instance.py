@@ -139,7 +139,7 @@ class sram_instance:
                 for way_idx in range(sram_instance.num_ways):
                     with self.m.Case(way_idx):
                         # Offset is used (returning word)
-                        if offset:
+                        if offset is not None:
                             # Offset is used to find the word
                             with self.m.Switch(offset):
                                 for word_idx in range(sram_instance.words_per_line):
@@ -163,7 +163,7 @@ class sram_instance:
         # If way is a constant, use it directly
         else:
             # Offset is used (returning word)
-            if offset:
+            if offset is not None:
                 # Offset is used to find the word
                 with self.m.Switch(offset):
                     for word_idx in range(sram_instance.words_per_line):
