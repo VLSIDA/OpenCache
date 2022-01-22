@@ -15,7 +15,7 @@ from base.policy import replacement_policy as rp
 from globals import OPTS
 
 
-class verify_test(opencache_test):
+class basic_test(opencache_test):
 
     def runTest(self):
 
@@ -24,7 +24,7 @@ class verify_test(opencache_test):
         globals.init_opencache(config_file)
 
         OPTS.num_ways = 4
-        OPTS.replacement_policy = rp.LRU
+        OPTS.replacement_policy = rp.RANDOM
         OPTS.simulate = True
         OPTS.synthesize = True
 

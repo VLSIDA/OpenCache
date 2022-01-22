@@ -15,7 +15,7 @@ from base.policy import replacement_policy as rp
 from globals import OPTS
 
 
-class verify_test(opencache_test):
+class wmask_test(opencache_test):
 
     def runTest(self):
 
@@ -25,7 +25,7 @@ class verify_test(opencache_test):
 
         OPTS.write_size = 8
         OPTS.num_ways = 4
-        OPTS.replacement_policy = rp.FIFO
+        OPTS.replacement_policy = rp.LRU
         OPTS.simulate = True
         OPTS.synthesize = True
 
