@@ -66,7 +66,7 @@ class cache_config:
         if self.tag_size + self.set_size + self.offset_size != self.address_size:
             debug.error("Calculated address size does not match the given address size.", -1)
 
-        # Address pin size of DRAM
+        # Address port size of DRAM
         self.dram_address_size = self.address_size - self.offset_size
         # Number of rows in DRAM
         self.dram_num_rows = 2 ** self.dram_address_size

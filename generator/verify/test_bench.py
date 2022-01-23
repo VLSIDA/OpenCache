@@ -72,7 +72,7 @@ class test_bench:
         self.tbf.write("  reg clk;\n")
         self.tbf.write("  reg rst;\n\n")
 
-        self.tbf.write("  // Cache input pins\n")
+        self.tbf.write("  // Cache input ports\n")
         self.tbf.write("  reg cache_flush;\n")
         self.tbf.write("  reg cache_csb;\n")
         self.tbf.write("  reg cache_web;\n")
@@ -81,17 +81,17 @@ class test_bench:
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
         self.tbf.write("  reg [{}-1:0] cache_din;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
 
-        self.tbf.write("  // Cache output pins\n")
+        self.tbf.write("  // Cache output ports\n")
         self.tbf.write("  wire [{}-1:0] cache_dout;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
         self.tbf.write("  wire cache_stall;\n")
 
-        self.tbf.write("  // DRAM input pins\n")
+        self.tbf.write("  // DRAM input ports\n")
         self.tbf.write("  wire dram_csb;\n")
         self.tbf.write("  wire dram_web;\n")
         self.tbf.write("  wire [ADDR_WIDTH-OFFSET_WIDTH-1:0] dram_addr;\n")
         self.tbf.write("  wire [LINE_WIDTH-1:0] dram_din;\n\n")
 
-        self.tbf.write("  // DRAM output pins\n")
+        self.tbf.write("  // DRAM output ports\n")
         self.tbf.write("  wire [LINE_WIDTH-1:0] dram_dout;\n\n")
         self.tbf.write("  wire dram_stall;\n")
 
