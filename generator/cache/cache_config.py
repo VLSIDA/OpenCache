@@ -16,12 +16,12 @@ class cache_config:
 
     def __init__(self, total_size, word_size, words_per_line, address_size, write_size, num_ways):
 
-        self.total_size     = total_size
-        self.word_size      = word_size
+        self.total_size = total_size
+        self.word_size = word_size
         self.words_per_line = words_per_line
-        self.address_size   = address_size
-        self.write_size     = write_size
-        self.num_ways       = num_ways
+        self.address_size = address_size
+        self.write_size = write_size
+        self.num_ways = num_ways
 
         self.compute_configs()
 
