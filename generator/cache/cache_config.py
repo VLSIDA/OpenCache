@@ -49,7 +49,7 @@ class cache_config:
         if self.total_size % self.row_size:
             debug.error("Row size overflows the size of the cache.", -1)
 
-        self.num_rows = int(self.total_size / self.row_size)
+        self.num_rows = self.total_size // self.row_size
 
         # If cache returns line, we shouldn't use offset
         if OPTS.return_type == "word":
