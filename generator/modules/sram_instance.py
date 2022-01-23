@@ -100,7 +100,7 @@ class sram_instance:
         # If way is a signal, wrap it with case statements
         elif isinstance(way, cache_signal):
             with self.m.Switch(way):
-                for i in range(1 << way.width):
+                for i in range(2 ** way.width):
                     with self.m.Case(i):
                         if self.num_arrays > 1:
                             self.m.d.comb += self.write_csb[i].eq(0)

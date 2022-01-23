@@ -259,7 +259,7 @@ class sim_cache:
 
         for i in range(self.num_masks):
             part = data_input if mask[-(i + 1)] == "1" else orig_data
-            part = (part >> (i * self.write_size)) % (1 << self.write_size)
+            part = (part >> (i * self.write_size)) % (2 ** self.write_size)
             wr_data += part << (i * self.write_size)
 
         # If returning a data word
@@ -269,7 +269,7 @@ class sim_cache:
         else:
             line = []
             for i in range(self.words_per_line):
-                word = (wr_data >> (i * self.word_size)) % (1 << self.word_size)
+                word = (wr_data >> (i * self.word_size)) % (2 ** self.word_size)
                 line.append(word)
             self.sram.write_line(set_decimal, way, line)
 

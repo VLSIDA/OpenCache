@@ -34,7 +34,7 @@ class sim_dram:
         for _ in range(self.num_rows):
             self.data_array.append([])
             for _ in range(self.num_words):
-                self.data_array[-1].append(randrange(1 << self.word_size))
+                self.data_array[-1].append(randrange(2 ** self.word_size))
 
 
     def read_line(self, address):
