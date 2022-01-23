@@ -85,45 +85,40 @@ class sram_instance:
             self.m.d.comb += self.read_addr[i].eq(address)
 
 
-    def write(self, address, data, way=None):
+    def write_local(self, address, data, way, is_reset=False):
         """ Send a new write request to SRAM. """
 
+        if self.num_arrays > 1:
+            idx = way
+        else:
+            idx = 0
+
         # TODO: Use wmask feature of OpenRAM
+        self.m.d.comb += self.write_csb[idx].eq(0)
+        self.m.d.comb += self.write_addr[idx].eq(address)
+        self.m.d.comb += self.write_din[idx].eq(self.read_dout[idx])
+        if self.num_arrays > 1 or is_reset:
+            self.m.d.comb += self.write_din[idx].eq(data)
+        else:
+            self.m.d.comb += self.write_din[0].way(way).eq(data)
+
+
+    def write(self, address, data, way=None):
+        """ Send a new write request to SRAM. """
 
         # If no way is given, set all input data
         if way is None:
             for i in range(self.num_arrays):
-                self.m.d.comb += self.write_csb[i].eq(0)
-                self.m.d.comb += self.write_addr[i].eq(address)
-                self.m.d.comb += self.write_din[i].eq(self.read_dout[i])
-                self.m.d.comb += self.write_din[i].eq(data)
+                self.write_local(address, data, i, True)
         # If way is a signal, wrap it with case statements
         elif isinstance(way, cache_signal):
             with self.m.Switch(way):
                 for i in range(2 ** way.width):
                     with self.m.Case(i):
-                        if self.num_arrays > 1:
-                            self.m.d.comb += self.write_csb[i].eq(0)
-                            self.m.d.comb += self.write_addr[i].eq(address)
-                            self.m.d.comb += self.write_din[i].eq(self.read_dout[i])
-                            self.m.d.comb += self.write_din[i].eq(data)
-                        else:
-                            self.m.d.comb += self.write_csb[0].eq(0)
-                            self.m.d.comb += self.write_addr[0].eq(address)
-                            self.m.d.comb += self.write_din[0].eq(self.read_dout[0])
-                            self.m.d.comb += self.write_din[0].way(i).eq(data)
+                        self.write_local(address, data, i)
         # If way is a constant, calculate the way part of the signal
         else:
-            if self.num_arrays > 1:
-                self.m.d.comb += self.write_csb[way].eq(0)
-                self.m.d.comb += self.write_addr[way].eq(address)
-                self.m.d.comb += self.write_din[way].eq(self.read_dout[way])
-                self.m.d.comb += self.write_din[way].eq(data)
-            else:
-                self.m.d.comb += self.write_csb[0].eq(0)
-                self.m.d.comb += self.write_addr[0].eq(address)
-                self.m.d.comb += self.write_din[0].eq(self.read_dout[0])
-                self.m.d.comb += self.write_din[0].way(way).eq(data)
+            self.write_local(address, data, way)
 
 
     def write_input(self, way, offset, data, wmask=None):
