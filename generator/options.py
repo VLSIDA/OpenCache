@@ -38,7 +38,7 @@ class options(optparse.Values):
     #! Write-through is not yet supported
     write_policy = None
     # Cache can be a data cache or an instruction cache
-    is_data_cache = True
+    read_only = False
     # Cache can return a word or a line of words
     return_type = "word"
 

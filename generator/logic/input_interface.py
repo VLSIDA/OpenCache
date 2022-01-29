@@ -94,11 +94,11 @@ class input_interface(logic_base):
             m.d.comb += c.set.eq(0)
             if c.offset_size:
                 m.d.comb += c.offset.eq(0)
-            if OPTS.is_data_cache:
+            if not OPTS.read_only:
                 m.d.comb += c.web_reg.eq(1)
             if c.num_masks:
                 m.d.comb += c.wmask_reg.eq(0)
-            if OPTS.is_data_cache:
+            if not OPTS.read_only:
                 m.d.comb += c.din_reg.eq(0)
 
 
@@ -109,9 +109,9 @@ class input_interface(logic_base):
         m.d.comb += c.set.eq(c.addr.parse_set())
         if c.offset_size:
             m.d.comb += c.offset.eq(c.addr.parse_offset())
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             m.d.comb += c.web_reg.eq(c.web)
         if c.num_masks:
             m.d.comb += c.wmask_reg.eq(c.wmask)
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             m.d.comb += c.din_reg.eq(c.din)

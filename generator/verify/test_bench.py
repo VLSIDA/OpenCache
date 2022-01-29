@@ -78,12 +78,12 @@ class test_bench:
         if OPTS.has_flush:
             self.tbf.write("  reg cache_flush;\n")
         self.tbf.write("  reg cache_csb;\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("  reg cache_web;\n")
         if self.num_masks:
             self.tbf.write("  reg [MASK_COUNT-1:0] cache_wmask;\n")
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("  reg [{}-1:0] cache_din;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
 
         self.tbf.write("  // Cache output ports\n")
@@ -92,10 +92,10 @@ class test_bench:
 
         self.tbf.write("  // DRAM input ports\n")
         self.tbf.write("  wire dram_csb;\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("  wire dram_web;\n")
         self.tbf.write("  wire [ADDR_WIDTH-OFFSET_WIDTH-1:0] dram_addr;\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("  wire [LINE_WIDTH-1:0] dram_din;\n\n")
 
         self.tbf.write("  // DRAM output ports\n")
@@ -134,7 +134,7 @@ class test_bench:
         if OPTS.has_flush:
             self.tbf.write("    cache_flush = 0;\n")
         self.tbf.write("    cache_csb   = 1;\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("    cache_web   = 1;\n")
         if self.num_masks:
             self.tbf.write("    cache_wmask = 0;\n")
@@ -151,20 +151,20 @@ class test_bench:
         if OPTS.has_flush:
             self.tbf.write("    .flush      (cache_flush),\n")
         self.tbf.write("    .csb        (cache_csb),\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("    .web        (cache_web),\n")
         if self.num_masks:
             self.tbf.write("    .wmask      (cache_wmask),\n")
         self.tbf.write("    .addr       (cache_addr),\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("    .din        (cache_din),\n")
         self.tbf.write("    .dout       (cache_dout),\n")
         self.tbf.write("    .stall      (cache_stall),\n")
         self.tbf.write("    .main_csb   (dram_csb),\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("    .main_web   (dram_web),\n")
         self.tbf.write("    .main_addr  (dram_addr),\n")
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.tbf.write("    .main_din   (dram_din),\n")
         self.tbf.write("    .main_dout  (dram_dout),\n")
         self.tbf.write("    .main_stall (dram_stall)\n")

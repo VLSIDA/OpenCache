@@ -59,7 +59,7 @@ This is the write policy of the cache. Currently supported write policies are:
 + Write-back
 
 *************
-is_data_cache
+read_only
 *************
 This is whether the cache is a *"data cache"* or an *"instruction cache"*.
 

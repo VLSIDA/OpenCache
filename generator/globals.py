@@ -208,7 +208,7 @@ def fix_config():
     OPTS.write_policy = wp.get_value(OPTS.write_policy)
 
     # Instruction caches cannot have flush
-    if not OPTS.is_data_cache:
+    if OPTS.read_only:
         OPTS.has_flush = False
 
     # If config didn't set output name, make a reasonable default
@@ -403,7 +403,7 @@ def report_status():
         debug.error("Only write-back policy is supported at the moment.", -1)
 
     # Print cache info
-    debug.print_raw("\nCache type: {}".format("Data" if OPTS.is_data_cache else "Instruction"))
+    debug.print_raw("\nCache type: {}".format("Instruction" if OPTS.read_only else "Data"))
     debug.print_raw("Word size: {}".format(OPTS.word_size))
     debug.print_raw("Words per line: {}".format(OPTS.words_per_line))
     debug.print_raw("Number of ways: {}".format(OPTS.num_ways))

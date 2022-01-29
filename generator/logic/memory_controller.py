@@ -118,7 +118,7 @@ class memory_controller(logic_base):
                 # Disable DRAM since a request could have been sent above
                 c.dram.disable()
                 # Perform the write request if data cache
-                if OPTS.is_data_cache:
+                if not OPTS.read_only:
                     with m.If(~c.web_reg):
                         # Update dirty bit
                         c.tag_array.write(c.set, Cat(c.tag, C(3, 2)), i)
@@ -194,14 +194,14 @@ class memory_controller(logic_base):
             #   COMPARE if CPU is sending a new request
             with m.If(~c.dram.stall()):
                 # Update tag line
-                if OPTS.is_data_cache:
-                    c.tag_array.write(c.set, Cat(c.tag, ~c.web_reg, C(1, 1)), c.way)
-                else:
+                if OPTS.read_only:
                     c.tag_array.write(c.set, Cat(c.tag, C(1, 1)), c.way)
+                else:
+                    c.tag_array.write(c.set, Cat(c.tag, ~c.web_reg, C(1, 1)), c.way)
                 # Update data line
                 c.data_array.write(c.set, c.dram.output(), c.way)
                 # Perform the write request if data cache
-                if OPTS.is_data_cache:
+                if not OPTS.read_only:
                     with m.If(~c.web_reg):
                         c.data_array.write_input(c.way, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending

@@ -25,7 +25,7 @@ class instruction_test(opencache_test):
 
         OPTS.num_ways = 1
         OPTS.replacement_policy = rp.NONE
-        OPTS.is_data_cache = False
+        OPTS.read_only = True
         OPTS.simulate = True
         OPTS.synthesize = True
 

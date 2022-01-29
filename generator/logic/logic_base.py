@@ -38,7 +38,7 @@ class logic_base:
             self.add_compare(c, m)
             self.add_read(c, m)
             self.add_wait_read(c, m)
-            if OPTS.is_data_cache:
+            if not OPTS.read_only:
                 self.add_write(c, m)
                 self.add_wait_write(c, m)
             if OPTS.data_hazard:

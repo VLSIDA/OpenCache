@@ -111,7 +111,7 @@ class state_machine(logic_base):
                             with m.Else():
                                 m.d.comb += c.state.eq(state.COMPARE)
                         # If SRAMs are only updated after write (must have dirty bit)
-                        elif OPTS.is_data_cache:
+                        elif not OPTS.read_only:
                             with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
                                 m.d.comb += c.state.eq(state.WAIT_HAZARD)
                             with m.Else():

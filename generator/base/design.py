@@ -106,18 +106,18 @@ class design(Elaboratable):
         if OPTS.has_flush:
             self.flush = cache_signal()
         self.csb = cache_signal()
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.web = cache_signal()
         if self.num_masks:
             self.wmask = cache_signal(self.num_masks)
         self.addr = cache_signal(self.address_size)
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.din = cache_signal(self.word_size if self.offset_size else self.line_size)
         self.dout = cache_signal(self.word_size if self.offset_size else self.line_size)
         self.stall = cache_signal(reset=1)
 
         # Create a DRAM module
-        self.dram = dram_instance(self.m, self.dram_address_size, self.line_size, not OPTS.is_data_cache)
+        self.dram = dram_instance(self.m, self.dram_address_size, self.line_size, OPTS.read_only)
 
         # Return all port signals
         ports = self.dram.get_signals()
@@ -135,11 +135,11 @@ class design(Elaboratable):
         self.set = cache_signal(self.set_size, is_flop=True)
         if self.offset_size:
             self.offset = cache_signal(self.offset_size, is_flop=True)
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.web_reg = cache_signal(is_flop=True)
         if self.num_masks:
             self.wmask_reg = cache_signal(self.num_masks, is_flop=True)
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             self.din_reg = cache_signal(self.word_size if self.offset_size else self.line_size, is_flop=True)
         # State flop
         self.state = cache_signal(state, is_flop=True)

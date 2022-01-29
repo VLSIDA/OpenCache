@@ -72,13 +72,13 @@ class cache_config:
         self.dram_num_rows = 2 ** self.dram_address_size
 
         # Tag word bit-width of a way
-        self.tag_word_size = self.tag_size + (2 if OPTS.is_data_cache else 1)
+        self.tag_word_size = self.tag_size + (1 if OPTS.read_only else 2)
 
         # Way size is used in replacement policy
         self.way_size = ceil(log2(self.num_ways))
 
         # Don't add a write mask if it is the same size as data word or instruction cache
-        if (OPTS.return_type == "word" and self.write_size == self.word_size) or self.write_size == self.line_size or not OPTS.is_data_cache:
+        if (OPTS.return_type == "word" and self.write_size == self.word_size) or self.write_size == self.line_size or OPTS.read_only:
             self.write_size = None
         # Number of write masks
         if self.write_size:

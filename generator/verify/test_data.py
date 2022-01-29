@@ -39,7 +39,7 @@ class test_data:
         self.add_operation("reset")
 
         # Write and flush only when it's a data cache
-        if OPTS.is_data_cache:
+        if not OPTS.read_only:
             # Write random data to random addresses initially
             for i in range(test_size):
                 self.add_operation("write")
@@ -140,7 +140,7 @@ class test_data:
                     file.write("assert_{}();\n".format(self.op[i]))
                 else:
                     file.write("cache_csb   = 0;\n")
-                    if OPTS.is_data_cache:
+                    if not OPTS.read_only:
                         file.write("cache_web   = {};\n".format(self.web[i]))
                     if self.num_masks:
                         file.write("cache_wmask = {0}'b{1};\n".format(self.num_masks, self.wmask[i]))
