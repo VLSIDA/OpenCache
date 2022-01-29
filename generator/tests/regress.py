@@ -54,7 +54,7 @@ def fork_tests(num_threads):
                 # PID == 0 is a child
                 try:
                     # Open a stream to write to the parent
-                    stream = os.fdopen(c2pwrite, 'wb', 0)
+                    stream = os.fdopen(c2pwrite, "wb", 0)
                     os.close(c2pread)
                     sys.stdin.close()
                     test_suite_result = TestProtocolClient(stream)
@@ -69,7 +69,7 @@ def fork_tests(num_threads):
                 # PID > 0 is the parent
                 # Collect all of the child streams and append to the results
                 os.close(c2pwrite)
-                stream = os.fdopen(c2pread, 'rb', 0)
+                stream = os.fdopen(c2pread, "rb", 0)
                 test = ProtocolTestCase(stream)
                 results.append(test)
         return results

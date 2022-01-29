@@ -159,7 +159,7 @@ def read_config(config_file, is_unit_test=True):
         config_file = os.getcwd() + "/" + config_file
 
     # Make it a python file if the base name was only given
-    config_file = re.sub(r'\.py$', "", config_file)
+    config_file = re.sub(r"\.py$", "", config_file)
 
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
@@ -229,9 +229,9 @@ def fix_config():
         OPTS.use_array_name = "{}_use_array".format(OPTS.output_name)
 
     # Massage the output path to be an absolute one
-    if not OPTS.output_path.endswith('/'):
+    if not OPTS.output_path.endswith("/"):
         OPTS.output_path += "/"
-    if not OPTS.output_path.startswith('/'):
+    if not OPTS.output_path.startswith("/"):
         OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
 
     # Create a new folder for each process of unit tests
@@ -356,7 +356,7 @@ def print_time(name, now_time, last_time=None, indentation=2):
         if last_time:
             time = str(round((now_time - last_time).total_seconds(), 1)) + " seconds"
         else:
-            time = now_time.strftime('%m/%d/%Y %H:%M:%S')
+            time = now_time.strftime("%m/%d/%Y %H:%M:%S")
         debug.print_raw("{0} {1}: {2}".format("*" * indentation, name, time))
 
 

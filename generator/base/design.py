@@ -72,7 +72,7 @@ class design(Elaboratable):
             # Delete comments from lines
             lines[i] = re.sub(r"\/\*.*\*\/", "", lines[i])
             # Check if line is whitespace only
-            if re.match(r'.*[ \t]$', lines[i]):
+            if re.match(r".*[ \t]$", lines[i]):
                 lines[i] = ""
 
         code = "".join(lines)

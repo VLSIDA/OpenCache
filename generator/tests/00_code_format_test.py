@@ -66,7 +66,7 @@ def check_file_tab(file_name):
     f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f, 1):
-        if b'\t' in line:
+        if b"\t" in line:
             key_positions.append(num)
     if len(key_positions) > 0:
         # If there are more than 10 tabs, don't print
@@ -88,10 +88,10 @@ def check_file_carriage(file_name):
     number of carriage return lines.
     """
 
-    f = open(file_name, 'r+b')
+    f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f.readlines()):
-        if b'\r\n' in line:
+        if b"\r\n" in line:
             key_positions.append(num)
     if len(key_positions) > 0:
         # If there are more than 10 carriage returns,
@@ -113,10 +113,10 @@ def check_file_whitespace(file_name):
     return the number of whitespace only lines.
     """
 
-    f = open(file_name, 'r')
+    f = open(file_name, "r")
     key_positions = []
     for num, line in enumerate(f.readlines()):
-        if re.match(r'.*[ \t]$', line):
+        if re.match(r".*[ \t]$", line):
             key_positions.append(num)
     if len(key_positions) > 0:
         # If there are more than 10 ending whitespace,
@@ -141,9 +141,9 @@ def check_file_print_call(file_name):
     file = open(file_name, "r+b")
     line = file.read().decode("utf-8")
     # Skip comments with a hash
-    line = re.sub(r'#.*', '', line)
+    line = re.sub(r"#.*", "", line)
     # Skip doc string comments
-    line = re.sub(r'\"\"\"[^\"]*\"\"\"', '', line, flags=re.S|re.M)
+    line = re.sub(r"\"\"\"[^\"]*\"\"\"", "", line, flags=re.S|re.M)
     count = len(re.findall("[^p]+print\(", line))
     if count > 0:
         debug.info(0, "\nFound {0} _print_ calls in {1}".format(count,

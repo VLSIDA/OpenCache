@@ -24,7 +24,7 @@ class opencache_test(unittest.TestCase):
 
     def tearDown(self):
         duration = time.time() - self.start_time
-        print('%s: %.3fs' % (self.id(), duration))
+        print("%s: %.3fs" % (self.id(), duration))
         self.cleanup()
 
 
@@ -38,7 +38,7 @@ class opencache_test(unittest.TestCase):
         zip_file = "{0}../{1}_{2}".format(OPTS.output_path, base_filename, os.getpid())
 
         debug.info(0, "Archiving failed test's files to {}".format(zip_file))
-        shutil.make_archive(zip_file, 'zip', OPTS.output_path)
+        shutil.make_archive(zip_file, "zip", OPTS.output_path)
 
         super().fail(msg)
 

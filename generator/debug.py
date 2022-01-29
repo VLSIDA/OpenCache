@@ -62,7 +62,7 @@ def print_raw(str):
 
 
 def log(str):
-    if globals.OPTS.output_name != '':
+    if globals.OPTS.output_name != "":
         if log.create_file:
             # We may have not yet read the config, so we need to ensure
             # it ends with a /
@@ -70,24 +70,24 @@ def log(str):
             # FIXME: There's actually a bug here. The first few lines
             # could be in one log file and after read_config it could be
             # in another log file if the path or name changes.
-            if not globals.OPTS.output_path.endswith('/'):
+            if not globals.OPTS.output_path.endswith("/"):
                 globals.OPTS.output_path += "/"
             if not os.path.isdir(globals.OPTS.output_path):
                 os.makedirs(globals.OPTS.output_path,
                             mode=0o750,
                             exist_ok=True)
             compile_log = open(globals.OPTS.output_path +
-                               globals.OPTS.output_name + '.log', "w+")
+                               globals.OPTS.output_name + ".log", "w+")
             log.create_file = 0
         else:
             compile_log = open(globals.OPTS.output_path +
-                               globals.OPTS.output_name + '.log', "a")
+                               globals.OPTS.output_name + ".log", "a")
 
         if len(log.setup_output) != 0:
             for line in log.setup_output:
                 compile_log.write(line)
             log.setup_output = []
-        compile_log.write(str + '\n')
+        compile_log.write(str + "\n")
         compile_log.close()
     else:
         log.setup_output.append(str + "\n")
@@ -103,7 +103,7 @@ def info(lev, str):
     if (OPTS.verbose_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
-        # classname = frm.f_globals['__name__']
+        # classname = frm.f_globals["__name__"]
         if mod.__name__ is None:
             class_name = ""
         else:
