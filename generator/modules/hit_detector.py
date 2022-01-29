@@ -28,11 +28,15 @@ class hit_detector:
         return self.m.If(self.c.tag_array.output().valid(way) & (self.c.tag_array.output().tag(way) == self.c.tag))
 
 
-    def check_clean_miss(self):
+    def check_clean_miss(self, way=0):
         """ Return Amaranth context manager instance to check clean miss. """
 
-        # Assume clean miss if not dirty miss
-        return self.m.Else()
+        if OPTS.is_data_cache:
+            # Assume clean miss if not dirty miss
+            return self.m.Else()
+        else:
+            # Assume clean miss
+            return self.m.If(1)
 
 
     def check_dirty_miss(self, way=0):
@@ -94,8 +98,10 @@ class hit_detector:
     def find_miss_none(self):
         """ Return the way missed for direct-mapped caches. """
 
-        with self.check_dirty_miss():
-            yield True, 0
+        # Instruction caches don't have dirty bit
+        if OPTS.is_data_cache:
+            with self.check_dirty_miss():
+                yield True, 0
         with self.check_clean_miss():
             yield False, 0
 
@@ -103,11 +109,13 @@ class hit_detector:
     def find_miss_fifo(self):
         """ Return the way missed for FIFO caches. """
 
-        with self.check_dirty_miss(self.c.use_array.output()):
-            with self.m.Switch(self.c.use_array.output()):
-                for i in range(self.c.num_ways):
-                    with self.m.Case(i):
-                        yield True, i
+        # Instruction caches don't have dirty bit
+        if OPTS.is_data_cache:
+            with self.check_dirty_miss(self.c.use_array.output()):
+                with self.m.Switch(self.c.use_array.output()):
+                    for i in range(self.c.num_ways):
+                        with self.m.Case(i):
+                            yield True, i
         with self.check_clean_miss():
             yield False, 0
 
@@ -117,8 +125,10 @@ class hit_detector:
 
         for i in range(self.c.num_ways):
             with self.m.If(self.c.use_array.output().use(i) == C(0, self.c.way_size)):
-                with self.check_dirty_miss(i):
-                    yield True, i
+                # Instruction caches don't have dirty bit
+                if OPTS.is_data_cache:
+                    with self.check_dirty_miss(i):
+                        yield True, i
                 with self.check_clean_miss():
                     yield False, i
 
@@ -126,10 +136,12 @@ class hit_detector:
     def find_miss_random(self):
         """ Return the way missed for random caches. """
 
-        with self.check_dirty_miss(self.c.random):
-            with self.m.Switch(self.c.random):
-                for i in range(self.c.num_ways):
-                    with self.m.Case(i):
-                        yield True, i
+        # Instruction caches don't have dirty bit
+        if OPTS.is_data_cache:
+            with self.check_dirty_miss(self.c.random):
+                with self.m.Switch(self.c.random):
+                    for i in range(self.c.num_ways):
+                        with self.m.Case(i):
+                            yield True, i
         with self.check_clean_miss():
             yield False, 0

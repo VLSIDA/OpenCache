@@ -7,6 +7,7 @@
 #
 from logic_base import logic_base
 from state import state
+from globals import OPTS
 
 
 class input_interface(logic_base):
@@ -93,10 +94,12 @@ class input_interface(logic_base):
             m.d.comb += c.set.eq(0)
             if c.offset_size:
                 m.d.comb += c.offset.eq(0)
-            m.d.comb += c.web_reg.eq(1)
+            if OPTS.is_data_cache:
+                m.d.comb += c.web_reg.eq(1)
             if c.num_masks:
                 m.d.comb += c.wmask_reg.eq(0)
-            m.d.comb += c.din_reg.eq(0)
+            if OPTS.is_data_cache:
+                m.d.comb += c.din_reg.eq(0)
 
 
     def store_request(self, c, m):
@@ -106,7 +109,9 @@ class input_interface(logic_base):
         m.d.comb += c.set.eq(c.addr.parse_set())
         if c.offset_size:
             m.d.comb += c.offset.eq(c.addr.parse_offset())
-        m.d.comb += c.web_reg.eq(c.web)
+        if OPTS.is_data_cache:
+            m.d.comb += c.web_reg.eq(c.web)
         if c.num_masks:
             m.d.comb += c.wmask_reg.eq(c.wmask)
-        m.d.comb += c.din_reg.eq(c.din)
+        if OPTS.is_data_cache:
+            m.d.comb += c.din_reg.eq(c.din)

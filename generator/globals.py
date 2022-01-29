@@ -207,6 +207,10 @@ def fix_config():
     from policy import write_policy as wp
     OPTS.write_policy = wp.get_value(OPTS.write_policy)
 
+    # Instruction caches cannot have flush
+    if not OPTS.is_data_cache:
+        OPTS.has_flush = False
+
     # If config didn't set output name, make a reasonable default
     if OPTS.output_name == "":
         OPTS.output_name = "cache_{0}b_{1}b_{2}_{3!s}".format(OPTS.total_size,
@@ -394,8 +398,6 @@ def report_status():
         debug.error("N-way Set Associative and Fully Associative caches need replacement policy.", -1)
 
     # Options below are not implemented yet
-    if not OPTS.is_data_cache:
-        debug.error("Instruction cache is not yet supported.", -1)
     from policy import write_policy as wp
     if OPTS.write_policy != wp.WRITE_BACK:
         debug.error("Only write-back policy is supported at the moment.", -1)

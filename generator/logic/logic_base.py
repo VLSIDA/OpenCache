@@ -22,7 +22,8 @@ class logic_base:
         """ Add all sections of the always block code. """
 
         self.add_states(c, m)
-        self.add_flush_sig(c, m)
+        if OPTS.has_flush:
+            self.add_flush_sig(c, m)
         self.add_reset_sig(c, m)
 
 
@@ -31,15 +32,18 @@ class logic_base:
 
         with m.Switch(c.state):
             self.add_reset(c, m)
-            self.add_flush(c, m)
+            if OPTS.has_flush:
+                self.add_flush(c, m)
             self.add_idle(c, m)
             self.add_compare(c, m)
-            self.add_write(c, m)
-            self.add_wait_write(c, m)
             self.add_read(c, m)
             self.add_wait_read(c, m)
+            if OPTS.is_data_cache:
+                self.add_write(c, m)
+                self.add_wait_write(c, m)
             if OPTS.data_hazard:
-                self.add_flush_hazard(c, m)
+                if OPTS.has_flush:
+                    self.add_flush_hazard(c, m)
                 self.add_wait_hazard(c, m)
 
 

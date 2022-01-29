@@ -38,10 +38,12 @@ class options(optparse.Values):
     #! Write-through is not yet supported
     write_policy = None
     # Cache can be a data cache or an instruction cache
-    #! Instruction cache is not yet supported
     is_data_cache = True
     # Cache can return a word or a line of words
     return_type = "word"
+
+    # Whether the cache has the flush signal
+    has_flush = True
 
     # Data hazard might occur when the same location is read and written at the
     # same cycle. If SRAM arrays are guaranteed to be data hazard proof, this

@@ -5,6 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import OPTS
+
 
 class test_bench:
     """
@@ -73,13 +75,16 @@ class test_bench:
         self.tbf.write("  reg rst;\n\n")
 
         self.tbf.write("  // Cache input ports\n")
-        self.tbf.write("  reg cache_flush;\n")
+        if OPTS.has_flush:
+            self.tbf.write("  reg cache_flush;\n")
         self.tbf.write("  reg cache_csb;\n")
-        self.tbf.write("  reg cache_web;\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("  reg cache_web;\n")
         if self.num_masks:
             self.tbf.write("  reg [MASK_COUNT-1:0] cache_wmask;\n")
         self.tbf.write("  reg [ADDR_WIDTH-1:0] cache_addr;\n")
-        self.tbf.write("  reg [{}-1:0] cache_din;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
+        if OPTS.is_data_cache:
+            self.tbf.write("  reg [{}-1:0] cache_din;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
 
         self.tbf.write("  // Cache output ports\n")
         self.tbf.write("  wire [{}-1:0] cache_dout;\n\n".format("WORD_WIDTH" if self.offset_size else "LINE_WIDTH"))
@@ -87,9 +92,11 @@ class test_bench:
 
         self.tbf.write("  // DRAM input ports\n")
         self.tbf.write("  wire dram_csb;\n")
-        self.tbf.write("  wire dram_web;\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("  wire dram_web;\n")
         self.tbf.write("  wire [ADDR_WIDTH-OFFSET_WIDTH-1:0] dram_addr;\n")
-        self.tbf.write("  wire [LINE_WIDTH-1:0] dram_din;\n\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("  wire [LINE_WIDTH-1:0] dram_din;\n\n")
 
         self.tbf.write("  // DRAM output ports\n")
         self.tbf.write("  wire [LINE_WIDTH-1:0] dram_dout;\n\n")
@@ -124,9 +131,11 @@ class test_bench:
         self.tbf.write("  // Reset registers\n")
         self.tbf.write("  initial begin\n")
         self.tbf.write("    rst         = 0;\n")
-        self.tbf.write("    cache_flush = 0;\n")
+        if OPTS.has_flush:
+            self.tbf.write("    cache_flush = 0;\n")
         self.tbf.write("    cache_csb   = 1;\n")
-        self.tbf.write("    cache_web   = 1;\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("    cache_web   = 1;\n")
         if self.num_masks:
             self.tbf.write("    cache_wmask = 0;\n")
         self.tbf.write("    error_count = 0;\n")
@@ -139,19 +148,24 @@ class test_bench:
         self.tbf.write("  {} cache_instance (\n".format(self.name))
         self.tbf.write("    .clk        (clk),\n")
         self.tbf.write("    .rst        (rst),\n")
-        self.tbf.write("    .flush      (cache_flush),\n")
+        if OPTS.has_flush:
+            self.tbf.write("    .flush      (cache_flush),\n")
         self.tbf.write("    .csb        (cache_csb),\n")
-        self.tbf.write("    .web        (cache_web),\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("    .web        (cache_web),\n")
         if self.num_masks:
             self.tbf.write("    .wmask      (cache_wmask),\n")
         self.tbf.write("    .addr       (cache_addr),\n")
-        self.tbf.write("    .din        (cache_din),\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("    .din        (cache_din),\n")
         self.tbf.write("    .dout       (cache_dout),\n")
         self.tbf.write("    .stall      (cache_stall),\n")
         self.tbf.write("    .main_csb   (dram_csb),\n")
-        self.tbf.write("    .main_web   (dram_web),\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("    .main_web   (dram_web),\n")
         self.tbf.write("    .main_addr  (dram_addr),\n")
-        self.tbf.write("    .main_din   (dram_din),\n")
+        if OPTS.is_data_cache:
+            self.tbf.write("    .main_din   (dram_din),\n")
         self.tbf.write("    .main_dout  (dram_dout),\n")
         self.tbf.write("    .main_stall (dram_stall)\n")
         self.tbf.write("  );\n\n")
@@ -181,15 +195,16 @@ class test_bench:
         self.tbf.write("    end\n")
         self.tbf.write("  endtask\n\n")
 
-        self.tbf.write("  // Assert the flush signal\n")
-        self.tbf.write("  task assert_flush;\n")
-        self.tbf.write("    begin\n")
-        self.tbf.write("    // Flush is asserted just before a posedge of the clock.\n")
-        self.tbf.write("    // Therefore, it is enough to assert it for DELAY.\n")
-        self.tbf.write("    cache_flush <= 1;\n")
-        self.tbf.write("    cache_flush <= #(DELAY) 0;\n")
-        self.tbf.write("    end\n")
-        self.tbf.write("  endtask\n\n")
+        if OPTS.has_flush:
+            self.tbf.write("  // Assert the flush signal\n")
+            self.tbf.write("  task assert_flush;\n")
+            self.tbf.write("    begin\n")
+            self.tbf.write("    // Flush is asserted just before a posedge of the clock.\n")
+            self.tbf.write("    // Therefore, it is enough to assert it for DELAY.\n")
+            self.tbf.write("    cache_flush <= 1;\n")
+            self.tbf.write("    cache_flush <= #(DELAY) 0;\n")
+            self.tbf.write("    end\n")
+            self.tbf.write("  endtask\n\n")
 
         self.tbf.write("  // Check for a number of stall cycles starting from the current cycle\n")
         self.tbf.write("  task check_stall;\n")

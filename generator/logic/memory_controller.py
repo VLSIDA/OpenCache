@@ -8,6 +8,7 @@
 from amaranth import Cat, C
 from logic_base import logic_base
 from state import state
+from globals import OPTS
 
 
 class memory_controller(logic_base):
@@ -116,13 +117,14 @@ class memory_controller(logic_base):
             for i in c.hit_detector.find_hit():
                 # Disable DRAM since a request could have been sent above
                 c.dram.disable()
-                # Perform the write request
-                with m.If(~c.web_reg):
-                    # Update dirty bit
-                    c.tag_array.write(c.set, Cat(c.tag, C(3, 2)), i)
-                    # Perform write request
-                    c.data_array.write(c.set, c.data_array.output(i), i)
-                    c.data_array.write_input(i, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
+                # Perform the write request if data cache
+                if OPTS.is_data_cache:
+                    with m.If(~c.web_reg):
+                        # Update dirty bit
+                        c.tag_array.write(c.set, Cat(c.tag, C(3, 2)), i)
+                        # Perform write request
+                        c.data_array.write(c.set, c.data_array.output(i), i)
+                        c.data_array.write_input(i, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive.
                 c.tag_array.read(c.addr.parse_set())
@@ -192,12 +194,16 @@ class memory_controller(logic_base):
             #   COMPARE if CPU is sending a new request
             with m.If(~c.dram.stall()):
                 # Update tag line
-                c.tag_array.write(c.set, Cat(c.tag, ~c.web_reg, C(1, 1)), c.way)
+                if OPTS.is_data_cache:
+                    c.tag_array.write(c.set, Cat(c.tag, ~c.web_reg, C(1, 1)), c.way)
+                else:
+                    c.tag_array.write(c.set, Cat(c.tag, C(1, 1)), c.way)
                 # Update data line
                 c.data_array.write(c.set, c.dram.output(), c.way)
-                # Perform the write request
-                with m.If(~c.web_reg):
-                    c.data_array.write_input(c.way, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
+                # Perform the write request if data cache
+                if OPTS.is_data_cache:
+                    with m.If(~c.web_reg):
+                        c.data_array.write_input(c.way, c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
                 # Read next lines from SRAMs even though the CPU is not sending
                 # a new request since read is non-destructive
                 c.tag_array.read(c.addr.parse_set())

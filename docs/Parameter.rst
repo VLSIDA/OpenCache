@@ -61,8 +61,7 @@ This is the write policy of the cache. Currently supported write policies are:
 *************
 is_data_cache
 *************
-This is whether the cache is a *"data cache"* or an *"instruction cache"*. INSTRUCTION
-CACHE IS NOT YET SUPPORTED!
+This is whether the cache is a *"data cache"* or an *"instruction cache"*.
 
 ***********
 return_type

@@ -13,16 +13,20 @@ class dram_instance:
     This class represents DRAM which OpenCache modules connect to.
     """
 
-    def __init__(self, m, address_size, row_size):
+    def __init__(self, m, address_size, row_size, read_only=False):
+
+        self.read_only = read_only
 
         # Chip select
         self.main_csb = cache_signal(reset_less=True, reset=1)
         # Write enable
-        self.main_web = cache_signal(reset_less=True, reset=1)
+        if not read_only:
+            self.main_web = cache_signal(reset_less=True, reset=1)
         # Address
         self.main_addr = cache_signal(address_size, reset_less=True)
         # Data input
-        self.main_din = cache_signal(row_size, reset_less=True)
+        if not read_only:
+            self.main_din = cache_signal(row_size, reset_less=True)
         # Data output
         self.main_dout = cache_signal(row_size)
         # Stall
@@ -64,14 +68,16 @@ class dram_instance:
         """ Send a new read request to DRAM. """
 
         self.m.d.comb += self.main_csb.eq(0)
-        self.m.d.comb += self.main_web.eq(1)
+        if not self.read_only:
+            self.m.d.comb += self.main_web.eq(1)
         self.m.d.comb += self.main_addr.eq(address)
 
 
     def write(self, address, data):
         """ Send a new write request to DRAM. """
 
-        self.m.d.comb += self.main_csb.eq(0)
-        self.m.d.comb += self.main_web.eq(0)
-        self.m.d.comb += self.main_addr.eq(address)
-        self.m.d.comb += self.main_din.eq(data)
+        if not self.read_only:
+            self.m.d.comb += self.main_csb.eq(0)
+            self.m.d.comb += self.main_web.eq(0)
+            self.m.d.comb += self.main_addr.eq(address)
+            self.m.d.comb += self.main_din.eq(data)

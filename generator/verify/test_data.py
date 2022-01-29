@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from random import randrange, choice
+from globals import OPTS
 
 
 class test_data:
@@ -37,21 +38,27 @@ class test_data:
 
         self.add_operation("reset")
 
-        # Write random data to random addresses initially
-        for i in range(test_size):
-            self.add_operation("write")
+        # Write and flush only when it's a data cache
+        if OPTS.is_data_cache:
+            # Write random data to random addresses initially
+            for i in range(test_size):
+                self.add_operation("write")
 
-        self.add_operation("flush")
+            self.add_operation("flush")
 
-        addresses = []
-        for i in range(len(self.op)):
-            if self.op[i] == "write":
-                addresses.append(self.addr[i])
+            addresses = []
+            for i in range(len(self.op)):
+                if self.op[i] == "write":
+                    addresses.append(self.addr[i])
 
-        # Read from random addresses which are written to in the first half
-        while len(addresses) > 0:
-            self.add_operation("read", addresses)
-            addresses.remove(self.addr[-1])
+            # Read from random addresses which are written to in the first half
+            while len(addresses) > 0:
+                self.add_operation("read", addresses)
+                addresses.remove(self.addr[-1])
+        else:
+            # Read random data from random addresses
+            for i in range(test_size):
+                self.add_operation("read")
 
         # Simulate the cache with sequence operations
         for i in range(len(self.op)):
@@ -133,7 +140,8 @@ class test_data:
                     file.write("assert_{}();\n".format(self.op[i]))
                 else:
                     file.write("cache_csb   = 0;\n")
-                    file.write("cache_web   = {};\n".format(self.web[i]))
+                    if OPTS.is_data_cache:
+                        file.write("cache_web   = {};\n".format(self.web[i]))
                     if self.num_masks:
                         file.write("cache_wmask = {0}'b{1};\n".format(self.num_masks, self.wmask[i]))
                     file.write("cache_addr  = {};\n".format(self.addr[i]))
