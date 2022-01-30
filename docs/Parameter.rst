@@ -72,6 +72,11 @@ This is which data the cache returns. Currently supported return types are:
 + Line
 
 ***********
+has_flush
+***********
+This is whether the cache has flush signal.
+
+***********
 data_hazard
 ***********
 This is whether data hazard may occur in the internal SRAM arrays. Some technologies don't have
