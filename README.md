@@ -12,6 +12,7 @@ It generates a synthesizable Verilog file for cache logic and configuration file
 ## Dependencies
 The OpenCache has the following dependencies:
 + Python 3.6 or higher
++ [Git]
 + [Amaranth] 0.3 or higher
 + [Yosys] 0.10 or higher
 
@@ -113,6 +114,7 @@ OpenCache is licensed under the [BSD 3-Clause License](LICENSE).
 
 * * *
 
+[Git]:      https://git-scm.com/
 [OpenRAM]:  https://github.com/VLSIDA/OpenRAM
 [FuseSoC]:  https://github.com/olofk/fusesoc
 [Icarus]:   https://github.com/steveicarus/iverilog
