@@ -194,10 +194,10 @@ class memory_controller(logic_base):
             #   COMPARE if CPU is sending a new request
             with m.If(~c.dram.stall()):
                 # Update tag line
-                if OPTS.read_only:
-                    c.tag_array.write(c.set, Cat(c.tag, C(1, 1)), c.way)
-                else:
+                if c.has_dirty:
                     c.tag_array.write(c.set, Cat(c.tag, ~c.web_reg, C(1, 1)), c.way)
+                else:
+                    c.tag_array.write(c.set, Cat(c.tag, C(1, 1)), c.way)
                 # Update data line
                 c.data_array.write(c.set, c.dram.output(), c.way)
                 # Perform the write request if data cache

@@ -71,8 +71,10 @@ class cache_config:
         # Number of rows in DRAM
         self.dram_num_rows = 2 ** self.dram_address_size
 
+        # Whether the tag word has dirty bit
+        self.has_dirty = not OPTS.read_only
         # Tag word bit-width of a way
-        self.tag_word_size = self.tag_size + (1 if OPTS.read_only else 2)
+        self.tag_word_size = self.tag_size + (2 if self.has_dirty else 1)
 
         # Way size is used in replacement policy
         self.way_size = ceil(log2(self.num_ways))
