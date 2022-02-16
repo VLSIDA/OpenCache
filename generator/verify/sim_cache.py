@@ -280,7 +280,7 @@ class sim_cache:
     def stall_cycles(self, address):
         """ Return the number of stall cycles for a request of address. """
 
-        stall_cycles = int(self.is_data_hazard(address))
+        cycles = int(self.is_data_hazard(address))
 
         # In order to calculate the stall cycles correctly, random counter
         # needs to be updated temporarily here.
@@ -292,11 +292,11 @@ class sim_cache:
 
         if self.find_way(address) is None:
             # Stalls 1 cycle in the COMPARE state since the request is a miss
-            stall_cycles += 1
+            cycles += 1
 
             # If DRAM is not yet ready and the request is miss, cache needs to
             # wait until DRAM is ready
-            stall_cycles += self.dram_stalls
+            cycles += self.dram_stalls
             self.dram_stalls = 0
 
             # Find the evicted address
@@ -309,13 +309,13 @@ class sim_cache:
             # - n while writing
             # - 1 for sending the read request to DRAM
             # - n while reading
-            stall_cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
+            cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
 
         # After the calculation is done, the random counter should be decremented
         if self.is_data_hazard(address):
             self.update_random(-1)
 
-        return stall_cycles
+        return cycles
 
 
     def is_data_hazard(self, address):
