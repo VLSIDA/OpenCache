@@ -7,6 +7,7 @@
 #
 from logic_base import logic_base
 from state import state
+from policy import write_policy as wp
 from globals import OPTS
 
 
@@ -59,6 +60,25 @@ class input_interface(logic_base):
         # In the COMPARE state, the request is decoded if current request is hit.
         with m.Case(state.COMPARE):
             for _ in c.hit_detector.find_hit():
+                # If write policy is write-through, take the next request if
+                # current request is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        self.store_request(c, m)
+                else:
+                    self.store_request(c, m)
+
+
+    def add_write(self, c, m):
+        """ Add statements for the WRITE state. """
+
+        # If write policy is not write-through, don't generate this state.
+        if OPTS.write_policy != wp.WRITE_THROUGH:
+            return
+
+        # In the WRITE state, the next request is stored.
+        with m.Case(state.WRITE):
+            with m.If(~c.dram.stall()):
                 self.store_request(c, m)
 
 
@@ -68,7 +88,13 @@ class input_interface(logic_base):
         # In the COMPARE state, the request is decoded if DRAM completed read request
         with m.Case(state.WAIT_READ):
             with m.If(~c.dram.stall()):
-                self.store_request(c, m)
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    # Take the next request if current request is read
+                    # Otherwise, take the next request in WRITE state
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        self.store_request(c, m)
+                else:
+                    self.store_request(c, m)
 
 
     def add_flush_sig(self, c, m):

@@ -9,6 +9,7 @@ from design import design
 from configuration import configuration
 from cache_signal import cache_signal
 from sram_instance import sram_instance
+from dram_instance import dram_instance
 
 
 class cache_base(design, configuration):
@@ -27,3 +28,4 @@ class cache_base(design, configuration):
         # Copy configs to module classes for calculations
         cache_config.set_local_config(cache_signal)
         cache_config.set_local_config(sram_instance)
+        cache_config.set_local_config(dram_instance)

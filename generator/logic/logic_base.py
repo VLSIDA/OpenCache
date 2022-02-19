@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from policy import write_policy as wp
 from globals import OPTS
 
 
@@ -40,7 +41,8 @@ class logic_base:
             self.add_wait_read(c, m)
             if not OPTS.read_only:
                 self.add_write(c, m)
-                self.add_wait_write(c, m)
+                if OPTS.write_policy == wp.WRITE_BACK:
+                    self.add_wait_write(c, m)
             if OPTS.data_hazard:
                 if OPTS.has_flush:
                     self.add_flush_hazard(c, m)

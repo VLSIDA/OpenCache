@@ -7,6 +7,8 @@
 #
 from logic_base import logic_base
 from state import state
+from policy import write_policy as wp
+from globals import OPTS
 
 
 class lru_replacer(logic_base):
@@ -62,6 +64,7 @@ class lru_replacer(logic_base):
                 m.d.comb += c.way.eq(i)
             # Check if current request is a hit
             for i in c.hit_detector.find_hit():
+                m.d.comb += c.way.eq(i)
                 c.use_array.write(c.set, c.use_array.output())
                 # Each way in a set has its own use numbers. These numbers
                 # start from 0. Every time a way is needed to be evicted,
@@ -73,8 +76,28 @@ class lru_replacer(logic_base):
                 for j in range(c.num_ways):
                     m.d.comb += c.use_array.input().use(j).eq(c.use_array.output().use(j) - (c.use_array.output().use(j) > c.use_array.output().use(i)))
                 m.d.comb += c.use_array.input().use(i).eq(c.num_ways - 1)
-                # Read next lines from SRAMs even though CPU is not
-                # sending a new request since read is non-destructive.
+                # Read next lines from SRAMs even if CPU is not sending a new request
+                # since read is non-destructive.
+                # If write policy is write-through, read next lines if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        c.use_array.read(c.addr.parse_set())
+                else:
+                    c.use_array.read(c.addr.parse_set())
+
+
+    def add_write(self, c, m):
+        """ Add statements for the WRITE state. """
+
+        # If write policy is not write-through, don't generate this state
+        if OPTS.write_policy != wp.WRITE_THROUGH:
+            return
+
+        # In the WAIT_READ state, corresponding line from the use array is
+        # requested if DRAM is available.
+        with m.Case(state.WRITE):
+            with m.If(~c.dram.stall()):
                 c.use_array.read(c.addr.parse_set())
 
 
@@ -117,9 +140,15 @@ class lru_replacer(logic_base):
                     for i in range(c.num_ways):
                         with m.Case(i):
                             m.d.comb += c.use_array.input().use(i).eq(c.num_ways - 1)
-                # Read next lines from SRAMs even though CPU is not
-                # sending a new request since read is non-destructive.
-                c.use_array.read(c.addr.parse_set())
+                # Read next lines from SRAMs even if CPU is not sending a new request
+                # since read is non-destructive.
+                # If write policy is write-through, read next lines if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        c.use_array.read(c.addr.parse_set())
+                else:
+                    c.use_array.read(c.addr.parse_set())
 
 
     def add_wait_hazard(self, c, m):

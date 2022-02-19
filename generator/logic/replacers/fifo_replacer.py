@@ -7,6 +7,8 @@
 #
 from logic_base import logic_base
 from state import state
+from policy import write_policy as wp
+from globals import OPTS
 
 
 class fifo_replacer(logic_base):
@@ -63,6 +65,27 @@ class fifo_replacer(logic_base):
             # Read next lines from SRAMs even though CPU is not sending a new
             # request since read is non-destructive.
             for i in c.hit_detector.find_hit():
+                m.d.comb += c.way.eq(i)
+                # If write policy is write-through, read next lines if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        c.use_array.read(c.addr.parse_set())
+                else:
+                    c.use_array.read(c.addr.parse_set())
+
+
+    def add_write(self, c, m):
+        """ Add statements for the WRITE state. """
+
+        # If write policy is not write-through, don't generate this state.
+        if OPTS.write_policy != wp.WRITE_THROUGH:
+            return
+
+        # In the WAIT_READ state, corresponding line from the use array is
+        # requested if DRAM is available.
+        with m.Case(state.WRITE):
+            with m.If(~c.dram.stall()):
                 c.use_array.read(c.addr.parse_set())
 
 
@@ -76,9 +99,15 @@ class fifo_replacer(logic_base):
                 # always show the next way to be placed. When new data is placed on
                 # that way, FIFO number is incremented.
                 c.use_array.write(c.set, c.way + 1)
-                # Read next lines from SRAMs even though CPU is not
-                # sending a new request since read is non-destructive.
-                c.use_array.read(c.addr.parse_set())
+                # Read next lines from SRAMs even if CPU is not sending a new request
+                # since read is non-destructive.
+                # If write policy is write-through, read next lines if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        c.use_array.read(c.addr.parse_set())
+                else:
+                    c.use_array.read(c.addr.parse_set())
 
 
     def add_wait_hazard(self, c, m):

@@ -49,6 +49,9 @@ class random_replacer(logic_base):
             # random way.
             for i in c.hit_detector.find_empty():
                 m.d.comb += c.way.eq(i)
+            # Check if current request is a hit
+            for i in c.hit_detector.find_hit():
+                m.d.comb += c.way.eq(i)
 
 
     def add_flush_sig(self, c, m):

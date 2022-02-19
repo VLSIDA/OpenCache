@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from policy import replacement_policy as rp
+from policy import write_policy as wp
 from .sim_sram import sim_sram
 from .sim_dram import sim_dram
 from .sim_dram import DRAM_DELAY
@@ -183,20 +184,21 @@ class sim_cache:
         way_evict = None
 
         # Increment the random counter if cache enters WAIT_HAZARD
-        self.update_random(int(self.is_data_hazard(address)))
+        self.add_cycles(int(self.is_data_hazard(address)))
 
         if way is not None: # Hit
             self.update_lru(set_decimal, way)
-            self.update_random(1)
         else: # Miss
             way_evict = self.way_to_evict(set_decimal)
+
+            self.add_cycles(self.dram_stalls)
 
             # Write-back
             if self.sram.read_dirty(set_decimal, way_evict):
                 old_tag = self.sram.read_tag(set_decimal, way_evict)
                 old_data = self.sram.read_line(set_decimal, way_evict)
                 self.dram.write_line((old_tag << self.set_size) + set_decimal, old_data)
-                self.update_random(DRAM_DELAY + 1)
+                self.add_cycles(DRAM_DELAY + 1)
 
             # Bring data line from DRAM
             self.sram.write_valid(set_decimal, way_evict, 1)
@@ -206,7 +208,7 @@ class sim_cache:
 
             self.update_fifo(set_decimal)
             self.update_lru(set_decimal, way_evict)
-            self.update_random(1 + DRAM_DELAY + 1)
+            self.add_cycles(1 + DRAM_DELAY)
 
         # Update previous request variables
         self.prev_hit = way is not None
@@ -224,6 +226,7 @@ class sim_cache:
 
         _, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
+        self.add_cycles(1)
         # If returning a data word
         if self.offset_size:
             return self.sram.read_word(set_decimal, way, offset_decimal)
@@ -240,9 +243,10 @@ class sim_cache:
     def write(self, address, mask, data_input):
         """ Write data to an address. """
 
-        _, set_decimal, offset_decimal = self.parse_address(address)
+        tag_decimal, set_decimal, offset_decimal = self.parse_address(address)
         way = self.request(address)
-        self.sram.write_dirty(set_decimal, way, 1)
+        if self.has_dirty:
+            self.sram.write_dirty(set_decimal, way, 1)
 
         # Write input data over the write mask
         # If returning a data word
@@ -265,6 +269,13 @@ class sim_cache:
         # If returning a data word
         if self.offset_size:
             self.sram.write_word(set_decimal, way, offset_decimal, wr_data)
+            # If write policy is write-through, update the data line in DRAM
+            if OPTS.write_policy == wp.WRITE_THROUGH:
+                line = self.sram.read_line(set_decimal, way)
+                line[offset_decimal] = wr_data
+                self.dram.write_line((tag_decimal << self.set_size) + set_decimal, line)
+                self.add_cycles(self.dram_stalls)
+                self.dram_stalls = DRAM_DELAY + 1
         # If returning a data line
         else:
             line = []
@@ -272,23 +283,34 @@ class sim_cache:
                 word = (wr_data >> (i * self.word_size)) % (2 ** self.word_size)
                 line.append(word)
             self.sram.write_line(set_decimal, way, line)
+            # If write policy is write-through, update the data line in DRAM
+            if OPTS.write_policy == wp.WRITE_THROUGH:
+                self.dram.write_line((tag_decimal << self.set_size) + set_decimal, line)
+                self.add_cycles(self.dram_stalls)
+                self.dram_stalls = DRAM_DELAY + 1
+
+        self.add_cycles(1)
 
         # Update previous write enable
         self.prev_web = 0
 
 
-    def stall_cycles(self, address):
+    def stall_cycles(self, address, is_write):
         """ Return the number of stall cycles for a request of address. """
 
-        cycles = int(self.is_data_hazard(address))
+        hazard = self.is_data_hazard(address)
 
         # In order to calculate the stall cycles correctly, random counter
         # needs to be updated temporarily here.
         # If there is a data hazard, cache stalls in WAIT_HAZARD state, which
         # results in incrementing the random counter. Therefore, we will
         # increment it here.
-        if self.is_data_hazard(address):
+        if hazard:
             self.update_random(1)
+
+        # Cache will spend a cycle in WAIT_HAZARD state if there is a data hazard.
+        # Don't add an extra cycle here if DRAM's stall is non-zero.
+        cycles = int(hazard and self.dram_stalls == 0)
 
         if self.find_way(address) is None:
             # Stalls 1 cycle in the COMPARE state since the request is a miss
@@ -297,7 +319,6 @@ class sim_cache:
             # If DRAM is not yet ready and the request is miss, cache needs to
             # wait until DRAM is ready
             cycles += self.dram_stalls
-            self.dram_stalls = 0
 
             # Find the evicted address
             _, set_decimal, _ = self.parse_address(address)
@@ -310,9 +331,15 @@ class sim_cache:
             # - 1 for sending the read request to DRAM
             # - n while reading
             cycles += (DRAM_DELAY * 2 + 1 if is_dirty else DRAM_DELAY)
+        elif OPTS.write_policy == wp.WRITE_THROUGH and is_write:
+            # If DRAM is not yet ready and the request is miss, cache needs to
+            # wait until DRAM is ready
+            cycles += self.dram_stalls
+        else:
+            cycles = int(hazard)
 
         # After the calculation is done, the random counter should be decremented
-        if self.is_data_hazard(address):
+        if hazard:
             self.update_random(-1)
 
         return cycles
@@ -342,6 +369,13 @@ class sim_cache:
             return (self.prev_hit and not self.prev_web) or (not self.prev_hit)
 
         return False
+
+
+    def add_cycles(self, cycles):
+        """ Add cycles to calculate stalls. """
+
+        self.dram_stalls = max(self.dram_stalls - cycles, 0)
+        self.update_random(cycles)
 
 
     def update_fifo(self, set_decimal):

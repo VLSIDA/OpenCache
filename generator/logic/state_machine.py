@@ -7,6 +7,7 @@
 #
 from logic_base import logic_base
 from state import state
+from policy import write_policy as wp
 from globals import OPTS
 
 
@@ -99,27 +100,55 @@ class state_machine(logic_base):
             # Compare all ways' tags to find a hit. Since each way has a different
             # tag, only one of them can match at most.
             for _ in c.hit_detector.find_hit():
-                with m.If(c.csb):
-                    m.d.comb += c.state.eq(state.IDLE)
-                with m.Else():
-                    # Don't use WAIT_HAZARD if data_hazard is disabled
-                    if OPTS.data_hazard:
-                        # If SRAMs are also updated after read
-                        if OPTS.replacement_policy.updated_after_read():
-                            with m.If(c.set == c.addr.parse_set()):
-                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                            with m.Else():
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    # If current request is read or DRAM is available, get the next request.
+                    # Otherwise, switch to WRITE state.
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        with m.If(c.csb):
+                            m.d.comb += c.state.eq(state.IDLE)
+                        with m.Else():
+                            # Don't use WAIT_HAZARD if data_hazard is disabled
+                            if OPTS.data_hazard:
+                                # If SRAMs are also updated after read
+                                if OPTS.replacement_policy.updated_after_read():
+                                    with m.If(c.set == c.addr.parse_set()):
+                                        m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                                    with m.Else():
+                                        m.d.comb += c.state.eq(state.COMPARE)
+                                # If SRAMs are only updated after write (must have dirty bit)
+                                elif c.has_dirty:
+                                    with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
+                                        m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                                    with m.Else():
+                                        m.d.comb += c.state.eq(state.COMPARE)
+                                else:
+                                    m.d.comb += c.state.eq(state.COMPARE)
+                            else:
                                 m.d.comb += c.state.eq(state.COMPARE)
-                        # If SRAMs are only updated after write (must have dirty bit)
-                        elif c.has_dirty:
-                            with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
-                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                            with m.Else():
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WRITE)
+                else:
+                    with m.If(c.csb):
+                        m.d.comb += c.state.eq(state.IDLE)
+                    with m.Else():
+                        # Don't use WAIT_HAZARD if data_hazard is disabled
+                        if OPTS.data_hazard:
+                            # If SRAMs are also updated after read
+                            if OPTS.replacement_policy.updated_after_read():
+                                with m.If(c.set == c.addr.parse_set()):
+                                    m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                                with m.Else():
+                                    m.d.comb += c.state.eq(state.COMPARE)
+                            # If SRAMs are only updated after write (must have dirty bit)
+                            elif c.has_dirty:
+                                with m.If(~c.web_reg & (c.set == c.addr.parse_set())):
+                                    m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                                with m.Else():
+                                    m.d.comb += c.state.eq(state.COMPARE)
+                            else:
                                 m.d.comb += c.state.eq(state.COMPARE)
                         else:
                             m.d.comb += c.state.eq(state.COMPARE)
-                    else:
-                        m.d.comb += c.state.eq(state.COMPARE)
 
 
     def add_write(self, c, m):
@@ -130,7 +159,20 @@ class state_machine(logic_base):
         #   WAIT_WRITE if DRAM responded
         with m.Case(state.WRITE):
             with m.If(~c.dram.stall()):
-                m.d.comb += c.state.eq(state.WAIT_WRITE)
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.csb):
+                        m.d.comb += c.state.eq(state.IDLE)
+                    with m.Else():
+                        # Don't use WAIT_HAZARD if data_hazard is disabled
+                        if OPTS.data_hazard:
+                            with m.If(c.set == c.addr.parse_set()):
+                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += c.state.eq(state.COMPARE)
+                        else:
+                            m.d.comb += c.state.eq(state.COMPARE)
+                else:
+                    m.d.comb += c.state.eq(state.WAIT_WRITE)
 
 
     def add_wait_write(self, c, m):
@@ -164,17 +206,33 @@ class state_machine(logic_base):
         #   COMPARE     if CPU is sending a new request
         with m.Case(state.WAIT_READ):
             with m.If(~c.dram.stall()):
-                with m.If(c.csb):
-                    m.d.comb += c.state.eq(state.IDLE)
-                with m.Else():
-                    # Don't use WAIT_HAZARD if data_hazard is disabled
-                    if OPTS.data_hazard:
-                        with m.If(c.set == c.addr.parse_set()):
-                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        with m.If(c.csb):
+                            m.d.comb += c.state.eq(state.IDLE)
                         with m.Else():
+                            # Don't use WAIT_HAZARD if data_hazard is disabled
+                            if OPTS.data_hazard:
+                                with m.If(c.set == c.addr.parse_set()):
+                                    m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                                with m.Else():
+                                    m.d.comb += c.state.eq(state.COMPARE)
+                            else:
+                                m.d.comb += c.state.eq(state.COMPARE)
+                    with m.Else():
+                        m.d.comb += c.state.eq(state.WRITE)
+                else:
+                    with m.If(c.csb):
+                        m.d.comb += c.state.eq(state.IDLE)
+                    with m.Else():
+                        # Don't use WAIT_HAZARD if data_hazard is disabled
+                        if OPTS.data_hazard:
+                            with m.If(c.set == c.addr.parse_set()):
+                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
+                            with m.Else():
+                                m.d.comb += c.state.eq(state.COMPARE)
+                        else:
                             m.d.comb += c.state.eq(state.COMPARE)
-                    else:
-                        m.d.comb += c.state.eq(state.COMPARE)
 
 
     def add_flush_hazard(self, c, m):

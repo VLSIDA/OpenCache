@@ -44,7 +44,8 @@ class test_data:
             for i in range(test_size):
                 self.add_operation("write")
 
-            self.add_operation("flush")
+            if OPTS.has_flush:
+                self.add_operation("flush")
 
             addresses = []
             for i in range(len(self.op)):
@@ -110,7 +111,7 @@ class test_data:
         elif self.op[op_idx] == "flush":
             self.stall[op_idx] = self.sc.flush()
         else:
-            self.stall[op_idx] = self.sc.stall_cycles(self.addr[op_idx])
+            self.stall[op_idx] = self.sc.stall_cycles(self.addr[op_idx], self.op[op_idx] == "write")
             if self.op[op_idx] == "read":
                 # Overwrite data for read to prevent bugs
                 # NOTE: If the same address is written twice, this data

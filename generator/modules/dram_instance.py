@@ -81,3 +81,36 @@ class dram_instance:
             self.m.d.comb += self.main_web.eq(0)
             self.m.d.comb += self.main_addr.eq(address)
             self.m.d.comb += self.main_din.eq(data)
+
+
+    def write_input(self, offset, data, wmask):
+        """ Add input data to write request to DRAM. """
+
+        if not self.read_only:
+            for word_idx in self.find_word(offset):
+                # Write the word over the write mask
+                for mask_idx in range(dram_instance.num_masks):
+                    with self.m.If(wmask[mask_idx]):
+                        if word_idx is None:
+                            self.m.d.comb += self.main_din.mask(mask_idx).eq(data.mask(mask_idx))
+                        else:
+                            self.m.d.comb += self.main_din.mask(mask_idx, word_idx).eq(data.mask(mask_idx))
+
+                # Write the whole word if write mask is not used
+                if not dram_instance.num_masks:
+                    if word_idx is None:
+                        self.m.d.comb += self.main_din.eq(data)
+                    else:
+                        self.m.d.comb += self.main_din.word(word_idx).eq(data)
+
+
+    def find_word(self, offset):
+        """ Return all word indices corresponding to the given offset value. """
+
+        if offset is None:
+            yield None
+        else:
+            with self.m.Switch(offset):
+                for word_idx in range(dram_instance.words_per_line):
+                    with self.m.Case(word_idx):
+                        yield word_idx

@@ -7,6 +7,8 @@
 #
 from logic_base import logic_base
 from state import state
+from policy import write_policy as wp
+from globals import OPTS
 
 
 class output_interface(logic_base):
@@ -40,11 +42,30 @@ class output_interface(logic_base):
         # request is write since read is non-destructive.
         with m.Case(state.COMPARE):
             for i in c.hit_detector.find_hit():
-                m.d.comb += c.stall.eq(0)
+                # If write policy is write-through, lower the stall if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        m.d.comb += c.stall.eq(0)
+                else:
+                    m.d.comb += c.stall.eq(0)
                 if c.offset_size:
                     m.d.comb += c.dout.eq(c.data_array.output(i).word(c.offset))
                 else:
                     m.d.comb += c.dout.eq(c.data_array.output(i))
+
+
+    def add_write(self, c, m):
+        """ Add statements for the WRITE state. """
+
+        # If write policy is not write-through, don't generate this state.
+        if OPTS.write_policy != wp.WRITE_THROUGH:
+            return
+
+        # In the WRITE state, stall is lowered.
+        with m.Case(state.WRITE):
+            with m.If(~c.dram.stall()):
+                m.d.comb += c.stall.eq(0)
 
 
     def add_wait_read(self, c, m):
@@ -57,7 +78,13 @@ class output_interface(logic_base):
         with m.Case(state.WAIT_READ):
             # Check if DRAM answers to the read request
             with m.If(~c.dram.stall()):
-                m.d.comb += c.stall.eq(0)
+                # If write policy is write-through, lower the stall if current request
+                # is read or DRAM is available.
+                if OPTS.write_policy == wp.WRITE_THROUGH:
+                    with m.If(c.web_reg | ~c.dram.stall()):
+                        m.d.comb += c.stall.eq(0)
+                else:
+                    m.d.comb += c.stall.eq(0)
                 if c.offset_size:
                     m.d.comb += c.dout.eq(c.dram.output().word(c.offset))
                 else:

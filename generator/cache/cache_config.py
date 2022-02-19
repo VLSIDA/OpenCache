@@ -8,6 +8,7 @@
 from math import log2, ceil
 import debug
 from policy import associativity as asc
+from policy import write_policy as wp
 from globals import OPTS
 
 
@@ -71,8 +72,13 @@ class cache_config:
         # Number of rows in DRAM
         self.dram_num_rows = 2 ** self.dram_address_size
 
+        # Instruction caches cannot have flush
+        # FIXME: Move the lines below into globals.py
+        if OPTS.read_only or OPTS.write_policy == wp.WRITE_THROUGH:
+            OPTS.has_flush = False
+
         # Whether the tag word has dirty bit
-        self.has_dirty = not OPTS.read_only
+        self.has_dirty = not (OPTS.read_only or OPTS.write_policy == wp.WRITE_THROUGH)
         # Tag word bit-width of a way
         self.tag_word_size = self.tag_size + (2 if self.has_dirty else 1)
 
