@@ -78,13 +78,7 @@ class output_interface(logic_base):
         with m.Case(state.WAIT_READ):
             # Check if DRAM answers to the read request
             with m.If(~c.dram.stall()):
-                # If write policy is write-through, lower the stall if current request
-                # is read or DRAM is available.
-                if OPTS.write_policy == wp.WRITE_THROUGH:
-                    with m.If(c.web_reg | ~c.dram.stall()):
-                        m.d.comb += c.stall.eq(0)
-                else:
-                    m.d.comb += c.stall.eq(0)
+                m.d.comb += c.stall.eq(0)
                 if c.offset_size:
                     m.d.comb += c.dout.eq(c.dram.output().word(c.offset))
                 else:

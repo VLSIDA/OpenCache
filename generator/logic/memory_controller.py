@@ -230,19 +230,10 @@ class memory_controller(logic_base):
                         if OPTS.write_policy == wp.WRITE_THROUGH:
                             c.dram.write(Cat(c.set, c.tag), c.dram.output())
                             c.dram.write_input(c.offset if c.offset_size else None, c.din_reg, c.wmask_reg if c.num_masks else None)
-                # If write policy is write-through, read next lines if current request
-                # is read or DRAM is available.
-                if OPTS.write_policy == wp.WRITE_THROUGH:
-                    with m.If(c.web_reg | ~c.dram.stall()):
-                        # Read next lines from SRAMs even though the CPU is not sending
-                        # a new request since read is non-destructive.
-                        c.tag_array.read(c.addr.parse_set())
-                        c.data_array.read(c.addr.parse_set())
-                else:
-                    # Read next lines from SRAMs even though the CPU is not sending
-                    # a new request since read is non-destructive.
-                    c.tag_array.read(c.addr.parse_set())
-                    c.data_array.read(c.addr.parse_set())
+                # Read next lines from SRAMs even though the CPU is not sending
+                # a new request since read is non-destructive.
+                c.tag_array.read(c.addr.parse_set())
+                c.data_array.read(c.addr.parse_set())
 
 
     def add_flush_hazard(self, c, m):

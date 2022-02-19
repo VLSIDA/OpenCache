@@ -101,13 +101,7 @@ class fifo_replacer(logic_base):
                 c.use_array.write(c.set, c.way + 1)
                 # Read next lines from SRAMs even if CPU is not sending a new request
                 # since read is non-destructive.
-                # If write policy is write-through, read next lines if current request
-                # is read or DRAM is available.
-                if OPTS.write_policy == wp.WRITE_THROUGH:
-                    with m.If(c.web_reg | ~c.dram.stall()):
-                        c.use_array.read(c.addr.parse_set())
-                else:
-                    c.use_array.read(c.addr.parse_set())
+                c.use_array.read(c.addr.parse_set())
 
 
     def add_wait_hazard(self, c, m):

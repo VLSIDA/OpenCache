@@ -206,33 +206,17 @@ class state_machine(logic_base):
         #   COMPARE     if CPU is sending a new request
         with m.Case(state.WAIT_READ):
             with m.If(~c.dram.stall()):
-                if OPTS.write_policy == wp.WRITE_THROUGH:
-                    with m.If(c.web_reg | ~c.dram.stall()):
-                        with m.If(c.csb):
-                            m.d.comb += c.state.eq(state.IDLE)
+                with m.If(c.csb):
+                    m.d.comb += c.state.eq(state.IDLE)
+                with m.Else():
+                    # Don't use WAIT_HAZARD if data_hazard is disabled
+                    if OPTS.data_hazard:
+                        with m.If(c.set == c.addr.parse_set()):
+                            m.d.comb += c.state.eq(state.WAIT_HAZARD)
                         with m.Else():
-                            # Don't use WAIT_HAZARD if data_hazard is disabled
-                            if OPTS.data_hazard:
-                                with m.If(c.set == c.addr.parse_set()):
-                                    m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                                with m.Else():
-                                    m.d.comb += c.state.eq(state.COMPARE)
-                            else:
-                                m.d.comb += c.state.eq(state.COMPARE)
-                    with m.Else():
-                        m.d.comb += c.state.eq(state.WRITE)
-                else:
-                    with m.If(c.csb):
-                        m.d.comb += c.state.eq(state.IDLE)
-                    with m.Else():
-                        # Don't use WAIT_HAZARD if data_hazard is disabled
-                        if OPTS.data_hazard:
-                            with m.If(c.set == c.addr.parse_set()):
-                                m.d.comb += c.state.eq(state.WAIT_HAZARD)
-                            with m.Else():
-                                m.d.comb += c.state.eq(state.COMPARE)
-                        else:
                             m.d.comb += c.state.eq(state.COMPARE)
+                    else:
+                        m.d.comb += c.state.eq(state.COMPARE)
 
 
     def add_flush_hazard(self, c, m):

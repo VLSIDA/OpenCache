@@ -88,13 +88,7 @@ class input_interface(logic_base):
         # In the COMPARE state, the request is decoded if DRAM completed read request
         with m.Case(state.WAIT_READ):
             with m.If(~c.dram.stall()):
-                if OPTS.write_policy == wp.WRITE_THROUGH:
-                    # Take the next request if current request is read
-                    # Otherwise, take the next request in WRITE state
-                    with m.If(c.web_reg | ~c.dram.stall()):
-                        self.store_request(c, m)
-                else:
-                    self.store_request(c, m)
+                self.store_request(c, m)
 
 
     def add_flush_sig(self, c, m):
