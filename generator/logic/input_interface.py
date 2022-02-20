@@ -85,7 +85,8 @@ class input_interface(logic_base):
     def add_wait_read(self, c, m):
         """ Add statements for the WAIT_READ state. """
 
-        # In the COMPARE state, the request is decoded if DRAM completed read request
+        # In the WAIT_READ state, the request is decoded if DRAM completed the
+        # previous read request.
         with m.Case(state.WAIT_READ):
             with m.If(~c.dram.stall()):
                 self.store_request(c, m)

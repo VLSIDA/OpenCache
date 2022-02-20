@@ -55,7 +55,6 @@ class fifo_replacer(logic_base):
     def add_compare(self, c, m):
         """ Add statements for the COMPARE state. """
 
-
         # In the COMPARE state, way is selected according to the replacement
         # policy of the cache.
         with m.Case(state.COMPARE):
@@ -82,8 +81,8 @@ class fifo_replacer(logic_base):
         if OPTS.write_policy != wp.WRITE_THROUGH:
             return
 
-        # In the WAIT_READ state, corresponding line from the use array is
-        # requested if DRAM is available.
+        # In the WRITE state, corresponding line from the use array is requested
+        # if DRAM is available.
         with m.Case(state.WRITE):
             with m.If(~c.dram.stall()):
                 c.use_array.read(c.addr.parse_set())

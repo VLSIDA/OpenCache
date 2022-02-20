@@ -94,8 +94,8 @@ class lru_replacer(logic_base):
         if OPTS.write_policy != wp.WRITE_THROUGH:
             return
 
-        # In the WAIT_READ state, corresponding line from the use array is
-        # requested if DRAM is available.
+        # In the WRITE state, corresponding line from the use array is requested
+        # if DRAM is available.
         with m.Case(state.WRITE):
             with m.If(~c.dram.stall()):
                 c.use_array.read(c.addr.parse_set())
@@ -148,7 +148,7 @@ class lru_replacer(logic_base):
     def add_wait_hazard(self, c, m):
         """ Add statements for the WAIT_HAZARD state. """
 
-        # In the WAIT_READ state, corresponding line from the use array is
+        # In the WAIT_HAZARD state, corresponding line from the use array is
         # requested.
         with m.Case(state.WAIT_HAZARD):
             c.use_array.read(c.set)
