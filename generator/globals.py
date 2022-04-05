@@ -207,6 +207,10 @@ def fix_config():
     from policy import write_policy as wp
     OPTS.write_policy = wp.get_value(OPTS.write_policy)
 
+    # Instruction caches cannot have a write policy
+    if OPTS.read_only:
+        OPTS.write_policy = None
+
     # Instruction caches cannot have flush
     if OPTS.read_only or OPTS.write_policy == wp.WRITE_THROUGH:
         OPTS.has_flush = False
@@ -403,6 +407,6 @@ def report_status():
     debug.print_raw("Words per line: {}".format(OPTS.words_per_line))
     debug.print_raw("Number of ways: {}".format(OPTS.num_ways))
     debug.print_raw("Replacement policy: {}".format(OPTS.replacement_policy.long_name()))
-    debug.print_raw("Write policy: {}".format(OPTS.write_policy.long_name()))
+    debug.print_raw("Write policy: {}".format(OPTS.write_policy.long_name() if OPTS.write_policy else "None"))
     debug.print_raw("Return type: {}".format(OPTS.return_type.capitalize()))
     debug.print_raw("Data hazard: {}\n".format(OPTS.data_hazard))
