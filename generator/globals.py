@@ -34,8 +34,7 @@ def parse_args():
     global OPTS
 
     option_list = {
-        optparse.make_option("-o",
-                             "--output",
+        optparse.make_option("-o", "--output",
                              dest="output_name",
                              help="Base output file name(s) prefix",
                              metavar="FILE"),
