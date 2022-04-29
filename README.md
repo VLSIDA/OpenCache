@@ -12,7 +12,7 @@ It generates a synthesizable Verilog file for cache logic and configuration file
 ## Dependencies
 The OpenCache has the following dependencies:
 + [Git]
-+ [Python] 3.6 or higher
++ [Python] 3.7 or higher
 + [Amaranth] 0.3 or higher
 + [Yosys] 0.10 or higher
 
